@@ -1130,6 +1130,7 @@ dependencies = [
  "ext-php-rs",
  "lazy_static",
  "libsql",
+ "once_cell",
  "serde",
  "serde_json",
  "tokio",

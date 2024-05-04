@@ -2,6 +2,7 @@
 name = "libsql_php_extension"
 version = "0.1.0"
 edition = "2021"
+authors = ["Imam Ali Mustofa <darkterminal@duck.com>"]
 
 [lib]
 name = "sql_php_extension"
@@ -13,7 +14,8 @@ crate-type = ["cdylib"]
 base64 = "0.22.0"
 ext-php-rs = "*"
 lazy_static = "1.4.0"
-libsql = "0.3.5"
+libsql = { version = "0.3.5", features = ["remote", "replication", "core", "encryption"] }
+once_cell = "1.19.0"
 serde = { version = "1.0.199", features = ["derive"]}
 serde_json = "1.0.116"
 tokio = "1.37.0"

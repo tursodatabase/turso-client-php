@@ -1,19 +1,5 @@
 <?php
 
-// class LibSQLPHP {
-
-//     public string $mode;
-
-//     public function __construct(string $url)
-//     {
-//         if (strpos($url, 'file:') !== false) {
-//             $this->mode = "local";
-//         } else {
-//             $this->mode = "other";
-//         }   
-//     }
-// }
-
 $config = [
     "url" => "file:database.db",
     // "authToken" => "secrettoken",
@@ -22,11 +8,11 @@ $config = [
     // "encryptionKey" => null
 ];
 
-$db = new LibSQLPHP($config);
+$db = new LibSQL($config);
 echo $db->version() . PHP_EOL;
 
 // Execute the query
-$result = $db->query("SELECT * FROM users WHERE id = @id", ["@id" => "2"]);
+$result = $db->query('SELECT * FROM users WHERE id = :id', [':id' => 1]);
 
 // Check if the query was successful and print the result
 if ($result !== false) {
@@ -34,3 +20,4 @@ if ($result !== false) {
 } else {
     echo "Query failed.\n";
 }
+$db->close();
