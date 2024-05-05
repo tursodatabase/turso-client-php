@@ -1,0 +1,46 @@
+name: Build and Publish PHP Extension
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            artifact-name: "extension-linux.so"
+          - os: macos-latest
+            artifact-name: "extension-darwin.dylib"
+          - os: windows-latest
+            artifact-name: "extension-windows.dll"
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
+      - name: Build PHP Extension
+        run: |
+          cargo build --release
+          # Add any additional steps required to build your PHP extension here
+
+      - name: Rename and Move Artifact
+        run: |
+          mv target/release/YOUR_EXTENSION_NAME ${{ matrix.artifact-name }}
+
+      - name: Upload Artifact to GitHub Packages
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ matrix.artifact-name }}
+          path: ${{ matrix.artifact-name }}
