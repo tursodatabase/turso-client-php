@@ -96,19 +96,19 @@ namespace {
     {
         /**
          * The connection ID associated with the transaction.
-         * @var mixed
+         * @var string
          */
         public $conn_id;
 
         /**
          * The transaction ID.
-         * @var mixed
+         * @var string
          */
         public $trx_id;
 
         /**
          * The behavior of the transaction.
-         * @var mixed
+         * @var string
          */
         public $trx_behavior;
 
@@ -205,13 +205,13 @@ namespace {
 
         /**
          * The connection identifier.
-         * @var mixed
+         * @var string
          */
         public $conn_id;
 
         /**
          * The mode of the connection.
-         * @var mixed
+         * @var string
          */
         public $mode;
 
@@ -280,7 +280,7 @@ namespace {
          * @param string $stmt The SQL query to execute.
          * @param array $parameters The parameters for the query (optional).
          *
-         * @return mixed The result of the query.
+         * @return array The result of the query.
          */
         public function query(string $stmt, array $parameters = [])
         {
@@ -311,7 +311,7 @@ namespace {
         /**
          * Closes the database connection.
          *
-         * @return mixed The result of the close operation.
+         * @return void The result of the close operation.
          */
         public function close()
         {
