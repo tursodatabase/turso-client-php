@@ -1,3 +1,7 @@
 /target
 *.db
 *.txt
+libsql.stubs.php
+playground.rs
+libsql_php_extension.php
+*.env
