@@ -1,8 +1,42 @@
 use std::collections::HashMap;
 
-use ext_php_rs::types::{ZendHashTable, Zval};
+use ext_php_rs::{exception::PhpException, types::{ZendHashTable, Zval}};
 use once_cell::sync::OnceCell;
 use tokio::runtime::Runtime;
+
+pub fn cwd() -> Result<String, PhpException> {
+    match std::env::current_dir() {
+        Ok(current_dir) => {
+            if let Some(last_component) = current_dir.components().last() {
+                let last_dir = last_component.as_os_str().to_string_lossy();
+                let slugified_last_dir = slugify(&last_dir);
+                Ok(slugified_last_dir)
+            } else {
+                Err(PhpException::default("Current working directory is empty".to_string()))
+            }
+        }
+        Err(err) => Err(PhpException::default(format!("Error getting current working directory: {}", err))),
+    }
+}
+
+pub fn slugify(s: &str) -> String {
+    s.chars()
+        .map(|c| if c.is_ascii_alphanumeric() { c.to_ascii_lowercase() } else { '_' })
+        .collect()
+}
+
+pub fn remove_duplicates<T: Eq + std::hash::Hash + Clone>(vec: &mut Vec<T>) {
+    let mut set = std::collections::HashSet::new();
+    let mut i = 0;
+
+    while i < vec.len() {
+        if !set.insert(vec[i].clone()) {
+            vec.remove(i);
+        } else {
+            i += 1;
+        }
+    }
+}
 
 /// Converts a LibSQL value to a Zval.
 ///
@@ -90,7 +124,7 @@ pub fn get_mode(
 ) -> String {
     match (url, auth_token, sync_url) {
         (Some(url), Some(_), Some(sync_url))
-            if url.starts_with("file:")
+            if (url.starts_with("file:") || url.ends_with(".db") || url.starts_with("libsql:"))
                 && (sync_url.starts_with("libsql://")
                     || sync_url.starts_with("http://")
                     || sync_url.starts_with("https://")) =>
@@ -104,9 +138,56 @@ pub fn get_mode(
         {
             "remote".to_string()
         }
-        (Some(url), _, _) if url.starts_with("file:") || url.contains(":memory:") => {
+        (Some(url), _, _) if (url.starts_with("file:") || url.ends_with(".db") || url.starts_with("libsql:")) || url.contains(":memory:") => {
             "local".to_string()
         }
         _ => "Mode is not available!".to_string(),
     }
+}
+
+#[derive(Debug)]
+pub struct Dsn {
+    pub dbname: String,
+    pub auth_token: Option<String>,
+}
+
+pub fn parse_dsn(dsn: &str) -> Option<Dsn> {
+    // Check if the DSN is empty
+    if dsn.is_empty() {
+        return Some(Dsn {
+            dbname: dsn.to_string(),
+            auth_token: None,
+        });
+    }
+
+    // Check if the DSN starts with "libsql:"
+    if !dsn.starts_with("libsql:") {
+        // Treat it as a filename
+        return Some(Dsn {
+            dbname: dsn.to_string(),
+            auth_token: None,
+        });
+    }
+
+    // Remove the "libsql:" prefix
+    let dsn = &dsn[7..];
+
+    let mut parsed_dsn = Dsn {
+        dbname: String::new(),
+        auth_token: None,
+    };
+
+    for param in dsn.split(';') {
+        let mut parts = param.splitn(2, '=');
+        let key = parts.next()?.trim();
+        let value = parts.next()?.trim();
+
+        match key {
+            "dbname" => parsed_dsn.dbname = value.to_string(),
+            "authToken" => parsed_dsn.auth_token = Some(value.to_string()),
+            _ => {}
+        }
+    }
+
+    Some(parsed_dsn)
 }
