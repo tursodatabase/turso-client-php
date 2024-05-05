@@ -2,8 +2,8 @@ pub mod statement;
 #[allow(non_snake_case, deprecated)]
 #[cfg_attr(windows, feature(abi_vectorcall))]
 extern crate lazy_static;
+pub mod hooks;
 pub mod providers;
-pub mod statements;
 pub mod transaction;
 pub mod utils;
 extern crate ext_php_rs;
@@ -11,13 +11,19 @@ use crate::statement::LibSQLStatement;
 use crate::transaction::LibSQLTransaction;
 use ext_php_rs::prelude::*;
 use std::{collections::HashMap, sync::Mutex};
-use utils::{query_params::QueryParameters, runtime::get_mode};
+use utils::{
+    config_value::ConfigValue,
+    query_params::QueryParameters,
+    runtime::{get_mode, parse_dsn},
+};
 
 lazy_static::lazy_static! {
     static ref CONNECTION_REGISTRY: Mutex<HashMap<String, libsql::Connection>> = Mutex::new(HashMap::new());
     static ref TRANSACTION_REGISTRY: Mutex<HashMap<String, libsql::Transaction>> = Mutex::new(HashMap::new());
     static ref STATEMENT_REGISTRY: Mutex<HashMap<String, libsql::Statement>> = Mutex::new(HashMap::new());
 }
+
+pub const LIBSQL_PHP_VERSION: &'static str = "1.0.0";
 
 /// Represents the flag for opening a database in read-only mode.
 pub const LIBSQL_OPEN_READONLY: i32 = 1;
@@ -28,24 +34,19 @@ pub const LIBSQL_OPEN_READWRITE: i32 = 2;
 /// Represents the flag for creating a new database if it does not exist.
 pub const LIBSQL_OPEN_CREATE: i32 = 4;
 
-
 /// Struct representing LibSQL PHP Class.
 #[php_class]
 struct LibSQL {
-    
     /// Property representing the connection mode.
     #[prop]
     mode: String,
 
     /// Property representing the connection ID.
-    #[prop]
     conn_id: String,
-
 }
 
 #[php_impl]
 impl LibSQL {
-
     /// Represents the flag for opening a database in read-only mode.
     const OPEN_READONLY: i32 = 1;
 
@@ -55,41 +56,89 @@ impl LibSQL {
     /// Represents the flag for creating a new database if it does not exist.
     const OPEN_CREATE: i32 = 4;
 
-    /// Constructs a new `LibSQL` instance.
+    /// Constructs a new `LibSQLConnection` object.
     ///
     /// # Arguments
     ///
-    /// * `config` - A hashmap containing configuration parameters for the database connection.
+    /// * `config` - The configuration value for the connection.
+    /// * `flags` - Optional flags for the connection.
+    /// * `encryption_key` - Optional encryption key for the connection.
     ///
     /// # Returns
     ///
-    /// Returns a `Result` containing the constructed `LibSQL` instance if successful, or a `PhpException` if an error occurs.
-    pub fn __construct(config: HashMap<String, String>) -> Result<Self, PhpException> {
-        let url = config.get("url").cloned().unwrap_or("".to_string());
+    /// A `Result` containing the constructed `LibSQLConnection` object or a `PhpException` if an error occurs.
+    pub fn __construct(
+        config: ConfigValue,
+        flags: Option<i32>,
+        encryption_key: Option<String>,
+    ) -> Result<Self, PhpException> {
+        let db_flags = flags.unwrap_or(6);
+        let encryption_key = encryption_key.unwrap_or_default();
 
-        let db_flags = config
-            .get("flags")
-            .and_then(|s| s.parse::<i32>().ok())
-            .unwrap_or(6);
+        let (url, auth_token, sync_url, sync_interval, read_your_writes): (
+            String,
+            String,
+            String,
+            std::time::Duration,
+            bool,
+        ) = match config {
+            ConfigValue::String(dsn) => {
+                let dsn_parsed = match parse_dsn(&dsn) {
+                    Some(dsn) => match (dsn.dbname.is_empty(), dsn.auth_token) {
+                        (true, _) => Some((
+                            "".to_string(),
+                            "".to_string(),
+                            "".to_string(),
+                            std::time::Duration::from_secs(5),
+                            true,
+                        )),
+                        (false, None) => Some((
+                            dsn.dbname,
+                            "".to_string(),
+                            "".to_string(),
+                            std::time::Duration::from_secs(5),
+                            true,
+                        )),
+                        (false, Some(auth_token)) => Some((
+                            dsn.dbname,
+                            auth_token,
+                            "".to_string(),
+                            std::time::Duration::from_secs(5),
+                            true,
+                        )),
+                    },
+                    None => None,
+                };
 
-        let auth_token = config.get("authToken").cloned().unwrap_or("".to_string());
+                
 
-        let sync_url = config.get("syncUrl").cloned().unwrap_or("".to_string());
+                dsn_parsed.ok_or_else(|| PhpException::default("Failed to parse DSN".into()))?
+            }
+            ConfigValue::Array(config) => {
+                let url = config
+                    .get("url")
+                    .and_then(|v| v.to_string())
+                    .unwrap_or_default();
+                let auth_token = config
+                    .get("authToken")
+                    .and_then(|v| v.to_string())
+                    .unwrap_or_default();
+                let sync_url = config
+                    .get("syncUrl")
+                    .and_then(|v| v.to_string())
+                    .unwrap_or_default();
+                let sync_interval = config
+                    .get("syncInterval")
+                    .and_then(|s| s.to_long())
+                    .map(std::time::Duration::from_secs)
+                    .unwrap_or_else(|| std::time::Duration::from_secs(5));
+                let read_your_writes = config
+                    .get("read_your_writes")
+                    .and_then(|v| v.to_bool())
+                    .unwrap_or(true);
 
-        let sync_interval = config
-            .get("syncInterval")
-            .and_then(|s| s.parse::<u64>().ok())
-            .map(std::time::Duration::from_secs)
-            .unwrap_or_else(|| std::time::Duration::from_secs(5));
-
-        let encryption_key = config
-            .get("encryptionKey")
-            .cloned()
-            .unwrap_or("".to_string());
-
-        let read_your_writes = match config.get("read_your_writes") {
-            Some(value) if !value.is_empty() => value.parse::<bool>().unwrap_or(true),
-            _ => true,
+                (url, auth_token, sync_url, sync_interval, read_your_writes)
+            }
         };
 
         if url.is_empty() {
@@ -103,17 +152,19 @@ impl LibSQL {
         );
 
         let conn = match mode.as_str() {
-            "local" => {
-                providers::local::create_local_connection(url, Some(db_flags), Some(encryption_key))
-            }
+            "local" => providers::local::create_local_connection(
+                url,
+                Some(db_flags),
+                Some(encryption_key.clone()),
+            ),
             "remote" => providers::remote::create_remote_connection(url, auth_token),
             "remote_replica" => providers::remote_replica::create_remote_replica_connection(
-                url,
-                auth_token,
-                sync_url,
-                sync_interval,
-                read_your_writes,
-                Some(encryption_key),
+                url.clone(),
+                auth_token.clone(),
+                sync_url.clone(),
+                sync_interval.clone(),
+                read_your_writes.clone(),
+                Some(encryption_key.clone()),
             ),
             _ => return Err(PhpException::default("Mode is not available!".into())),
         };
@@ -133,7 +184,7 @@ impl LibSQL {
     ///
     /// Returns a string representing the version of the LibSQL library.
     pub fn version() -> String {
-        statements::version::get_version()
+        hooks::version::get_version()
     }
 
     /// Retrieves the number of changes made by the last executed statement.
@@ -142,7 +193,7 @@ impl LibSQL {
     ///
     /// Returns the number of changes made as a result of the last executed statement.
     pub fn changes(&self) -> Result<u64, PhpException> {
-        statements::changes::get_changes(self.conn_id.to_string())
+        hooks::changes::get_changes(self.conn_id.to_string())
     }
 
     /// Checks if autocommit mode is enabled for the connection.
@@ -151,7 +202,7 @@ impl LibSQL {
     ///
     /// Returns `true` if autocommit mode is enabled, otherwise `false`.
     pub fn is_autocommit(&self) -> Result<bool, PhpException> {
-        statements::is_autocommit::get_is_autocommit(self.conn_id.to_string())
+        hooks::is_autocommit::get_is_autocommit(self.conn_id.to_string())
     }
 
     /// Executes a SQL statement.
@@ -164,8 +215,12 @@ impl LibSQL {
     /// # Returns
     ///
     /// Returns the number of rows affected by the execution of the statement.
-    pub fn execute(&self, stmt: &str, parameters: QueryParameters) -> Result<u64, PhpException> {
-        statements::use_exec::exec(self.conn_id.to_string(), stmt, parameters)
+    pub fn execute(
+        &self,
+        stmt: &str,
+        parameters: Option<QueryParameters>,
+    ) -> Result<u64, PhpException> {
+        hooks::use_exec::exec(self.conn_id.to_string(), stmt, parameters)
     }
 
     /// Executes a batch of SQL statements.
@@ -178,7 +233,7 @@ impl LibSQL {
     ///
     /// Returns `true` if the execution is successful, otherwise `false`.
     pub fn execute_batch(&self, stmt: &str) -> Result<bool, PhpException> {
-        statements::use_exec_batch::exec_batch(self.conn_id.to_string(), stmt)
+        hooks::use_exec_batch::exec_batch(self.conn_id.to_string(), stmt)
     }
 
     /// Executes a SQL query and returns the result.
@@ -194,9 +249,9 @@ impl LibSQL {
     pub fn query(
         &self,
         stmt: &str,
-        parameters: QueryParameters,
+        parameters: Option<QueryParameters>,
     ) -> Result<ext_php_rs::types::Zval, PhpException> {
-        statements::use_query::query(self.conn_id.to_string(), stmt, parameters)
+        hooks::use_query::query(self.conn_id.to_string(), stmt, parameters)
     }
 
     /// Initiates a transaction with the specified behavior.
@@ -236,7 +291,7 @@ impl LibSQL {
     ///
     /// Returns `Ok(())` if the connection is closed successfully, otherwise returns a `PhpException`.
     pub fn close(&self) -> Result<(), PhpException> {
-        statements::close::disconnect(self.conn_id.to_string())
+        hooks::close::disconnect(self.conn_id.to_string())
     }
 }
 
