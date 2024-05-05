@@ -4,7 +4,7 @@ extern crate ext_php_rs;
 use ext_php_rs::prelude::*;
 
 use crate::{
-    statements,
+    hooks,
     utils::{query_params::QueryParameters, runtime::runtime},
     CONNECTION_REGISTRY, TRANSACTION_REGISTRY,
 };
@@ -13,15 +13,12 @@ use crate::{
 #[php_class]
 pub struct LibSQLTransaction {
     /// The behavior of the transaction.
-    #[prop]
     pub trx_behavior: String,
 
     /// The ID of the transaction.
-    #[prop]
     pub trx_id: String,
 
     /// The ID of the database connection associated with the transaction.
-    #[prop]
     pub conn_id: String,
 }
 
@@ -74,7 +71,7 @@ impl LibSQLTransaction {
     ///
     /// A `Result` containing the number of rows changed or a `PhpException` if an error occurs.
     pub fn changes(&self) -> Result<u64, PhpException> {
-        statements::changes::get_changes(self.conn_id.to_string())
+        hooks::changes::get_changes(self.conn_id.to_string())
     }
 
     /// Checks if the connection is in autocommit mode.
@@ -83,7 +80,7 @@ impl LibSQLTransaction {
     ///
     /// A `Result` containing a boolean indicating if autocommit is enabled or a `PhpException` if an error occurs.
     pub fn is_autocommit(&self) -> Result<bool, PhpException> {
-        statements::is_autocommit::get_is_autocommit(self.conn_id.to_string())
+        hooks::is_autocommit::get_is_autocommit(self.conn_id.to_string())
     }
 
     /// Executes a SQL statement within the transaction.
@@ -96,8 +93,12 @@ impl LibSQLTransaction {
     /// # Returns
     ///
     /// A `Result` containing the number of affected rows or a `PhpException` if an error occurs.
-    pub fn exec(&self, stmt: &str, parameters: QueryParameters) -> Result<u64, PhpException> {
-        statements::use_exec::exec(self.conn_id.to_string(), stmt, parameters)
+    pub fn exec(
+        &self,
+        stmt: &str,
+        parameters: Option<QueryParameters>,
+    ) -> Result<u64, PhpException> {
+        hooks::use_exec::exec(self.conn_id.to_string(), stmt, parameters)
     }
 
     /// Executes a query within the transaction.
@@ -115,7 +116,7 @@ impl LibSQLTransaction {
         stmt: &str,
         parameters: QueryParameters,
     ) -> Result<ext_php_rs::types::Zval, PhpException> {
-        statements::use_query::query(self.conn_id.to_string(), stmt, parameters)
+        hooks::use_query::query(self.conn_id.to_string(), stmt, Some(parameters))
     }
 
     /// Commits the transaction.
