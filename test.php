@@ -20,4 +20,5 @@ if ($result !== false) {
 } else {
     echo "Query failed.\n";
 }
+
 $db->close();

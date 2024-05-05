@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use ext_php_rs::{convert::FromZval, flags::DataType, types::{ArrayKey, Zval}};
 
+/// Represents a value used in query parameters.
 #[derive(Debug, Clone)]
 enum QueryValue {
     Integer(i64),
@@ -11,12 +12,14 @@ enum QueryValue {
     Null,
 }
 
+/// Represents query parameters for database queries.
 #[derive(Debug)]
 pub struct QueryParameters {
     positional: Option<Vec<QueryValue>>,
     named: Option<HashMap<String, QueryValue>>,
 }
 
+/// Converts QueryParameters to libsql parameters.
 impl QueryParameters {
     pub fn to_params(&self) -> libsql::params::Params {
         let positional_params = self

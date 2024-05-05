@@ -4,6 +4,15 @@ use ext_php_rs::types::{ZendHashTable, Zval};
 use once_cell::sync::OnceCell;
 use tokio::runtime::Runtime;
 
+/// Converts a LibSQL value to a Zval.
+///
+/// # Arguments
+///
+/// * `value` - The LibSQL value to be converted.
+///
+/// # Returns
+///
+/// A Result containing the converted Zval or an error.
 pub fn convert_libsql_value_to_zval(
     value: libsql::Value,
 ) -> Result<Zval, ext_php_rs::error::Error> {
@@ -16,6 +25,15 @@ pub fn convert_libsql_value_to_zval(
     }
 }
 
+/// Converts a vector of hash maps to a PHP array.
+///
+/// # Arguments
+///
+/// * `vec` - A vector of hash maps containing column data.
+///
+/// # Returns
+///
+/// A Result containing the converted Zval or an error.
 pub fn convert_vec_hashmap_to_php_array(
     vec: Vec<HashMap<String, libsql::Value>>,
 ) -> Result<Zval, ext_php_rs::error::Error> {
@@ -39,12 +57,32 @@ pub fn convert_vec_hashmap_to_php_array(
     ext_php_rs::convert::IntoZval::into_zval(ext_php_rs::boxed::ZBox::from(outer_array), false)
 }
 
+/// Retrieves the global runtime instance.
+///
+/// # Returns
+///
+/// A reference to the global runtime instance.
 pub fn runtime() -> &'static Runtime {
     static RUNTIME: OnceCell<Runtime> = OnceCell::new();
 
     RUNTIME.get_or_try_init(Runtime::new).unwrap()
 }
 
+/// Determines the mode based on the provided URL, authentication token, and sync URL.
+///
+/// # Arguments
+///
+/// * `url` - An optional URL.
+/// * `auth_token` - An optional authentication token.
+/// * `sync_url` - An optional sync URL.
+///
+/// # Returns
+///
+/// A string indicating the determined mode:
+/// - "remote_replica" if the URL starts with "file:" and the sync URL starts with "libsql://", "http://", or "https://".
+/// - "remote" if the URL starts with "libsql://", "http://", or "https://".
+/// - "local" if the URL starts with "file:" or contains ":memory:".
+/// - "Mode is not available!" if no suitable mode is determined.
 pub fn get_mode(
     url: Option<String>,
     auth_token: Option<String>,

@@ -2,6 +2,17 @@ use crate::{
     utils::runtime::runtime, LIBSQL_OPEN_CREATE, LIBSQL_OPEN_READONLY, LIBSQL_OPEN_READWRITE,
 };
 
+/// Creates a local database connection.
+///
+/// # Arguments
+///
+/// * `url` - The URL of the local database.
+/// * `flags` - Optional flags for opening the database.
+/// * `encryption_key` - Optional encryption key for the database.
+///
+/// # Returns
+///
+/// Returns a `libsql::Connection` representing the connection to the local database.
 pub fn create_local_connection(
     url: String,
     flags: Option<i32>,

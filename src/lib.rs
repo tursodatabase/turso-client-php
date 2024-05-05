@@ -1,3 +1,4 @@
+pub mod statement;
 #[allow(non_snake_case, deprecated)]
 #[cfg_attr(windows, feature(abi_vectorcall))]
 extern crate lazy_static;
@@ -6,37 +7,63 @@ pub mod statements;
 pub mod transaction;
 pub mod utils;
 extern crate ext_php_rs;
+use crate::statement::LibSQLStatement;
 use crate::transaction::LibSQLTransaction;
 use ext_php_rs::prelude::*;
 use std::{collections::HashMap, sync::Mutex};
-use utils::{
-    query_params::QueryParameters,
-    runtime::{get_mode, runtime},
-};
+use utils::{query_params::QueryParameters, runtime::get_mode};
 
 lazy_static::lazy_static! {
     static ref CONNECTION_REGISTRY: Mutex<HashMap<String, libsql::Connection>> = Mutex::new(HashMap::new());
     static ref TRANSACTION_REGISTRY: Mutex<HashMap<String, libsql::Transaction>> = Mutex::new(HashMap::new());
+    static ref STATEMENT_REGISTRY: Mutex<HashMap<String, libsql::Statement>> = Mutex::new(HashMap::new());
 }
 
-const LIBSQL_OPEN_READONLY: i32 = 1;
-const LIBSQL_OPEN_READWRITE: i32 = 2;
-const LIBSQL_OPEN_CREATE: i32 = 4;
+/// Represents the flag for opening a database in read-only mode.
+pub const LIBSQL_OPEN_READONLY: i32 = 1;
 
+/// Represents the flag for opening a database in read-write mode.
+pub const LIBSQL_OPEN_READWRITE: i32 = 2;
+
+/// Represents the flag for creating a new database if it does not exist.
+pub const LIBSQL_OPEN_CREATE: i32 = 4;
+
+
+/// Struct representing LibSQL PHP Class.
 #[php_class]
 struct LibSQL {
+    
+    /// Property representing the connection mode.
     #[prop]
     mode: String,
+
+    /// Property representing the connection ID.
     #[prop]
     conn_id: String,
+
 }
 
 #[php_impl]
 impl LibSQL {
+
+    /// Represents the flag for opening a database in read-only mode.
     const OPEN_READONLY: i32 = 1;
+
+    /// Represents the flag for opening a database in read-write mode.
     const OPEN_READWRITE: i32 = 2;
+
+    /// Represents the flag for creating a new database if it does not exist.
     const OPEN_CREATE: i32 = 4;
 
+    /// Constructs a new `LibSQL` instance.
+    ///
+    /// # Arguments
+    ///
+    /// * `config` - A hashmap containing configuration parameters for the database connection.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing the constructed `LibSQL` instance if successful, or a `PhpException` if an error occurs.
     pub fn __construct(config: HashMap<String, String>) -> Result<Self, PhpException> {
         let url = config.get("url").cloned().unwrap_or("".to_string());
 
@@ -100,22 +127,70 @@ impl LibSQL {
         Ok(Self { mode, conn_id })
     }
 
+    /// Retrieves the version of the LibSQL library.
+    ///
+    /// # Returns
+    ///
+    /// Returns a string representing the version of the LibSQL library.
     pub fn version() -> String {
         statements::version::get_version()
     }
 
+    /// Retrieves the number of changes made by the last executed statement.
+    ///
+    /// # Returns
+    ///
+    /// Returns the number of changes made as a result of the last executed statement.
     pub fn changes(&self) -> Result<u64, PhpException> {
         statements::changes::get_changes(self.conn_id.to_string())
     }
 
+    /// Checks if autocommit mode is enabled for the connection.
+    ///
+    /// # Returns
+    ///
+    /// Returns `true` if autocommit mode is enabled, otherwise `false`.
     pub fn is_autocommit(&self) -> Result<bool, PhpException> {
         statements::is_autocommit::get_is_autocommit(self.conn_id.to_string())
     }
 
-    pub fn exec(&self, stmt: &str) -> Result<bool, PhpException> {
-        statements::use_exec::exec(self.conn_id.to_string(), stmt)
+    /// Executes a SQL statement.
+    ///
+    /// # Arguments
+    ///
+    /// * `stmt` - The SQL statement to execute.
+    /// * `parameters` - Parameters to bind to the statement.
+    ///
+    /// # Returns
+    ///
+    /// Returns the number of rows affected by the execution of the statement.
+    pub fn execute(&self, stmt: &str, parameters: QueryParameters) -> Result<u64, PhpException> {
+        statements::use_exec::exec(self.conn_id.to_string(), stmt, parameters)
     }
 
+    /// Executes a batch of SQL statements.
+    ///
+    /// # Arguments
+    ///
+    /// * `stmt` - The batch of SQL statements to execute.
+    ///
+    /// # Returns
+    ///
+    /// Returns `true` if the execution is successful, otherwise `false`.
+    pub fn execute_batch(&self, stmt: &str) -> Result<bool, PhpException> {
+        statements::use_exec_batch::exec_batch(self.conn_id.to_string(), stmt)
+    }
+
+    /// Executes a SQL query and returns the result.
+    ///
+    /// # Arguments
+    ///
+    /// * `stmt` - The SQL query to execute.
+    /// * `parameters` - Parameters to bind to the query.
+    ///
+    /// # Returns
+    ///
+    /// Returns the result of the query execution.
     pub fn query(
         &self,
         stmt: &str,
@@ -124,10 +199,16 @@ impl LibSQL {
         statements::use_query::query(self.conn_id.to_string(), stmt, parameters)
     }
 
-    pub fn transaction(
-        &self,
-        behavior: Option<String>,
-    ) -> Result<LibSQLTransaction, PhpException> {
+    /// Initiates a transaction with the specified behavior.
+    ///
+    /// # Arguments
+    ///
+    /// * `behavior` - The behavior of the transaction.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `LibSQLTransaction` instance representing the transaction.
+    pub fn transaction(&self, behavior: Option<String>) -> Result<LibSQLTransaction, PhpException> {
         let tx_behavior = behavior
             .as_deref()
             .map(|s| s.to_uppercase())
@@ -136,14 +217,26 @@ impl LibSQL {
         LibSQLTransaction::__construct(self.conn_id.clone(), tx_behavior)
     }
 
+    /// Prepares a SQL statement for execution.
+    ///
+    /// # Arguments
+    ///
+    /// * `sql` - The SQL statement to prepare.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `LibSQLStatement` instance representing the prepared statement.
+    pub fn prepare(&self, sql: &str) -> Result<LibSQLStatement, PhpException> {
+        LibSQLStatement::__construct(self.conn_id.clone(), sql)
+    }
+
+    /// Closes the database connection.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(())` if the connection is closed successfully, otherwise returns a `PhpException`.
     pub fn close(&self) -> Result<(), PhpException> {
-        let mut registry = CONNECTION_REGISTRY.lock().unwrap();
-        if let Some(conn) = registry.remove(&self.conn_id) {
-            runtime().block_on(async { conn.reset().await });
-            Ok(())
-        } else {
-            Err(PhpException::default("Connection ID not found.".into()))
-        }
+        statements::close::disconnect(self.conn_id.to_string())
     }
 }
 

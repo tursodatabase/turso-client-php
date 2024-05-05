@@ -7,6 +7,21 @@ use crate::{
     CONNECTION_REGISTRY,
 };
 
+/// Executes an SQL query with parameters on the specified connection and returns the result set.
+///
+/// # Arguments
+///
+/// * `conn_id` - The ID of the connection.
+/// * `stmt` - The SQL statement to execute.
+/// * `parameters` - The parameters to bind to the statement.
+///
+/// # Returns
+///
+/// Returns a `Zval` representing the result set.
+///
+/// # Errors
+///
+/// Returns a `PhpException` if the connection is not found or an error occurs during execution.
 pub fn query(
     conn_id: String,
     stmt: &str,

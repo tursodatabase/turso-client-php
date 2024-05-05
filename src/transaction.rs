@@ -9,18 +9,34 @@ use crate::{
     CONNECTION_REGISTRY, TRANSACTION_REGISTRY,
 };
 
+/// Represents a LibSQLTransaction object for managing transactions.
 #[php_class]
 pub struct LibSQLTransaction {
+    /// The behavior of the transaction.
     #[prop]
     pub trx_behavior: String,
+
+    /// The ID of the transaction.
     #[prop]
     pub trx_id: String,
+
+    /// The ID of the database connection associated with the transaction.
     #[prop]
     pub conn_id: String,
 }
 
 #[php_impl]
 impl LibSQLTransaction {
+    /// Constructs a new `LibSQLTransaction` object.
+    ///
+    /// # Arguments
+    ///
+    /// * `conn_id` - The ID of the database connection.
+    /// * `trx_mode` - The mode of the transaction.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing the constructed `LibSQLTransaction` object or a `PhpException` if an error occurs.
     pub fn __construct(conn_id: String, trx_mode: String) -> Result<Self, PhpException> {
         let conn_registry = CONNECTION_REGISTRY.lock().unwrap();
 
@@ -52,18 +68,48 @@ impl LibSQLTransaction {
         })
     }
 
+    /// Gets the number of rows changed by the transaction.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing the number of rows changed or a `PhpException` if an error occurs.
     pub fn changes(&self) -> Result<u64, PhpException> {
         statements::changes::get_changes(self.conn_id.to_string())
     }
 
+    /// Checks if the connection is in autocommit mode.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing a boolean indicating if autocommit is enabled or a `PhpException` if an error occurs.
     pub fn is_autocommit(&self) -> Result<bool, PhpException> {
         statements::is_autocommit::get_is_autocommit(self.conn_id.to_string())
     }
 
-    pub fn exec(&self, stmt: &str) -> Result<bool, PhpException> {
-        statements::use_exec::exec(self.conn_id.to_string(), stmt)
+    /// Executes a SQL statement within the transaction.
+    ///
+    /// # Arguments
+    ///
+    /// * `stmt` - The SQL statement to execute.
+    /// * `parameters` - Query parameters for the statement.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing the number of affected rows or a `PhpException` if an error occurs.
+    pub fn exec(&self, stmt: &str, parameters: QueryParameters) -> Result<u64, PhpException> {
+        statements::use_exec::exec(self.conn_id.to_string(), stmt, parameters)
     }
 
+    /// Executes a query within the transaction.
+    ///
+    /// # Arguments
+    ///
+    /// * `stmt` - The SQL statement to execute.
+    /// * `parameters` - Query parameters for the statement.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing the query result as a PHP value or a `PhpException` if an error occurs.
     pub fn query(
         &self,
         stmt: &str,
@@ -72,6 +118,11 @@ impl LibSQLTransaction {
         statements::use_query::query(self.conn_id.to_string(), stmt, parameters)
     }
 
+    /// Commits the transaction.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` indicating success or a `PhpException` if an error occurs.
     pub fn commit(&self) -> Result<(), PhpException> {
         let mut trx_registry = TRANSACTION_REGISTRY.lock().unwrap();
 
@@ -87,6 +138,11 @@ impl LibSQLTransaction {
         }
     }
 
+    /// Rolls back the transaction.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` indicating success or a `PhpException` if an error occurs.
     pub fn rollback(&self) -> Result<(), PhpException> {
         let mut trx_registry = TRANSACTION_REGISTRY.lock().unwrap();
 
