@@ -1,5 +1,6 @@
+#![feature(abi_vectorcall)]
 pub mod statement;
-#[allow(non_snake_case, deprecated)]
+#[allow(non_snake_case, deprecated, unused_attributes)]
 #[cfg_attr(windows, feature(abi_vectorcall))]
 extern crate lazy_static;
 pub mod hooks;
