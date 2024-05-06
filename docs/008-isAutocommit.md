@@ -37,3 +37,24 @@ if ($db->isAutocommit()) {
 - By default, autocommit mode is usually enabled for LibSQL connections.
 - When autocommit mode is disabled, multiple SQL statements can be grouped into a single transaction using the `transaction()` method, allowing for more complex operations that require atomicity and consistency across multiple statements.
 - It is important to understand the implications of enabling or disabling autocommit mode, as it can affect the behavior and performance of database operations.
+
+## Read More
+
+- [Quickstart Guide](quick-start.md)
+- [LibSQL Configuration Options](000-configuration.md)
+    - [Local Connection](001-local-connection.md)
+    - [In-Memory Connection](002-memory-connection.md)
+    - [Remote Connection](003-remote-connection.md)
+    - [Remote Replica Connection](004-remote-replica-connection.md)
+- [LibSQL Class](005-LibSQL-class.md)
+    - [Version](006-version.md)
+    - [Changes](007-changes.md)
+    - **[Is Auto Commit](008-isAutocommit.md)**
+    - [Execute](009-execute.md)
+    - [Execute Batch](010-executeBatch.md)
+    - [Query](011-query.md)
+    - [Transaction](012-transaction.md)
+    - [Prepare](013-prepare.md)
+    - [Close](014-close.md)
+- [LibSQLStatement](015-LibSQLStatement.md)
+- [LibSQLTransaction](016-LibSQLTransaction.md)
