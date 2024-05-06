@@ -1,11 +1,11 @@
 [package]
-name = "libsql_php_extension"
+name = "libsql_php"
 version = "0.1.0"
 edition = "2021"
 authors = ["Imam Ali Mustofa <darkterminal@duck.com>"]
 
 [lib]
-name = "sql_php_extension"
+name = "sql_php"
 crate-type = ["cdylib"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

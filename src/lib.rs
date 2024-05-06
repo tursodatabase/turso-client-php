@@ -12,9 +12,7 @@ use crate::transaction::LibSQLTransaction;
 use ext_php_rs::prelude::*;
 use std::{collections::HashMap, sync::Mutex};
 use utils::{
-    config_value::ConfigValue,
-    query_params::QueryParameters,
-    runtime::{get_mode, parse_dsn},
+    config_value::ConfigValue, query_params::QueryParameters, runtime::{get_mode, parse_dsn}
 };
 
 lazy_static::lazy_static! {
@@ -23,7 +21,7 @@ lazy_static::lazy_static! {
     static ref STATEMENT_REGISTRY: Mutex<HashMap<String, libsql::Statement>> = Mutex::new(HashMap::new());
 }
 
-pub const LIBSQL_PHP_VERSION: &'static str = "1.0.0";
+pub const LIBSQL_PHP_VERSION: &str = "1.0.0";
 
 /// Represents the flag for opening a database in read-only mode.
 pub const LIBSQL_OPEN_READONLY: i32 = 1;
@@ -295,7 +293,25 @@ impl LibSQL {
     }
 }
 
+// The function to display extension info in phpinfo().
+pub extern "C" fn libsql_php_extension_info(_module: *mut ext_php_rs::zend::ModuleEntry) {
+    unsafe {
+        // Start the PHP info table.
+        ext_php_rs::ffi::php_info_print_table_start();
+        // Add rows to the PHP info table.
+        ext_php_rs::ffi::php_info_print_table_row(2, "LibSQL Support\0".as_ptr() as *const i8, "Enabled\0".as_ptr() as *const i8);
+        ext_php_rs::ffi::php_info_print_table_row(2, "LibSQL Local Connection Support\0".as_ptr() as *const i8, "Enabled\0".as_ptr() as *const i8);
+        ext_php_rs::ffi::php_info_print_table_row(2, "LibSQL In-Memory Connection Support\0".as_ptr() as *const i8, "Enabled\0".as_ptr() as *const i8);
+        ext_php_rs::ffi::php_info_print_table_row(2, "LibSQL Remote Connection Support\0".as_ptr() as *const i8, "Enabled\0".as_ptr() as *const i8);
+        ext_php_rs::ffi::php_info_print_table_row(2, "LibSQL Remote Replica Connection Support\0".as_ptr() as *const i8, "Enabled\0".as_ptr() as *const i8);
+        ext_php_rs::ffi::php_info_print_table_row(2, "LibSQL PHP version\0".as_ptr() as *const i8, "1.0.0\0".as_ptr() as *const i8);
+        ext_php_rs::ffi::php_info_print_table_row(2, "Author\0".as_ptr() as *const i8, "Imam Ali Mustofa <darkterminal@duck.com>\0".as_ptr() as *const i8);
+        // End the PHP info table.
+        ext_php_rs::ffi::php_info_print_table_end();
+    }
+}
+
 #[php_module]
 pub fn get_module(module: ModuleBuilder) -> ModuleBuilder {
-    module
+    module.info_function(libsql_php_extension_info)
 }
