@@ -1,10 +1,10 @@
 #![feature(abi_vectorcall)]
-pub mod statement;
 #[allow(non_snake_case, deprecated, unused_attributes)]
 #[cfg_attr(windows, feature(abi_vectorcall))]
 extern crate lazy_static;
 pub mod hooks;
 pub mod providers;
+pub mod statement;
 pub mod transaction;
 pub mod utils;
 extern crate ext_php_rs;
@@ -13,7 +13,9 @@ use crate::transaction::LibSQLTransaction;
 use ext_php_rs::prelude::*;
 use std::{collections::HashMap, sync::Mutex};
 use utils::{
-    config_value::ConfigValue, query_params::QueryParameters, runtime::{get_mode, parse_dsn}
+    config_value::ConfigValue,
+    query_params::QueryParameters,
+    runtime::{get_mode, parse_dsn},
 };
 
 lazy_static::lazy_static! {
@@ -108,8 +110,6 @@ impl LibSQL {
                     },
                     None => None,
                 };
-
-                
 
                 dsn_parsed.ok_or_else(|| PhpException::default("Failed to parse DSN".into()))?
             }
@@ -300,13 +300,41 @@ pub extern "C" fn libsql_php_extension_info(_module: *mut ext_php_rs::zend::Modu
         // Start the PHP info table.
         ext_php_rs::ffi::php_info_print_table_start();
         // Add rows to the PHP info table.
-        ext_php_rs::ffi::php_info_print_table_row(2, "LibSQL Support\0".as_ptr() as *const i8, "Enabled\0".as_ptr() as *const i8);
-        ext_php_rs::ffi::php_info_print_table_row(2, "LibSQL Local Connection Support\0".as_ptr() as *const i8, "Enabled\0".as_ptr() as *const i8);
-        ext_php_rs::ffi::php_info_print_table_row(2, "LibSQL In-Memory Connection Support\0".as_ptr() as *const i8, "Enabled\0".as_ptr() as *const i8);
-        ext_php_rs::ffi::php_info_print_table_row(2, "LibSQL Remote Connection Support\0".as_ptr() as *const i8, "Enabled\0".as_ptr() as *const i8);
-        ext_php_rs::ffi::php_info_print_table_row(2, "LibSQL Remote Replica Connection Support\0".as_ptr() as *const i8, "Enabled\0".as_ptr() as *const i8);
-        ext_php_rs::ffi::php_info_print_table_row(2, "LibSQL PHP version\0".as_ptr() as *const i8, "1.0.0\0".as_ptr() as *const i8);
-        ext_php_rs::ffi::php_info_print_table_row(2, "Author\0".as_ptr() as *const i8, "Imam Ali Mustofa <darkterminal@duck.com>\0".as_ptr() as *const i8);
+        ext_php_rs::ffi::php_info_print_table_row(
+            2,
+            "LibSQL Support\0".as_ptr() as *const i8,
+            "Enabled\0".as_ptr() as *const i8,
+        );
+        ext_php_rs::ffi::php_info_print_table_row(
+            2,
+            "LibSQL Local Connection Support\0".as_ptr() as *const i8,
+            "Enabled\0".as_ptr() as *const i8,
+        );
+        ext_php_rs::ffi::php_info_print_table_row(
+            2,
+            "LibSQL In-Memory Connection Support\0".as_ptr() as *const i8,
+            "Enabled\0".as_ptr() as *const i8,
+        );
+        ext_php_rs::ffi::php_info_print_table_row(
+            2,
+            "LibSQL Remote Connection Support\0".as_ptr() as *const i8,
+            "Enabled\0".as_ptr() as *const i8,
+        );
+        ext_php_rs::ffi::php_info_print_table_row(
+            2,
+            "LibSQL Remote Replica Connection Support\0".as_ptr() as *const i8,
+            "Enabled\0".as_ptr() as *const i8,
+        );
+        ext_php_rs::ffi::php_info_print_table_row(
+            2,
+            "LibSQL PHP version\0".as_ptr() as *const i8,
+            "1.0.0\0".as_ptr() as *const i8,
+        );
+        ext_php_rs::ffi::php_info_print_table_row(
+            2,
+            "Author\0".as_ptr() as *const i8,
+            "Imam Ali Mustofa <darkterminal@duck.com>\0".as_ptr() as *const i8,
+        );
         // End the PHP info table.
         ext_php_rs::ffi::php_info_print_table_end();
     }
