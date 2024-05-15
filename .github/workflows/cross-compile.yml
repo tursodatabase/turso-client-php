@@ -41,17 +41,6 @@ jobs:
         shell: bash
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
-      - name: Install Rust
-        # Or @stable if you want
-        uses: dtolnay/rust-toolchain@nightly
-        with:
-          targets: ${{ matrix.target }}
-      
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php-versions }}
-      
       - name: Add msbuild to PATH
         if: matrix.os == 'windows-latest'
         uses: microsoft/setup-msbuild@v2
@@ -67,11 +56,22 @@ jobs:
 
           # Install
           New-Item -Path $php_dir -Type Directory -Force
-          Invoke-WebRequest -UseBasicParsing -Uri https://github.com/shivammathur/php-builder-windows/releases/latest/download/Get-Php.ps1 -OutFile $php_dir\Get-Php.ps1
+          Invoke-WebRequest -UseBasicParsing -Uri https://github.com/shivammathur/php-builder-windows/releases/download/php8.3/Get-Php.ps1 -OutFile $php_dir\Get-Php.ps1
           . $php_dir\Get-Php.ps1 -Architecture $arch -ThreadSafe $ts -Path $php_dir -Version $version
 
           # Test
           . $php_dir\php -v
+
+      - name: Install Rust
+        # Or @stable if you want
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          targets: ${{ matrix.target }}
+      
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-versions }}
 
       - name: Build
         uses: actions-rs/cargo@v1
