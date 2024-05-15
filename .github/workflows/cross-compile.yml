@@ -55,6 +55,7 @@ jobs:
         run: |
           php --version
           php --ini
+          which php
         if: runner.os == 'Linux'
       
       - name: Echo PATH
