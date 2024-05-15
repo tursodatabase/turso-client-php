@@ -20,14 +20,17 @@ jobs:
           - build: linux
             os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
+            php-versions: '8.3'
 
           - build: macos
             os: macos-latest
             target: x86_64-apple-darwin
+            php-versions: '8.3'
           
           - build: windows-gnu
             os: windows-latest
             target: x86_64-pc-windows-msvc
+            php-versions: '8.3'
 
     steps:
       - name: Checkout
@@ -46,7 +49,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: ${{ matrix.php-versions }}
 
       - name: Build
         uses: actions-rs/cargo@v1
