@@ -24,4 +24,3 @@ RUN cargo install cross
 
 # Verify installations
 RUN php -v
-RUN cross --version
