@@ -59,12 +59,19 @@ jobs:
       - name: Setup PHP development environment for Windows
         if: matrix.os == 'windows-latest'
         run: |
-          # Example: Download and extract PHP development files
-          Invoke-WebRequest -Uri "https://windows.php.net/downloads/releases/php-devel-pack-8.3.7-nts-Win32-vs16-x64.zip" -OutFile "php-devel.zip"
-          Expand-Archive -Path "php-devel.zip" -DestinationPath "C:\php-devel"
-          # Set environment variables for include and lib directories
-          echo "INCLUDE=C:\php-devel\include;${env:INCLUDE}" | Out-File -Append -FilePath $env:GITHUB_ENV
-          echo "LIB=C:\php-devel\lib;${env:LIB}" | Out-File -Append -FilePath $env:GITHUB_ENV
+          # Configure
+          $php_dir = 'C:\tools\php'
+          $arch    = 'x64'    
+          $ts      = $False   
+          $version = '8.3'    
+
+          # Install
+          New-Item -Path $php_dir -Type Directory -Force
+          Invoke-WebRequest -UseBasicParsing -Uri https://github.com/shivammathur/php-builder-windows/releases/latest/download/Get-Php.ps1 -OutFile $php_dir\Get-Php.ps1
+          . $php_dir\Get-Php.ps1 -Architecture $arch -ThreadSafe $ts -Path $php_dir -Version $version
+
+          # Test
+          . $php_dir\php -v
 
       - name: Build
         uses: actions-rs/cargo@v1
