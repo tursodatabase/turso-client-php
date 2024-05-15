@@ -51,10 +51,11 @@ jobs:
         with:
           php-version: ${{ matrix.php-versions }}
       
-      - name: Check if PHP is installed
+      - name: Check if PHP is installed and update PATH
         run: |
-          echo "PHP=/usr/bin/php" >> $GITHUB_ENV
-          echo "PATH=/usr/bin/php:$GITHUB_ENV" >> $GITHUB_ENV
+          php_path=$(which php)
+          echo "PHP=$php_path" >> $GITHUB_ENV
+          echo "PATH=$(dirname $php_path):$PATH" >> $GITHUB_ENV
         if: runner.os == 'Linux'
       
       - name: Echo PATH
