@@ -54,7 +54,6 @@ jobs:
       - name: Check if PHP is installed
         run: |
           echo "PHP=/usr/bin/php" >> $GITHUB_ENV
-          echo "PATH=/usr/bin/php" >> $GITHUB_ENV
         if: runner.os == 'Linux'
       
       - name: Echo PATH
