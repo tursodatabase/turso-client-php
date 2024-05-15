@@ -11,15 +11,20 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     pkg-config \
     git \
+    cmake \
     && add-apt-repository ppa:ondrej/php -y \
     && apt-get update
 
 # Install PHP 8.3
 RUN apt-get install -y php8.3 php8.3-cli php8.3-common
 
+# Create a non-root user and switch to it
+RUN useradd -m dockeruser
+USER dockeruser
+
 # Install Rust and cross
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-ENV PATH="/root/.cargo/bin:${PATH}"
+ENV PATH="/home/dockeruser/.cargo/bin:${PATH}"
 RUN cargo install cross
 
 # Verify installations
