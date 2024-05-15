@@ -1,9 +1,8 @@
 [target.x86_64-unknown-linux-gnu]
 pre-build = [
-    "dpkg --add-architecture $CROSS_DEB_ARCH",
     "apt-get update",
     "apt-get install --assume-yes software-properties-common",
     "add-apt-repository ppa:ondrej/php -y",
     "apt-get update",
-    "apt-get install --assume-yes php8.3 libssl-dev:$CROSS_DEB_ARCH"
+    "apt-get install --assume-yes php8.3"
 ]
