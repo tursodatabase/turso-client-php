@@ -12,6 +12,8 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     git \
     cmake \
+    llvm \
+    libclang-dev \
     && add-apt-repository ppa:ondrej/php -y \
     && apt-get update
 
