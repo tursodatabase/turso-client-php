@@ -18,6 +18,10 @@ RUN apt-get update && apt-get install -y \
 # Install PHP 8.3
 RUN apt-get install -y php8.3 php8.3-cli php8.3-common
 
+# Add PHP to PATH
+ENV PATH="/usr/bin/php:${PATH}"
+ENV PHP_CONFIG="/usr/bin/php/php-config"
+
 # Create a non-root user and switch to it
 RUN useradd -m dockeruser
 USER dockeruser
@@ -29,3 +33,4 @@ RUN cargo install cross
 
 # Verify installations
 RUN php -v
+RUN php-config --version
