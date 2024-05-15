@@ -60,28 +60,27 @@ jobs:
       - name: Build archive
         shell: bash
         run: |
-          ls target/x86_64-apple-darwin/release/
-
-          exit
-
           # Replace with the name of your binary
-          # binary_name="libsql_php"
+          binary_name="libsql_php"
 
-          # dirname="$binary_name-${{ env.VERSION }}-${{ matrix.target }}"
-          # mkdir "$dirname"
-          # if [ "${{ matrix.os }}" = "windows-latest" ]; then
-          #   mv "target/${{ matrix.target }}/release/$binary_name.exe" "$dirname"
-          # else
-          #   mv "target/${{ matrix.target }}/release/$binary_name" "$dirname"
-          # fi
+          dirname="$binary_name-${{ env.VERSION }}-${{ matrix.target }}"
+          mkdir "$dirname"
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+              mv "target/${{ matrix.target }}/release/$binary_name.dll" "$dirname"
+          elif [ "${{ matrix.os }}" = "macos-latest" ]; then
+              mv "target/${{ matrix.target }}/release/lib$binary_name.dylib" "$dirname"
+          else
+              mv "target/${{ matrix.target }}/release/lib$binary_name.so" "$dirname"
+          fi
 
-          # if [ "${{ matrix.os }}" = "windows-latest" ]; then
-          #   7z a "$dirname.zip" "$dirname"
-          #   echo "ASSET=$dirname.zip" >> $GITHUB_ENV
-          # else
-          #   tar -czf "$dirname.tar.gz" "$dirname"
-          #   echo "ASSET=$dirname.tar.gz" >> $GITHUB_ENV
-          # fi
+
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            7z a "$dirname.zip" "$dirname"
+            echo "ASSET=$dirname.zip" >> $GITHUB_ENV
+          else
+            tar -czf "$dirname.tar.gz" "$dirname"
+            echo "ASSET=$dirname.tar.gz" >> $GITHUB_ENV
+          fi
 
       - name: Release
         uses: softprops/action-gh-release@v1
