@@ -73,7 +73,6 @@ jobs:
               mv "target/${{ matrix.target }}/release/lib$binary_name.so" "$dirname"
           fi
 
-
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
             7z a "$dirname.zip" "$dirname"
             echo "ASSET=$dirname.zip" >> $GITHUB_ENV
