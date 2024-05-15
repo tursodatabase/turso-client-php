@@ -36,7 +36,7 @@ jobs:
 
       - name: Get the release version from the tag
         shell: bash
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+        run: echo "VERSION=0.0.1" >> $GITHUB_ENV
 
       - name: Install Rust
         # Or @stable if you want
