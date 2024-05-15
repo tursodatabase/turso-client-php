@@ -17,6 +17,11 @@ jobs:
     strategy:
       matrix:
         include:
+          - build: windows-gnu
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+            php-versions: '8.3'
+            
           - build: linux
             os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
@@ -27,10 +32,6 @@ jobs:
             target: x86_64-apple-darwin
             php-versions: '8.3'
           
-          - build: windows-gnu
-            os: windows-latest
-            target: x86_64-pc-windows-msvc
-            php-versions: '8.3'
 
     steps:
       - name: Checkout
@@ -54,6 +55,16 @@ jobs:
       - name: Add msbuild to PATH
         if: matrix.os == 'windows-latest'
         uses: microsoft/setup-msbuild@v2
+
+      - name: Setup PHP development environment for Windows
+        if: matrix.os == 'windows-latest'
+        run: |
+          # Example: Download and extract PHP development files
+          Invoke-WebRequest -Uri "https://windows.php.net/downloads/releases/php-devel-pack-8.3.7-nts-Win32-vs16-x64.zip" -OutFile "php-devel.zip"
+          Expand-Archive -Path "php-devel.zip" -DestinationPath "C:\php-devel"
+          # Set environment variables for include and lib directories
+          echo "INCLUDE=C:\php-devel\include;${env:INCLUDE}" | Out-File -Append -FilePath $env:GITHUB_ENV
+          echo "LIB=C:\php-devel\lib;${env:LIB}" | Out-File -Append -FilePath $env:GITHUB_ENV
 
       - name: Build
         uses: actions-rs/cargo@v1
