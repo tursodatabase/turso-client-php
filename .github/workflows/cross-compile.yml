@@ -53,6 +53,10 @@ jobs:
       
       - name: Check if PHP is installed
         run: php --version
+      
+      - name: Echo PATH
+        run: echo $PATH
+        if: runner.os == 'Linux'
 
       - name: Build
         uses: actions-rs/cargo@v1
