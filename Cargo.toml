@@ -23,3 +23,14 @@ uuid = "1.8.0"
 
 [profile.release]
 strip="debuginfo"
+
+[workspace.metadata.cross.target.x86_64-unknown-linux-gnu]
+# Install libssl-dev:arm64, see <https://github.com/cross-rs/cross/blob/main/docs/custom_images.md#adding-dependencies-to-existing-images>
+pre-build = [
+    "dpkg --add-architecture $CROSS_DEB_ARCH",
+    "apt-get update",
+    "apt-get install --assume-yes software-properties-common",
+    "add-apt-repository ppa:ondrej/php -y",
+    "apt-get update",
+    "apt-get install --assume-yes php8.3 libssl-dev:$CROSS_DEB_ARCH"
+]
