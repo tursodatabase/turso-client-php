@@ -41,6 +41,15 @@ jobs:
         shell: bash
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
+      - name: setup msys2 for windows
+        if: matrix.os == 'windows-latest'
+        uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          install: mingw-w64-x86_64-toolchain mingw-w64-x86_64-sqlite3 gcc make base-devel mingw-w64-x86_64-rust zip
+          msystem: mingw64
+          path-type: inherit
+
       - name: Install Rust
         # Or @stable if you want
         uses: dtolnay/rust-toolchain@nightly
