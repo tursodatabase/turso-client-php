@@ -65,6 +65,7 @@ jobs:
           # Set environment variables for include and lib directories
           echo "INCLUDE=C:\php-devel\include;${env:INCLUDE}" | Out-File -Append -FilePath $env:GITHUB_ENV
           echo "LIB=C:\php-devel\lib;${env:LIB}" | Out-File -Append -FilePath $env:GITHUB_ENV
+          echo "INCLUDE=C:\Program Files (x86)\Windows Kits\10\Include\10.0.${env:GITHUB_WINDOWS_SDK_VERSION}\ucrt;${env:INCLUDE}" | Out-File -Append -FilePath $env:GITHUB_ENV
 
       - name: Build
         uses: actions-rs/cargo@v1
