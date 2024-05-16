@@ -2,7 +2,6 @@ name: Cross Deploy
 
 on:
   push:
-    branches:
     tags:
       - "[0-9]+.[0-9]+.[0-9]+"
 
@@ -17,22 +16,28 @@ jobs:
     strategy:
       matrix:
         include:
-          - build: windows-gnu
-            os: windows-latest
-            target: x86_64-pc-windows-msvc
-            php-versions: '8.3'
-            
-          - build: linux
+          # Linux x64
+          - build: linux-amd64
             os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             php-versions: '8.3'
+          
+          - build: linux-arm64
+            os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            php-versions: '8.3'
 
-          - build: macos
+          # Macos x64
+          - build: macos-amd64
             os: macos-latest
             target: x86_64-apple-darwin
             php-versions: '8.3'
-          
 
+          - build: macos-arm64
+            os: macos-latest
+            target: aarch64-apple-darwin
+            php-versions: '8.3'
+          
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -40,15 +45,6 @@ jobs:
       - name: Get the release version from the tag
         shell: bash
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-
-      - name: setup msys2 for windows
-        if: matrix.os == 'windows-latest'
-        uses: msys2/setup-msys2@v2
-        with:
-          update: true
-          install: mingw-w64-x86_64-toolchain mingw-w64-x86_64-sqlite3 gcc make base-devel mingw-w64-x86_64-rust zip
-          msystem: mingw64
-          path-type: inherit
 
       - name: Install Rust
         # Or @stable if you want
@@ -60,27 +56,6 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-versions }}
-      
-      - name: Install LLVM and Clang
-        if: matrix.os == 'windows-latest'
-        uses: KyleMayes/install-llvm-action@v2
-        with:
-          version: "10.0"
-      
-      - name: Add msbuild to PATH
-        if: matrix.os == 'windows-latest'
-        uses: microsoft/setup-msbuild@v2
-
-      - name: Setup PHP development environment for Windows
-        if: matrix.os == 'windows-latest'
-        run: |
-          # Download and extract PHP development files
-          Invoke-WebRequest -Uri "https://github.com/shivammathur/php-builder-windows/releases/download/php8.3/php-devel-pack-8.3.7-dev-nts-Win32-vs16-x64.zip" -OutFile "php-devel.zip"
-          Expand-Archive -Path "php-devel.zip" -DestinationPath "C:\php-devel"
-          # Set environment variables for include and lib directories
-          echo "INCLUDE=C:\php-devel\include;${env:INCLUDE}" | Out-File -Append -FilePath $env:GITHUB_ENV
-          echo "LIB=C:\php-devel\lib;${env:LIB}" | Out-File -Append -FilePath $env:GITHUB_ENV
-          echo "INCLUDE=C:\Program Files (x86)\Windows Kits\10\Include\10.0.${env:GITHUB_WINDOWS_SDK_VERSION}\ucrt;${env:INCLUDE}" | Out-File -Append -FilePath $env:GITHUB_ENV
 
       - name: Build
         uses: actions-rs/cargo@v1

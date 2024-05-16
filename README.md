@@ -11,8 +11,59 @@
 
 LibSQL PHP Driver/Extension/Whatever designed to seamlessly handle local, remote, and remote replica/embedded replica connections, offering versatility and efficiency for your application's data management needs. With an intuitive interface and flexible configuration options, LibSQL empowers developers to effortlessly integrate database operations into your PHP projects.
 
+## Download
+
+Download the latest build extension/driver binary you can see at [Release](https://github.com/darkterminal/libsql-extension/releases) page. It's available for:
+- Linux
+- Mac/Darwin
+- Windows (still struggle)
+
 ## Installation
 
+- Extract the archive
+- Locate somewhere in your machine
+- Copy a relative path that address that extension/driver
+- Open `php.ini` search `;extension` if you using `nano` (`ctrl+w`) then searching for it
+- add in the next-line `extension=liblibsql_php.so` (in Linux) without `;` at the begining
 
+Check on your console/terminal
+
+```bash
+php --m | grep libsql
+```
 
 ## Quickstart
+
+Remember, this is not a library or ORM, this is the native extension for LibSQL.
+
+```php
+<?php
+
+// Instanciate
+$db = new LibSQL(":memory:");
+
+// Create table
+$sql = "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, age INTEGER)";
+$db->execute($sql);
+
+// Insert data
+$db->execute("INSERT INTO users (name. age) VALUES ('Diana Hooggan', 24)");
+
+// Read data
+$results = $db->query("SELECT * FROM users");
+
+// Display data
+foreach ($results['rows'] as $row) {
+    echo "ID: " . $row['id'] . ", Name: " . $row['name'] . ", Age: " . $row['age'] . "\n";
+}
+
+// Close database
+$db->close();
+```
+
+How easy is that!?
+
+
+---
+
+- [Documentation](docs/README.md)
