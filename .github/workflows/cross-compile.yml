@@ -41,27 +41,6 @@ jobs:
         shell: bash
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
-      - name: Add msbuild to PATH
-        if: matrix.os == 'windows-latest'
-        uses: microsoft/setup-msbuild@v2
-
-      - name: Setup PHP development environment for Windows
-        if: matrix.os == 'windows-latest'
-        run: |
-          # Configure
-          $php_dir = 'C:\tools\php'
-          $arch    = 'x64'    
-          $ts      = $False   
-          $version = '8.3'    
-
-          # Install
-          New-Item -Path $php_dir -Type Directory -Force
-          Invoke-WebRequest -UseBasicParsing -Uri https://github.com/shivammathur/php-builder-windows/releases/download/php8.3/Get-Php.ps1 -OutFile $php_dir\Get-Php.ps1
-          . $php_dir\Get-Php.ps1 -Architecture $arch -ThreadSafe $ts -Path $php_dir -Version $version
-
-          # Test
-          . $php_dir\php -v
-
       - name: Install Rust
         # Or @stable if you want
         uses: dtolnay/rust-toolchain@nightly
@@ -72,6 +51,20 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-versions }}
+      
+      - name: Add msbuild to PATH
+        if: matrix.os == 'windows-latest'
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Setup PHP development environment for Windows
+        if: matrix.os == 'windows-latest'
+        run: |
+          # Download and extract PHP development files
+          Invoke-WebRequest -Uri "https://github.com/shivammathur/php-builder-windows/releases/download/php8.3/php-devel-pack-8.3.7-dev-nts-Win32-vs16-x64.zip" -OutFile "php-devel.zip"
+          Expand-Archive -Path "php-devel.zip" -DestinationPath "C:\php-devel"
+          # Set environment variables for include and lib directories
+          echo "INCLUDE=C:\php-devel\include;${env:INCLUDE}" | Out-File -Append -FilePath $env:GITHUB_ENV
+          echo "LIB=C:\php-devel\lib;${env:LIB}" | Out-File -Append -FilePath $env:GITHUB_ENV
 
       - name: Build
         uses: actions-rs/cargo@v1
