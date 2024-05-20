@@ -93,7 +93,7 @@ impl LibSQLTransaction {
     /// # Returns
     ///
     /// A `Result` containing the number of affected rows or a `PhpException` if an error occurs.
-    pub fn exec(
+    pub fn execute(
         &self,
         stmt: &str,
         parameters: Option<QueryParameters>,
