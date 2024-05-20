@@ -28,11 +28,6 @@ jobs:
             target: x86_64-apple-darwin
             php-versions: '8.3'
           
-          - build: aarch64-apple-darwin
-            os: macos-14
-            target: aarch64-apple-darwin
-            php-versions: '8.3'
-          
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -69,8 +64,6 @@ jobs:
           mkdir "$dirname"
           if [ "${{ matrix.os }}" = "macos-latest" ]; then
               mv "target/${{ matrix.target }}/release/lib$binary_name.dylib" "$dirname" && mv "libsql_php_extension.stubs.php" "$dirname"
-          elif [ "${{ matrix.os }}" = "macos-14" ]; then
-              ls "target/${{ matrix.target }}/release" && mv "target/${{ matrix.target }}/release/lib$binary_name.dylib" "$dirname" && mv "libsql_php_extension.stubs.php" "$dirname"
           else
               mv "target/${{ matrix.target }}/release/lib$binary_name.so" "$dirname" && mv "libsql_php_extension.stubs.php" "$dirname"
           fi
