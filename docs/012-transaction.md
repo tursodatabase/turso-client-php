@@ -27,11 +27,17 @@ $db = new LibSQL("database.db");
 // Start a new transaction with default behavior
 $transaction = $db->transaction();
 
-// Start a new transaction with write behavior
-$writeTransaction = $db->transaction("WRITE");
+$transaction->execute("UPDATE users SET name = 'Glauber Costa' WHERE id = 6");
 
-// Start a new transaction with read behavior
-$readTransaction = $db->transaction("READ");
+$another_transaction = true;
+
+if ($another_transaction) {
+    $transaction->commit();
+    echo "Transaction commited!" . PHP_EOL;
+} else {
+    $transaction->rollback();
+    echo "Transaction rollback!" . PHP_EOL;
+}
 ```
 
 ## Notes

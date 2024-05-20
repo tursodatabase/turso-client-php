@@ -32,7 +32,6 @@ if ($statement) {
     // Execute the prepared statement with parameters
     $result = $statement->query([3]);
     var_dump($result);
-    $statement->finalize();
 } else {
     // Handle error
     echo "Failed to prepare statement.";
