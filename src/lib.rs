@@ -335,6 +335,11 @@ pub extern "C" fn libsql_php_extension_info(_module: *mut ext_php_rs::zend::Modu
             "Author\0".as_ptr() as *const i8,
             "Imam Ali Mustofa <darkterminal@duck.com>\0".as_ptr() as *const i8,
         );
+        ext_php_rs::ffi::php_info_print_table_row(
+            2,
+            "GitHub\0".as_ptr() as *const i8,
+            "https://github.com/darkterminal/libsql-extension\0".as_ptr() as *const i8,
+        );
         // End the PHP info table.
         ext_php_rs::ffi::php_info_print_table_end();
     }
