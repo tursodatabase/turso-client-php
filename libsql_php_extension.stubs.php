@@ -130,7 +130,7 @@ namespace {
          *
          * @return int The number of affected rows.
          */
-        public function exec(string $stmt, array $parameters = [])
+        public function execute(string $stmt, array $parameters = [])
         {
         }
 
@@ -193,6 +193,63 @@ namespace {
 
         /**
          * Creates a new LibSQL instance.
+         * 
+         * ## Example Usage
+         * 1. **Local Connection:**
+         * 
+         *    Establishing a connection to a local database is straightforward with LibSQL. You have three options:
+         * 
+         *    a. **Standard DSN Connection:** If you're using a DSN string, use the following format:
+         *       ```
+         *       $db = new LibSQL("libsql:dbname=database.db", LibSQL::OPEN_READWRITE | LibSQL::OPEN_CREATE, "");
+         *       ```
+         *       
+         *    b. **Standard SQLite Connection:** For direct SQLite connections, simply provide the database file name:
+         *       ```
+         *       $db = new LibSQL("database.db", LibSQL::OPEN_READWRITE | LibSQL::OPEN_CREATE, "");
+         *       ```
+         *       
+         *    c. **Standard LibSQL Connection:** Alternatively, you can specify the file protocol explicitly:
+         *       ```
+         *       $db = new LibSQL("file:database.db", LibSQL::OPEN_READWRITE | LibSQL::OPEN_CREATE, "");
+         *       ```
+         * 
+         * 2. **Remote Connection:**
+         * 
+         *    Connecting to a remote database is equally effortless. Choose between two options:
+         * 
+         *    a. **Standard DSN Connection with 'libsql://':**
+         *       ```
+         *       $db = new LibSQL("libsql:dbname=libsql://database-org.turso.io;authToken=random-token");
+         *       ```
+         *       
+         *    b. **Standard DSN Connection with 'https://':**
+         *       ```
+         *       $db = new LibSQL("libsql:dbname=https://database-org.turso.io;authToken=random-token");
+         *       ```
+         * 
+         * 3. **Remote Replica Connection:**
+         * 
+         *    To set up a replica connection for distributed systems, follow these steps:
+         * 
+         *    a. Define the configuration array with the required parameters:
+         *       ```
+         *       $config = [
+         *          "url" => "file:database.db",
+         *          "authToken" => "secrettoken",
+         *          "syncUrl" => "libsql://database-org.turso.io",
+         *          "syncInterval" => 5,
+         *          "read_your_writes" => true,
+         *          "encryptionKey" => "",
+         *       ];
+         *       ```
+         * 
+         *    b. Instantiate a new LibSQL object with the configuration array:
+         *       ```
+         *       $db = new LibSQL($config);
+         *       ```
+         * 
+         * With this Quick Start guide, you're ready to seamlessly integrate LibSQL PHP Extension into your projects, whether for local, remote, or distributed database connections. 
          *
          * @param string|array $config
          * @param integer|null $flags
@@ -204,6 +261,16 @@ namespace {
 
         /**
          * Retrieves the version of the LibSQL library.
+         * 
+         * ## Example Usage
+         * ```
+         * // Retrieve the version of the LibSQL
+         * $version = LibSQL::version();
+         * echo $version;
+         * 
+         * // Output
+         * // LibSQL Core Version : 3.44.0-3044000 - LibSQL PHP Extension Version: 1.0.0
+         * ```
          *
          * @return string The version string.
          */
@@ -214,6 +281,21 @@ namespace {
         /**
          * Retrieves the number of rows changed by the last SQL statement.
          *
+         * ## Example Usage
+         * 
+         * ```
+         * // Create a new LibSQL instance
+         * $db = new LibSQL("libsql:dbname=database.db");
+         * 
+         * $stmt = "UPDATE users SET age = 28 WHERE id = 1";
+         * $db->execute($stmt);
+         * 
+         * // Retrieve the number of rows changed
+         * $changes = $db->changes();
+         * echo "Number of Rows Changed: " . $changes;
+         * 
+         * $db->close();
+         * ```
          * @return int The number of rows changed.
          */
         public function changes()
@@ -222,6 +304,21 @@ namespace {
 
         /**
          * Checks if autocommit mode is enabled for the connection.
+         * 
+         * ## Example Usage
+         * 
+         * ```
+         * // Create a new LibSQL instance
+         * $db = new LibSQL("libsql:dbname=database.db");
+         * 
+         * // Check if autocommit mode is enabled
+         * if ($db->isAutocommit()) {
+         *     echo "Autocommit mode is ENABLED." . PHP_EOL;
+         * } else {
+         *     echo "Autocommit mode is DISABLED." . PHP_EOL;
+         * }
+         * $db->close();
+         * ```
          *
          * @return bool True if autocommit is enabled, otherwise false.
          */
@@ -231,6 +328,22 @@ namespace {
 
         /**
          * Executes an SQL statement on the database.
+         * 
+         * ## Example Usage
+         * 
+         * ```
+         * // SQL statement with positional parameters
+         * $stmt = "INSERT INTO users (name, age) VALUES (?, ?)";
+         * $parameters = ["John Doe", 30];
+         * $rowsAffected = $db->execute($stmt, $parameters);
+         * echo "Inserted $rowsAffected rows." . PHP_EOL;
+         * 
+         * // SQL statement with named parameters
+         * $stmt = "UPDATE users SET name = :name WHERE id = :id";
+         * $parameters = [":name" => "Jane Doe", ":id" => 6];
+         * $rowsAffected = $db->execute($stmt, $parameters);
+         * echo "Updated $rowsAffected rows." . PHP_EOL;
+         * ```
          *
          * @param string $stmt The SQL statement to execute.
          * @param array $parameters The parameters for the statement (optional).
