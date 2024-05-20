@@ -356,6 +356,29 @@ namespace {
 
         /**
          * Executes a batch of SQL statements on the database.
+         * 
+         * ## Example Usage
+         * 
+         * ```
+         * // Create a new LibSQL instance
+         * $db = new LibSQL("libsql:dbname=database.db");
+         * 
+         * // SQL statements to execute as a batch
+         * $stmt = "
+         *     INSERT INTO users (name, age) VALUES ('Jane Jenifer', 30);
+         *     INSERT INTO users (name, age) VALUES ('Jane Smith', 25);
+         *     INSERT INTO users (name, age) VALUES ('Michael Johnson', 40);
+         * ";
+         * 
+         * // Execute the batch of SQL statements
+         * if ($db->executeBatch($stmt)) {
+         *     echo "Batch execution successful.";
+         * } else {
+         *     echo "Batch execution failed.";
+         * }
+         * 
+         * $db->close();
+         * ```
          *
          * @param string $stmt The SQL statements to execute as a batch.
          *
@@ -367,6 +390,20 @@ namespace {
 
         /**
          * Executes an SQL query on the database.
+         * 
+         * ## Example Usage
+         * 
+         * ```
+         * $db = new LibSQL("libsql:dbname=database.db");
+         * 
+         * $results = $db->query("SELECT * FROM users");
+         * 
+         * foreach ($results['rows'] as $row) {
+         *     echo "ID: " . $row['id'] . ", Name: " . $row['name'] . ", Age: " . $row['age'] . "\n";
+         * }
+         * 
+         * $db->close();
+         * ```
          *
          * @param string $stmt The SQL query to execute.
          * @param array $parameters The parameters for the query (optional).
@@ -379,6 +416,30 @@ namespace {
 
         /**
          * Initiates a new database transaction.
+         * 
+         * ## Example Usage
+         * 
+         * ```
+         * // Create a new LibSQL instance
+         * $db = new LibSQL("libsql:dbname=database.db");
+         * 
+         * // Start a new transaction with default behavior
+         * $transaction = $db->transaction();
+         * 
+         * $transaction->execute("UPDATE users SET name = 'Glauber Costa' WHERE id = 6");
+         * 
+         * $another_transaction = true;
+         * 
+         * if ($another_transaction) {
+         *     $transaction->commit();
+         *     echo "Transaction commited!" . PHP_EOL;
+         * } else {
+         *     $transaction->rollback();
+         *     echo "Transaction rollback!" . PHP_EOL;
+         * }
+         * 
+         * $db->close();
+         * ```
          *
          * @param string $behavior The behavior of the transaction (optional).
          *
@@ -391,6 +452,28 @@ namespace {
         /**
          * Prepares an SQL statement for execution.
          *
+         * ## Example Usage
+         * 
+         * ```
+         * // Create a new LibSQL instance
+         * $db = new LibSQL("libsql:dbname=database.db");
+         * 
+         * // Prepare an SQL statement for execution
+         * $sql = "SELECT * FROM users WHERE id = ?";
+         * $statement = $db->prepare($sql);
+         * 
+         * if ($statement) {
+         *     // Execute the prepared statement with parameters
+         *     $result = $statement->query([1]);
+         *     var_dump($result);
+         * } else {
+         *     // Handle error
+         *     echo "Failed to prepare statement.";
+         * }
+         * 
+         * $db->close();
+         * ```
+         * 
          * @param string $sql The SQL statement to prepare.
          *
          * @return \LibSQLStatement The prepared statement object.
@@ -401,6 +484,12 @@ namespace {
 
         /**
          * Closes the database connection.
+         * 
+         * # Example Usage
+         * 
+         * ```
+         * $db->close();
+         * ```
          *
          * @return void The result of the close operation.
          */
