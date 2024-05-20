@@ -4,3 +4,4 @@
 libsql.stubs.php
 playground.rs
 *.env
+downloader.php
