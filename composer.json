@@ -1,18 +1,18 @@
 {
-    "name": ":vendor_slug/:package_slug",
+    "name": "darkterminal/libsql-driver-laravel",
     "description": ":package_description",
     "keywords": [
         ":vendor_name",
         "laravel",
-        ":package_slug"
+        "libsql-driver-laravel"
     ],
-    "homepage": "https://github.com/:vendor_slug/:package_slug",
+    "homepage": "https://github.com/darkterminal/libsql-driver-laravel",
     "license": "MIT",
     "authors": [
         {
-            "name": ":author_name",
-            "email": "author@domain.com",
-            "role": "Developer"
+            "name": "Imam Ali Mustofa",
+            "email": "darkterminal@duck.com",
+            "role": "Software Freestyle Engineer"
         }
     ],
     "require": {
@@ -35,13 +35,13 @@
     },
     "autoload": {
         "psr-4": {
-            "VendorName\\Skeleton\\": "src/",
-            "VendorName\\Skeleton\\Database\\Factories\\": "database/factories/"
+            "Darkterminal\\LibSQLDriver\\": "src/",
+            "Darkterminal\\LibSQLDriver\\Database\\Factories\\": "database/factories/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "VendorName\\Skeleton\\Tests\\": "tests/",
+            "Darkterminal\\LibSQLDriver\\Tests\\": "tests/",
             "Workbench\\App\\": "workbench/app/"
         }
     },
@@ -73,10 +73,10 @@
     "extra": {
         "laravel": {
             "providers": [
-                "VendorName\\Skeleton\\SkeletonServiceProvider"
+                "Darkterminal\\LibSQLDriver\\LibSQLDriverServiceProvider"
             ],
             "aliases": {
-                "Skeleton": "VendorName\\Skeleton\\Facades\\Skeleton"
+                "LibSQL": "Darkterminal\\LibSQLDriver\\Facades\\LibSQL"
             }
         }
     },
