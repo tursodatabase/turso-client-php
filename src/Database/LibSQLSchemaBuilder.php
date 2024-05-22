@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Darkterminal\LibSQL\Database;
+namespace Darkterminal\LibSQLDriver\Database;
 
 use Illuminate\Database\Schema\SQLiteBuilder;
 use Darkterminal\LibSQL\Exceptions\FeatureNotSupportedException;

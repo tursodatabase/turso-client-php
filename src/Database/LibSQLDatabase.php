@@ -10,7 +10,7 @@ class LibSQLDatabase
     protected string $connection_mode;
     protected LibSQL $db;
     protected array $config;
-    protected array $query;
+    protected array $lastInsertIds = [];
 
     public function __construct(array $config = [])
     {
@@ -38,15 +38,13 @@ class LibSQLDatabase
         return new LibSQLPDOStatement($this->db, $sql);
     }
 
-    public function query(string $sql, array $params = []): array
+    public function setLastInsertId(?string $name = null, ?int $value = null): void
     {
-        $this->query = $this->db->query($sql, $params);
-        return $this->query;
-    }
+        if ($name === null) {
+            $name = 'id';
+        }
 
-    public function lastInsertId(): string|false
-    {
-        return false;
+        $this->lastInsertIds[$name] = $value;
     }
 
     /**

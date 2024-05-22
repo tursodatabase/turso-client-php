@@ -4,7 +4,6 @@ namespace Darkterminal\LibSQLDriver\Database;
 
 use Darkterminal\LibSQLDriver\Enums\LibSQLType;
 use Darkterminal\LibSQLDriver\Enums\PdoParam;
-use Darkterminal\LibSQLDriver\Facades\LibSQLPHP;
 use LibSQL;
 use PDO;
 use PDOStatement;
@@ -17,7 +16,7 @@ class LibSQLPDOStatement extends PDOStatement
     protected array $response = [];
 
     public function __construct(
-        protected PDO|LibSQL $pdo,
+        protected LibSQL $pdo,
         protected string $query,
         protected array $options = [],
     ) {
@@ -36,7 +35,7 @@ class LibSQLPDOStatement extends PDOStatement
         return true;
     }
 
-    public function execute(array $parameters = null): int
+    public function execute(array $parameters = null): bool
     {
         collect((array) $parameters)
             ->each(function (mixed $value, int $key) {
@@ -44,7 +43,7 @@ class LibSQLPDOStatement extends PDOStatement
                 $this->bindValue($key, $value, $type->value);
             });
 
-        $this->response = LibSQLPHP::query($this->query, array_values($this->bindings));
+        $this->response = $this->pdo->query($this->query, array_column($this->bindings, "value"));
 
         $lastId = (int) $this->response['last_insert_rowid'];
         if ($lastId > 0) {
@@ -53,7 +52,7 @@ class LibSQLPDOStatement extends PDOStatement
 
         $this->affectedRows = $this->response['rows_affected'];
 
-        return $this->affectedRows ?? 0;
+        return $this->affectedRows > 0;
     }
 
     public function fetch(
@@ -86,18 +85,15 @@ class LibSQLPDOStatement extends PDOStatement
         };
     }
 
-    public function fetchAll(int $mode = PDO::FETCH_DEFAULT, ...$args): array
+    #[\ReturnTypeWillChange]
+    public function fetchAll(int $mode = PDO::FETCH_DEFAULT, ...$args): array|object
     {
-        if (!($this->response instanceof QueryResponse)) {
-            return [];
-        }
-
         if ($mode === PDO::FETCH_DEFAULT) {
             $mode = $this->fetchMode;
         }
 
         $allRows = $this->response['rows'];
-        $rowValues = array_values($rows);
+        $rowValues = \array_map('array_values', $allRows);
 
         $response = match ($mode) {
             PDO::FETCH_BOTH => array_merge($allRows, $rowValues),
