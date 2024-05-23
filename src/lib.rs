@@ -44,6 +44,9 @@ struct LibSQL {
 
     /// Property representing the connection ID.
     conn_id: String,
+
+    /// Property representing the Database object.
+    db: Option<libsql::Database>,
 }
 
 #[php_impl]
@@ -150,21 +153,30 @@ impl LibSQL {
             Some(sync_url.clone()),
         );
 
-        let conn = match mode.as_str() {
-            "local" => providers::local::create_local_connection(
-                url,
-                Some(db_flags),
-                Some(encryption_key.clone()),
-            ),
-            "remote" => providers::remote::create_remote_connection(url, auth_token),
-            "remote_replica" => providers::remote_replica::create_remote_replica_connection(
-                url.clone(),
-                auth_token.clone(),
-                sync_url.clone(),
-                sync_interval.clone(),
-                read_your_writes.clone(),
-                Some(encryption_key.clone()),
-            ),
+        let (conn, db) = match mode.as_str() {
+            "local" => {
+                let conn = providers::local::create_local_connection(
+                    url,
+                    Some(db_flags),
+                    Some(encryption_key.clone()),
+                );
+                (conn, None)
+            }
+            "remote" => {
+                let conn = providers::remote::create_remote_connection(url, auth_token);
+                (conn, None)
+            }
+            "remote_replica" => {
+                let (db, conn) = providers::remote_replica::create_remote_replica_connection(
+                    url.clone(),
+                    auth_token.clone(),
+                    sync_url.clone(),
+                    sync_interval.clone(),
+                    read_your_writes.clone(),
+                    Some(encryption_key.clone()),
+                );
+                (conn, Some(db))
+            }
             _ => return Err(PhpException::default("Mode is not available!".into())),
         };
 
@@ -174,7 +186,7 @@ impl LibSQL {
             .unwrap()
             .insert(conn_id.clone(), conn);
 
-        Ok(Self { mode, conn_id })
+        Ok(Self { mode, conn_id, db })
     }
 
     /// Retrieves the version of the LibSQL library.
@@ -291,6 +303,49 @@ impl LibSQL {
     /// Returns `Ok(())` if the connection is closed successfully, otherwise returns a `PhpException`.
     pub fn close(&self) -> Result<(), PhpException> {
         hooks::close::disconnect(self.conn_id.to_string())
+    }
+
+    /// Synchronizes the database for remote replica connections.
+    ///
+    /// This function attempts to synchronize the database if the connection mode is
+    /// set to `remote_replica`. It uses asynchronous execution to perform the sync operation
+    /// and returns an appropriate result based on the success or failure of the sync process.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing:
+    /// - `()`: An empty tuple on successful synchronization.
+    /// - `PhpException`: An exception in case of failure.
+    ///
+    /// # Errors
+    ///
+    /// This function returns a `PhpException` in the following cases:
+    /// - If the mode is not `remote_replica`.
+    /// - If the database connection is not available for synchronization.
+    /// - If the synchronization operation fails.
+    ///
+    /// # Panics
+    ///
+    /// This function will not panic.
+    pub fn sync(&self) -> Result<(), PhpException> {
+        if self.mode == "remote_replica" {
+            match &self.db {
+                Some(db) => utils::runtime::runtime().block_on(async {
+                    db.sync()
+                        .await
+                        .map_err(|e| PhpException::default(format!("Sync failed: {}", e)))?;
+                    Ok(())
+                }),
+                None => Err(PhpException::default(
+                    "Database connection is not available for sync".to_string(),
+                )),
+            }
+        } else {
+            Err(PhpException::default(format!(
+                "{} mode does not support sync",
+                self.mode
+            )))
+        }
     }
 }
 
