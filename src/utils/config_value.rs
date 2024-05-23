@@ -30,13 +30,13 @@ impl<'a> ext_php_rs::convert::FromZval<'a> for ConfigValue {
         } else if let Some(array) = zval.array() {
             let mut map = std::collections::HashMap::new();
             for (key, val) in array.iter() {
-                if let (Some(key), Some(value)) =
-                    (Some(key.to_string()), ConfigValue::from_zval(val))
-                {
-                    map.insert(key, value);
-                } else {
-                    return None;
-                }
+                let key_str = key.to_string();
+                let value = match val {
+                    v if v.is_string() => ConfigValue::String(v.string()?),
+                    v if v.is_array() => ConfigValue::from_zval(v)?,
+                    _ => continue,
+                };
+                map.insert(key_str, value);
             }
             Some(ConfigValue::Array(map))
         } else {

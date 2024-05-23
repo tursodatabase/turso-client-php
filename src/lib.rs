@@ -117,10 +117,17 @@ impl LibSQL {
                 dsn_parsed.ok_or_else(|| PhpException::default("Failed to parse DSN".into()))?
             }
             ConfigValue::Array(config) => {
-                let url = config
+                let original_url = config
                     .get("url")
                     .and_then(|v| v.to_string())
                     .unwrap_or_default();
+
+                let url = if original_url.starts_with("file:") {
+                    original_url.strip_prefix("file:").unwrap().to_string()
+                } else {
+                    original_url.clone()
+                };
+
                 let auth_token = config
                     .get("authToken")
                     .and_then(|v| v.to_string())
