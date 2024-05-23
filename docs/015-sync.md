@@ -1,13 +1,14 @@
-# LibSQL `close` Method
+# LibSQL `sync` Method
 
 ## Description
 
-The `close` method in the LibSQL PHP Extension is used to close the database connection, releasing any resources associated with it. It should be called when you're done using the database connection to free up system resources and prevent memory leaks.
+The `sync` method in the LibSQL PHP Extension is used to sync changes from the remote database to the local replica, [embedded replicas](https://docs.turso.tech/features/embedded-replicas/introduction) provide a smooth switch between local and remote database operations, allowing the same database to adapt to various scenarios effortlessly. They also ensure speedy data access by syncing local copies with the remote database, enabling microsecond-level read operations — a significant advantage for scenarios demanding quick data retrieval.
+
 
 ## Method Signature
 
 ```php
-public function close(): void
+public function sync(): void
 ```
 
 ## Parameters
@@ -26,16 +27,14 @@ $db = new LibSQL("database.db");
 
 // Perform database operations...
 
-// Close the database connection when done
-$db->close();
+// Sync the database
+$db->sync();
 ```
 
 ## Notes
 
-- Always close the database connection when you no longer need it to free up resources and prevent memory leaks.
-- Closing the database connection should be the last step in your script after you've finished all database operations.
-- Once the connection is closed, you won't be able to perform any further operations on it unless you establish a new connection.
-- Failure to close the database connection may result in resource leaks and could impact the performance of your application over time.
+- Do not open the local database while the embedded replica is syncing. This can lead to data corruption.
+- In certain contexts, such as serverless environments without a filesystem, you can’t use embedded replicas.
 
 ## Read More
 
@@ -54,7 +53,7 @@ $db->close();
     - [Query](011-query.md)
     - [Transaction](012-transaction.md)
     - [Prepare](013-prepare.md)
-    - **[Close](014-close.md)**
-    - [Sync](015-sync.md)
+    - [Close](014-close.md)
+    - **[Sync](015-sync.md)**
 - [LibSQLStatement](016-LibSQLStatement.md)
 - [LibSQLTransaction](017-LibSQLTransaction.md)

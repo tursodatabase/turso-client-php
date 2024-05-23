@@ -56,5 +56,6 @@ if ($db->isAutocommit()) {
     - [Transaction](012-transaction.md)
     - [Prepare](013-prepare.md)
     - [Close](014-close.md)
-- [LibSQLStatement](015-LibSQLStatement.md)
-- [LibSQLTransaction](016-LibSQLTransaction.md)
+    - [Sync](015-sync.md)
+- [LibSQLStatement](016-LibSQLStatement.md)
+- [LibSQLTransaction](017-LibSQLTransaction.md)

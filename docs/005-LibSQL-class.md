@@ -28,6 +28,7 @@ class LibSQL
     public function transaction(?string $behavior = "DEFERRED"): LibSQLTransaction;
     public function prepare(string $sql): LibSQLStatement;
     public function close(): void;
+    public function sync(): void;
 }
 ```
 
@@ -43,6 +44,7 @@ class LibSQL
 - [`transaction(string $behavior = "DEFERRED"): LibSQLTransaction`](012-transaction.md): Initiates a new database transaction.
 - [`prepare(string $sql): LibSQLStatement`](013-prepare.md): Prepares an SQL statement for execution.
 - [`close(): void`](014-close.md): Closes the database connection.
+- [`sync(): void`](015-sync.md): Sync remote replica database.
 
 ## Description
 
@@ -65,6 +67,8 @@ class LibSQL
 - **prepare(string $sql): LibSQLStatement**: Prepares an SQL statement for execution.
 
 - **close(): void**: Closes the database connection.
+
+- **sync(): void**: Sync remote replica database.
 
 ## Example
 
@@ -103,5 +107,7 @@ Ensure proper error handling and data validation when using the LibSQL PHP Exten
     - [Transaction](012-transaction.md)
     - [Prepare](013-prepare.md)
     - [Close](014-close.md)
-- [LibSQLStatement](015-LibSQLStatement.md)
-- [LibSQLTransaction](016-LibSQLTransaction.md)
+    - [Sync](015-sync.md)
+- [LibSQLStatement](016-LibSQLStatement.md)
+- [LibSQLTransaction](017-LibSQLTransaction.md)
+
