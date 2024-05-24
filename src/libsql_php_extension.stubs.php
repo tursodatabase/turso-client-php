@@ -496,5 +496,20 @@ namespace {
         public function close()
         {
         }
+
+        /**
+         * Syncs the database.
+         *
+         * # Example Usage
+         *
+         * ```
+         * $db->sync();
+         * ```
+         *
+         * @return void The result of the sync operation.
+         */
+        public function sync()
+        {
+        }
     }
 }

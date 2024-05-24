@@ -14,11 +14,11 @@ class LibSQLPDOStatement extends PDOStatement
     protected int $fetchMode = PDO::FETCH_BOTH;
     protected array $bindings = [];
     protected array $response = [];
+    protected array $lastInsertIds = [];
 
     public function __construct(
-        protected LibSQL $pdo,
-        protected string $query,
-        protected array $options = [],
+        protected LibSQL $db,
+        protected string $query
     ) {
     }
 
@@ -43,16 +43,41 @@ class LibSQLPDOStatement extends PDOStatement
                 $this->bindValue($key, $value, $type->value);
             });
 
-        $this->response = $this->pdo->query($this->query, array_column($this->bindings, "value"));
+        if (str_starts_with(strtolower($this->query), 'select')) {
+            $this->response = $this->db->query($this->query, array_column($this->bindings, "value"));
+        } else {
+            $statement = $this->db->prepare($this->query);
+            $this->response = $statement->query(array_column($this->bindings, "value"));
+        }
 
         $lastId = (int) $this->response['last_insert_rowid'];
         if ($lastId > 0) {
-            $this->pdo->setLastInsertId(value: $lastId);
+            $this->setLastInsertId(value: $lastId);
         }
 
         $this->affectedRows = $this->response['rows_affected'];
 
         return $this->affectedRows > 0;
+    }
+
+    public function setLastInsertId(?string $name = null, ?int $value = null): void
+    {
+        if ($name === null) {
+            $name = 'id';
+        }
+
+        $this->lastInsertIds[$name] = $value;
+    }
+
+    public function lastInsertId(?string $name = null): string|false
+    {
+        if ($name === null) {
+            $name = 'id';
+        }
+
+        return (isset($this->lastInsertIds[$name]))
+            ? (string) $this->lastInsertIds[$name]
+            : false;
     }
 
     public function fetch(

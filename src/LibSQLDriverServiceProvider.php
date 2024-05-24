@@ -19,6 +19,31 @@ class LibSQLDriverServiceProvider extends PackageServiceProvider
         if (config('database.default') !== 'libsql' || config('database.connections.libsql.driver') === 'libsql') {
             return;
         }
+
+        $this->app->scoped(LibSQLManager::class, function () {
+            return new LibSQLManager(config('database.connections.libsql'));
+        });
+
+        $this->app->extend(DatabaseManager::class, function (DatabaseManager $manager) {
+            Connection::resolverFor('libsql', function ($connection = null, ?string $database = null, string $prefix = '', array $config = []) {
+                $config = config('database.connections.libsql');
+                if (!isset($config['driver'])) {
+                    $config['driver'] = 'libsql';
+                }
+
+                $connector = new LibSQLConnector();
+                $pdo = $connector->connect($config);
+
+                $connection = new LibSQLConnection($pdo, $database ?? 'libsql', $prefix, $config);
+                app()->instance(LibSQLConnection::class, $connection);
+
+                $connection->createReadPdo($config);
+
+                return $connection;
+            });
+
+            return $manager;
+        });
     }
 
     public function configurePackage(Package $package): void
@@ -36,28 +61,6 @@ class LibSQLDriverServiceProvider extends PackageServiceProvider
     {
         $this->app->singleton('db.factory', function ($app) {
             return new LibSQLConnectionFactory($app);
-        });
-
-        $this->app->scoped(LibSQLManager::class, function () {
-            return new LibSQLManager(config('database.connections.libsql'));
-        });
-
-        $this->app->extend(DatabaseManager::class, function (DatabaseManager $manager) {
-
-            Connection::resolverFor('libsql', function ($connection = null, ?string $database = null, string $prefix = '', array $config = []) {
-                $config = config('database.connections.libsql');
-                $connector = new LibSQLConnector();
-                $pdo = $connector->connect($config);
-
-                $connection = new LibSQLConnection($pdo, $database ?? 'libsql', $prefix, $config);
-                app()->instance(LibSQLConnection::class, $connection);
-
-                $connection->createReadPdo($config);
-
-                return $connection;
-            });
-
-            return $manager;
         });
     }
 }

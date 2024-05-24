@@ -1,6 +1,6 @@
 {
     "name": "darkterminal/libsql-driver-laravel",
-    "description": ":package_description",
+    "description": "A LibSQL Driver for Laravel",
     "keywords": [
         ":vendor_name",
         "laravel",
@@ -76,7 +76,7 @@
                 "Darkterminal\\LibSQLDriver\\LibSQLDriverServiceProvider"
             ],
             "aliases": {
-                "LibSQL": "Darkterminal\\LibSQLDriver\\Facades\\LibSQL"
+                "LibSQLPHP": "Darkterminal\\LibSQLDriver\\Facades\\LibSQLPHP"
             }
         }
     },

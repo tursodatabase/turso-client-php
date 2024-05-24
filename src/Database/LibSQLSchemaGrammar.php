@@ -1,6 +1,6 @@
 <?php
 
-namespace Darkterminal\LibSQL\Database;
+namespace Darkterminal\LibSQLDriver\Database;
 
 use Illuminate\Database\Schema\Grammars\SQLiteGrammar;
 use Override;
