@@ -2,7 +2,7 @@
     "name": "darkterminal/libsql-driver-laravel",
     "description": "A LibSQL Driver for Laravel",
     "keywords": [
-        ":vendor_name",
+        "darkterminal",
         "laravel",
         "libsql-driver-laravel"
     ],
