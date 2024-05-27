@@ -1,7 +1,3 @@
-Certainly! Here's the documentation for the `LibSQLTransaction` class:
-
----
-
 # LibSQLTransaction Class
 
 ## Introduction
