@@ -1,10 +1,20 @@
 <p align="center">
     <img src="art/elpha-cover.png" width="1000" />
-    <p align="center" style="font-size: 24px;font-weight:bold;margin:0;">Native LibSQL Driver for PHP</p>
-    <p align="center">
-        Build by Handsome Person from 🇮🇩 <br /> 
-        <a href="https://twitter.com/panggilmeiam" target="_blank">@panggilmeiam</a> or <a href="https://github.com/darkterminal" target="_blank">.darkterminal</a>
-    </p>
+</p>
+
+<p align="center" style="font-size: 24px;font-weight:bold;margin:0;">Native <a href="https://turso.tech/libsql">libSQL</a> Driver for PHP</p>
+<p align="center">
+    Build by Handsome Person from 🇮🇩 <br /> 
+    <a href="https://twitter.com/panggilmeiam" target="_blank">@panggilmeiam</a> or <a href="https://github.com/darkterminal" target="_blank">.darkterminal</a>
+</p>
+
+<p align="center">
+  <a href="https://turso.tech"><strong>Turso</strong></a> ·
+  <a href="https://darkterminal.mintlify.app/dark-extensions/introduction#quickstart"><strong>Quickstart</strong></a> ·
+  <a href="https://darkterminal.mintlify.app/dark-extensions/local-connection#usage-example"><strong>Examples</strong></a> ·
+  <a href="https://darkterminal.mintlify.app/dark-extensions/introduction"><strong>Docs</strong></a> ·
+  <a href="https://discord.com/invite/4B5D7hYwub"><strong>Discord</strong></a> ·
+  <a href="https://blog.turso.tech/"><strong>Blog &amp; Tutorials</strong></a>
 </p>
 
 ---
@@ -62,8 +72,3 @@ $db->close();
 ```
 
 How easy is that!?
-
-
----
-
-- [Documentation](docs/README.md)
