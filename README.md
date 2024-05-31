@@ -11,9 +11,9 @@
 
 <p align="center">
   <a href="https://turso.tech"><strong>Turso</strong></a> ·
-  <a href="#"><strong>Quickstart</strong></a> ·
-  <a href="#"><strong>Examples</strong></a> ·
-  <a href="#"><strong>Docs</strong></a> ·
+  <a href="https://darkterminal.mintlify.app/dark-packages/libsql-driver-laravel/readme"><strong>Quickstart</strong></a> ·
+  <a href="https://darkterminal.mintlify.app/dark-packages/libsql-driver-laravel/readme"><strong>Examples</strong></a> ·
+  <a href="https://darkterminal.mintlify.app/dark-packages/libsql-driver-laravel/readme"><strong>Docs</strong></a> ·
   <a href="https://discord.com/invite/4B5D7hYwub"><strong>Discord</strong></a> ·
   <a href="https://blog.turso.tech/"><strong>Blog &amp; Tutorials</strong></a>
 </p>
