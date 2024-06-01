@@ -3,3 +3,4 @@ vendor/
 *.sqlite
 .env
 *.sql
+version_bump.sh
