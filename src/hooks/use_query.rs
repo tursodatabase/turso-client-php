@@ -47,17 +47,13 @@ pub fn query(
         let mut columns: Vec<String> = Vec::new();
 
         while let Ok(Some(row)) = rows.next().await {
-            for idx in 0..rows.column_count() {
-                let column_name = row.column_name(idx as i32).unwrap();
-                columns.push(column_name.to_string());
-            }
-        }
-
-        while let Ok(Some(row)) = rows.next().await {
             let mut result = HashMap::new();
+
             for idx in 0..rows.column_count() {
                 let column_name = row.column_name(idx as i32).unwrap();
                 let value = row.get_value(idx).unwrap();
+
+                columns.push(column_name.to_string());
                 result.insert(column_name.to_string(), value);
             }
             results.push(result);
