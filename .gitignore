@@ -1,0 +1,5 @@
+vendor/
+*.db
+*.sqlite
+.env
+*.sql
