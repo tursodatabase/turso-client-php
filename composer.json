@@ -2,7 +2,7 @@
   "name": "darkterminal/libsql-doctrine-dbal",
   "description": "A Doctribe DBAL Driver implementation on top of LibSQL Extension",
   "type": "library",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "require": {
     "php": ">=8.1",
     "doctrine/dbal": "^4.0"
