@@ -11,16 +11,16 @@
 
 <p align="center">
   <a href="https://turso.tech"><strong>Turso</strong></a> ·
-  <a href="https://darkterminal.mintlify.app/dark-packages/libsql-driver-laravel/readme"><strong>Quickstart</strong></a> ·
-  <a href="https://darkterminal.mintlify.app/dark-packages/libsql-driver-laravel/readme"><strong>Examples</strong></a> ·
-  <a href="https://darkterminal.mintlify.app/dark-packages/libsql-driver-laravel/readme"><strong>Docs</strong></a> ·
+  <a href="https://darkterminal.mintlify.app/dark-packages/libsql-doctrine-dbal/readme"><strong>Quickstart</strong></a> ·
+  <a href="https://darkterminal.mintlify.app/dark-packages/libsql-doctrine-dbal/readme"><strong>Examples</strong></a> ·
+  <a href="https://darkterminal.mintlify.app/dark-packages/libsql-doctrine-dbal/readme"><strong>Docs</strong></a> ·
   <a href="https://discord.com/invite/4B5D7hYwub"><strong>Discord</strong></a> ·
   <a href="https://blog.turso.tech/"><strong>Blog &amp; Tutorials</strong></a>
 </p>
 
 ---
 
-<h1 id="a-libsql-driver-for-laravel" align="center">A LibSQL Driver for Doctrine DBAL</h1>
+<h1 id="a-libsql-driver-for-doctrine" align="center">A LibSQL Driver for Doctrine DBAL</h1>
 
 <p align="center">
     <a href="https://packagist.org/packages/darkterminal/libsql-doctrine-dbal"><img src="https://img.shields.io/packagist/v/darkterminal/libsql-doctrine-dbal.svg?style=flat-square" alt="Latest Version on Packagist"></a>
