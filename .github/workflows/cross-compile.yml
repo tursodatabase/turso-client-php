@@ -11,6 +11,7 @@ permissions:
 jobs:
   build-and-upload:
     name: Build and upload
+    working-directory: ./turso-php-extension
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -27,7 +28,7 @@ jobs:
             os: macos-latest
             target: x86_64-apple-darwin
             php-versions: '8.3'
-          
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -41,7 +42,7 @@ jobs:
         uses: dtolnay/rust-toolchain@nightly
         with:
           targets: ${{ matrix.target }}
-      
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
