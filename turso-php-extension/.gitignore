@@ -1,0 +1,7 @@
+/target
+*.db
+*.txt
+libsql.stubs.php
+playground.rs
+*.env
+downloader.php

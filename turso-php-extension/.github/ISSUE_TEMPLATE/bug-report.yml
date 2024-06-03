@@ -1,0 +1,21 @@
+name: Bug report
+description: Template for bug reports
+title: '[Bug]: '
+labels:
+  - bug
+assignees:
+  - darkterminal
+body:
+  - type: textarea
+    attributes:
+      label: Description
+      description: A clear and concise description of the problem
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Minimal Reproduction
+  - type: textarea
+    attributes:
+      label: Exception or Error
+      description: provide error logs
