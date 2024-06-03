@@ -1,0 +1,26 @@
+{
+    "name": "darkterminal/turso-client-php",
+    "description": "Offical Turso Client SDK for PHP",
+    "type": "project",
+    "version": "0.0.1",
+    "require": {
+        "php": "^7.0||^8.0",
+        "ext-json": "*"
+    },
+    "replace": {
+        "turso-doctrine-dbal": "*",
+        "turso-driver-laravel": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Turso\\": "/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Imam Ali Mustofa",
+            "email": "darkterminal@duck.com",
+            "role": "Software Freestyle Engineer"
+        }
+    ]
+}
