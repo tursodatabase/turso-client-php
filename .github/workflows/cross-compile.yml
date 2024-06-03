@@ -3,7 +3,7 @@ name: Cross Deploy
 on:
   push:
     tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"
+      - turso-php-extension/v*.*.*
 
 permissions:
   contents: write
