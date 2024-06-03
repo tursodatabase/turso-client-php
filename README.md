@@ -1,6 +1,6 @@
 <p align="center">
-  <a href="/docs/README.md">
-    <img alt="Turso + TypeScript" src="art/libsql-driver-laravel.png" width="1000">
+  <a href="https://darkterminal.mintlify.app/dark-packages/libsql-driver-laravel/readme">
+    <img alt="Turso + Laravel" src="https://i.imgur.com/T2pzJid.png" width="1000">
     <h3 align="center">Turso + Laravel</h3>
   </a>
 </p>
@@ -92,7 +92,15 @@ Create a new Turso Database [here](https://docs.turso.tech/quickstart)
 
 ## Configure The Connection
 
-LibSQL has 3 types of connections to interact with the database: _Local Connection_, _Remote Connection_, and _Remote Replica Connection (Embedded Replica)_
+LibSQL has 3 types of connections to interact with the database: _In-Memory Connection_, _Local Connection_, _Remote Connection_, and _Remote Replica Connection (Embedded Replica)_
+
+### In-Memory Connection
+
+To be able to use LibSQL in-memory as if you were using SQLite, simply change the following `.env`:
+```env
+DB_CONNECTION=libsql
+DB_DATABASE=:memory:
+```
 
 ### Local Connection
 
