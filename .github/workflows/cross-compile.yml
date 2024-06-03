@@ -12,9 +12,6 @@ jobs:
   build-and-upload:
     name: Build and upload
     runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        working-directory: ./turso-php-extension
 
     strategy:
       matrix:
@@ -37,19 +34,23 @@ jobs:
 
       - name: Get the release version from the tag
         shell: bash
+        working-directory: ./turso-php-extension
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
       - name: Install Rust
+        working-directory: ./turso-php-extension
         uses: dtolnay/rust-toolchain@nightly
         with:
           targets: ${{ matrix.target }}
 
       - name: Setup PHP
+        working-directory: ./turso-php-extension
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-versions }}
 
       - name: Build
+        working-directory: ./turso-php-extension
         uses: actions-rs/cargo@v1
         with:
           use-cross: true
@@ -57,6 +58,7 @@ jobs:
           args: --verbose --release --target ${{ matrix.target }}
 
       - name: Build archive
+        working-directory: ./turso-php-extension
         shell: bash
         run: |
           # Replace with the name of your binary
@@ -78,6 +80,7 @@ jobs:
             echo "ASSET=$dirname.tar.gz" >> $GITHUB_ENV
 
       - name: Release
+        working-directory: ./turso-php-extension
         uses: softprops/action-gh-release@v1
         with:
           files: |
