@@ -1,0 +1,22 @@
+{
+  "name": "darkterminal/libsql-doctrine-dbal",
+  "description": "A Doctribe DBAL Driver implementation on top of LibSQL Extension",
+  "type": "library",
+  "version": "0.0.3",
+  "require": {
+    "php": ">=8.1",
+    "doctrine/dbal": "^4.0"
+  },
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "Darkterminal\\LibSQL\\DBAL\\": "src/"
+    }
+  },
+  "authors": [
+    {
+      "name": "Imam Ali Mustofa",
+      "email": "darkterminal@duck.com"
+    }
+  ]
+}
