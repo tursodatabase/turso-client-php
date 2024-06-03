@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Darkterminal\LibSQL\DBAL;
+namespace Turso\Doctrine\DBAL;
 
 use Doctrine\DBAL\Driver\Connection as ConnectionInterface;
 use Doctrine\DBAL\Driver\Exception\NoIdentityValue;

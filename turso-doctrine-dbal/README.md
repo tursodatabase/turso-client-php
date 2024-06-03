@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://github.com/darkterminal/libsql-doctrine-dbal">
+  <a href="https://github.com/darkterminal/turso-doctrine-dbal">
     <img alt="Turso + TypeScript" src="https://i.imgur.com/r009n2u.png" width="1000">
     <h3 align="center">Turso + Doctrine DBAL</h3>
   </a>
@@ -11,9 +11,9 @@
 
 <p align="center">
   <a href="https://turso.tech"><strong>Turso</strong></a> ·
-  <a href="https://darkterminal.mintlify.app/dark-packages/libsql-doctrine-dbal/readme"><strong>Quickstart</strong></a> ·
-  <a href="https://darkterminal.mintlify.app/dark-packages/libsql-doctrine-dbal/readme"><strong>Examples</strong></a> ·
-  <a href="https://darkterminal.mintlify.app/dark-packages/libsql-doctrine-dbal/readme"><strong>Docs</strong></a> ·
+  <a href="https://darkterminal.mintlify.app/dark-packages/turso-doctrine-dbal/readme"><strong>Quickstart</strong></a> ·
+  <a href="https://darkterminal.mintlify.app/dark-packages/turso-doctrine-dbal/readme"><strong>Examples</strong></a> ·
+  <a href="https://darkterminal.mintlify.app/dark-packages/turso-doctrine-dbal/readme"><strong>Docs</strong></a> ·
   <a href="https://discord.com/invite/4B5D7hYwub"><strong>Discord</strong></a> ·
   <a href="https://blog.turso.tech/"><strong>Blog &amp; Tutorials</strong></a>
 </p>
@@ -23,8 +23,8 @@
 <h1 id="a-libsql-driver-for-doctrine" align="center">A LibSQL Driver for Doctrine DBAL</h1>
 
 <p align="center">
-    <a href="https://packagist.org/packages/darkterminal/libsql-doctrine-dbal"><img src="https://img.shields.io/packagist/v/darkterminal/libsql-doctrine-dbal.svg?style=flat-square" alt="Latest Version on Packagist"></a>
-    <a href="https://packagist.org/packages/darkterminal/libsql-doctrine-dbal"><img src="https://img.shields.io/packagist/dt/darkterminal/libsql-doctrine-dbal.svg?style=flat-square" alt="Total Downloads"></a>
+    <a href="https://packagist.org/packages/darkterminal/turso-doctrine-dbal"><img src="https://img.shields.io/packagist/v/darkterminal/turso-doctrine-dbal.svg?style=flat-square" alt="Latest Version on Packagist"></a>
+    <a href="https://packagist.org/packages/darkterminal/turso-doctrine-dbal"><img src="https://img.shields.io/packagist/dt/darkterminal/turso-doctrine-dbal.svg?style=flat-square" alt="Total Downloads"></a>
 </p>
 
 LibSQL is a fork of SQLite and this package is **#1 LibSQL Driver** that run natively using LibSQL Native Extension/Driver/Whatever and support Doctrine DBAL.
@@ -42,7 +42,7 @@ LibSQL is a fork of SQLite and this package is **#1 LibSQL Driver** that run nat
 ## Package Installation
 
 ```bash
-composer require darkterminal/libsql-doctrine-dbal
+composer require darkterminal/turso-doctrine-dbal
 ```
 
 ## Configuration
@@ -54,7 +54,7 @@ LibSQL has 4 types of connections to interact with the database: In-Memory Conne
 ```php
 $params = [
     "url"               => ":memory:",
-    'driverClass'       => \Darkterminal\LibSQL\DBAL\Driver::class,
+    'driverClass'       => \Turso\Doctrine\DBAL\Driver::class,
 ];
 ```
 
@@ -63,7 +63,7 @@ $params = [
 ```php
 $params = [
     "url"               => "database.db",
-    'driverClass'       => \Darkterminal\LibSQL\DBAL\Driver::class,
+    'driverClass'       => \Turso\Doctrine\DBAL\Driver::class,
 ];
 ```
 
@@ -91,7 +91,7 @@ TURSO_AUTH_TOKEN=
 $params = [
     "auth_token"        => "<your-database-auth-token-from-turso>",
     "sync_url"          => "<your-database-url-from-turso>",
-    'driverClass'       => \Darkterminal\LibSQL\DBAL\Driver::class,
+    'driverClass'       => \Turso\Doctrine\DBAL\Driver::class,
 ];
 ```
 
@@ -105,7 +105,7 @@ $params = [
     "sync_interval"     => 5,    // Optional, default is: 5 in seconds
     "read_your_writes"  => true, // Optional, default is: true
     "encryption_key"    => "",   // Optional, default is: empty
-    'driverClass'       => \Darkterminal\LibSQL\DBAL\Driver::class,
+    'driverClass'       => \Turso\Doctrine\DBAL\Driver::class,
 ];
 ```
 
@@ -118,7 +118,7 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 $params = [
     "url"               => ":memory:",
-    'driverClass'       => \Darkterminal\LibSQL\DBAL\Driver::class,
+    'driverClass'       => \Turso\Doctrine\DBAL\Driver::class,
 ];
 
 $db = DriverManager::getConnection($params);

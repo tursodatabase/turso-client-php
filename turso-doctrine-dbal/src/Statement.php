@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Darkterminal\LibSQL\DBAL;
+namespace Turso\Doctrine\DBAL;
 
 use Doctrine\DBAL\Driver\Statement as StatementInterface;
 use Doctrine\DBAL\ParameterType;

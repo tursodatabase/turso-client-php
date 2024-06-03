@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Darkterminal\LibSQL\DBAL;
+namespace Turso\Doctrine\DBAL;
 
 use Doctrine\DBAL\Driver\Result as ResultInterface;
 use Doctrine\DBAL\Exception\NoKeyValue;

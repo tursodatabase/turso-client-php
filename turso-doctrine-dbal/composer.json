@@ -1,5 +1,5 @@
 {
-  "name": "darkterminal/libsql-doctrine-dbal",
+  "name": "darkterminal/turso-doctrine-dbal",
   "description": "A Doctribe DBAL Driver implementation on top of LibSQL Extension",
   "type": "library",
   "version": "0.0.3",
@@ -10,13 +10,14 @@
   "license": "MIT",
   "autoload": {
     "psr-4": {
-      "Darkterminal\\LibSQL\\DBAL\\": "src/"
+      "Turso\\Doctrine\\DBAL\\": "src/"
     }
   },
   "authors": [
     {
       "name": "Imam Ali Mustofa",
-      "email": "darkterminal@duck.com"
+      "email": "darkterminal@duck.com",
+      "role": "Software Freestyle Engineer"
     }
   ]
 }

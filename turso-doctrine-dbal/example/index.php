@@ -6,7 +6,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 $params = [
     "url"               => ":memory:",
-    'driverClass'       => \Darkterminal\LibSQL\DBAL\Driver::class,
+    'driverClass'       => \Turso\Doctrine\DBAL\Driver::class,
 ];
 
 $db = DriverManager::getConnection($params);
