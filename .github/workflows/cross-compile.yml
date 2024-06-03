@@ -8,14 +8,13 @@ on:
 permissions:
   contents: write
 
-defaults:
- run:
-  working-directory: ./turso-php-extension
-
 jobs:
   build-and-upload:
     name: Build and upload
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: ./turso-php-extension
 
     strategy:
       matrix:
