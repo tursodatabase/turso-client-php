@@ -1,8 +1,8 @@
 <?php
 
-namespace Darkterminal\LibSQLDriver\Database;
+namespace Turso\Driver\Laravel\Database;
 
-use Darkterminal\LibSQLDriver\Database\LibSQLSchemaGrammar;
+use Turso\Driver\Laravel\Database\LibSQLSchemaGrammar;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Database\Connection;
 use Exception;

@@ -1,15 +1,15 @@
 <?php
 
-namespace Darkterminal\LibSQLDriver\Facades;
+namespace Turso\Driver\Laravel\Facades;
 
-use Darkterminal\LibSQLDriver\Database\LibSQLDatabase;
+use Turso\Driver\Laravel\Database\LibSQLDatabase;
 use Illuminate\Support\Facades\Facade;
 
 /**
- * @see \Darkterminal\LibSQLDriver\LibSQLDriver
+ * @see \Turso\Driver\Laravel\LibSQLDriver
  *
- * @mixin \Darkterminal\LibSQLDriver\LibSQLManager
- * @mixin \Darkterminal\LibSQLDriver\Database\LibSQLDatabase
+ * @mixin \Turso\Driver\Laravel\LibSQLManager
+ * @mixin \Turso\Driver\Laravel\Database\LibSQLDatabase
  */
 class LibSQLPHP extends Facade
 {

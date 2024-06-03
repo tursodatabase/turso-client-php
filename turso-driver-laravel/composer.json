@@ -1,10 +1,12 @@
 {
-    "name": "darkterminal/libsql-driver-laravel",
-    "description": "A LibSQL Driver for Laravel",
+    "name": "darkterminal/turso-driver-laravel",
+    "description": "A Turso Driver for Laravel",
+    "version": "0.0.1",
     "keywords": [
         "darkterminal",
         "laravel",
-        "libsql-driver-laravel"
+        "libsql-driver-laravel",
+        "turso-driver-laravel"
     ],
     "homepage": "https://github.com/darkterminal/libsql-driver-laravel",
     "license": "MIT",
@@ -35,13 +37,13 @@
     },
     "autoload": {
         "psr-4": {
-            "Darkterminal\\LibSQLDriver\\": "src/",
-            "Darkterminal\\LibSQLDriver\\Database\\Factories\\": "database/factories/"
+            "Turso\\Driver\\Laravel\\": "src/",
+            "Turso\\Driver\\Laravel\\Database\\Factories\\": "database/factories/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Darkterminal\\LibSQLDriver\\Tests\\": "tests/",
+            "Turso\\Driver\\Laravel\\Tests\\": "tests/",
             "Workbench\\App\\": "workbench/app/"
         }
     },
@@ -73,10 +75,10 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Darkterminal\\LibSQLDriver\\LibSQLDriverServiceProvider"
+                "Turso\\Driver\\Laravel\\LibSQLDriverServiceProvider"
             ],
             "aliases": {
-                "LibSQLPHP": "Darkterminal\\LibSQLDriver\\Facades\\LibSQLPHP"
+                "LibSQLPHP": "Turso\\Driver\\Laravel\\Facades\\LibSQLPHP"
             }
         }
     },

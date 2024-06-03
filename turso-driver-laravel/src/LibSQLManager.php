@@ -1,8 +1,8 @@
 <?php
 
-namespace Darkterminal\LibSQLDriver;
+namespace Turso\Driver\Laravel;
 
-use Darkterminal\LibSQLDriver\Database\LibSQLDatabase;
+use Turso\Driver\Laravel\Database\LibSQLDatabase;
 use Illuminate\Support\Collection;
 
 class LibSQLManager

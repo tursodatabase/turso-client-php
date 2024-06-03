@@ -1,9 +1,9 @@
 <?php
 
-namespace Darkterminal\LibSQLDriver\Database;
+namespace Turso\Driver\Laravel\Database;
 
-use Darkterminal\LibSQLDriver\Enums\LibSQLType;
-use Darkterminal\LibSQLDriver\Enums\PdoParam;
+use Turso\Driver\Laravel\Enums\LibSQLType;
+use Turso\Driver\Laravel\Enums\PdoParam;
 use LibSQL;
 use PDO;
 use PDOStatement;

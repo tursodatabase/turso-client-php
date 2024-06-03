@@ -1,8 +1,8 @@
 <?php
 
-namespace Darkterminal\LibSQLDriver\Database;
+namespace Turso\Driver\Laravel\Database;
 
-use Darkterminal\LibSQLDriver\Exceptions\ConfigurationIsNotFound;
+use Turso\Driver\Laravel\Exceptions\ConfigurationIsNotFound;
 use LibSQL;
 
 class LibSQLDatabase

@@ -1,6 +1,6 @@
 <?php
 
-namespace Darkterminal\LibSQLDriver\Exceptions;
+namespace Turso\Driver\Laravel\Exceptions;
 
 use LogicException;
 

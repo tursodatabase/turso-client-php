@@ -1,6 +1,6 @@
 <?php
 
-namespace Darkterminal\LibSQLDriver\Database;
+namespace Turso\Driver\Laravel\Database;
 
 use Illuminate\Database\Schema\SqliteSchemaState;
 

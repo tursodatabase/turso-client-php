@@ -1,6 +1,6 @@
 <?php
 
-namespace Darkterminal\LibSQLDriver\Enums;
+namespace Turso\Driver\Laravel\Enums;
 
 use PDO;
 

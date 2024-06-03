@@ -1,6 +1,6 @@
 <?php
 
-namespace Darkterminal\LibSQLDriver\Database;
+namespace Turso\Driver\Laravel\Database;
 
 use Illuminate\Database\Connectors\Connector;
 use Illuminate\Database\Connectors\ConnectorInterface;
@@ -10,7 +10,7 @@ class LibSQLConnector
     /**
      * Establish a database connection.
      *
-     * @return \Darkterminal\LibSQLDriver\Database\LibSQLDatabase
+     * @return \Turso\Driver\Laravel\Database\LibSQLDatabase
      */
     public function connect(array $config): LibSQLDatabase
     {

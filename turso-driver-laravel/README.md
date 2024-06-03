@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://darkterminal.mintlify.app/dark-packages/libsql-driver-laravel/readme">
+  <a href="https://darkterminal.mintlify.app/dark-packages/turso-driver-laravel/readme">
     <img alt="Turso + Laravel" src="https://i.imgur.com/T2pzJid.png" width="1000">
     <h3 align="center">Turso + Laravel</h3>
   </a>
@@ -11,9 +11,9 @@
 
 <p align="center">
   <a href="https://turso.tech"><strong>Turso</strong></a> ·
-  <a href="https://darkterminal.mintlify.app/dark-packages/libsql-driver-laravel/readme"><strong>Quickstart</strong></a> ·
-  <a href="https://darkterminal.mintlify.app/dark-packages/libsql-driver-laravel/readme"><strong>Examples</strong></a> ·
-  <a href="https://darkterminal.mintlify.app/dark-packages/libsql-driver-laravel/readme"><strong>Docs</strong></a> ·
+  <a href="https://darkterminal.mintlify.app/dark-packages/turso-driver-laravel/readme"><strong>Quickstart</strong></a> ·
+  <a href="https://darkterminal.mintlify.app/dark-packages/turso-driver-laravel/readme"><strong>Examples</strong></a> ·
+  <a href="https://darkterminal.mintlify.app/dark-packages/turso-driver-laravel/readme"><strong>Docs</strong></a> ·
   <a href="https://discord.com/invite/4B5D7hYwub"><strong>Discord</strong></a> ·
   <a href="https://blog.turso.tech/"><strong>Blog &amp; Tutorials</strong></a>
 </p>
@@ -23,10 +23,10 @@
 <h1 id="a-libsql-driver-for-laravel" align="center">A LibSQL Driver for Laravel</h1>
 
 <p align="center">
-    <a href="https://packagist.org/packages/darkterminal/libsql-driver-laravel"><img src="https://img.shields.io/packagist/v/darkterminal/libsql-driver-laravel.svg?style=flat-square" alt="Latest Version on Packagist"></a>
-    <a href="https://github.com/darkterminal/libsql-driver-laravel/actions?query=workflow%3Arun-tests+branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/darkterminal/libsql-driver-laravel/run-tests.yml?branch=main&amp;label=tests&amp;style=flat-square" alt="GitHub Tests Action Status"></a>
-    <a href="https://github.com/darkterminal/libsql-driver-laravel/actions?query=workflow%3A&quot;Fix+PHP+code+style+issues&quot;+branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/darkterminal/libsql-driver-laravel/fix-php-code-style-issues.yml?branch=main&amp;label=code%20style&amp;style=flat-square" alt="GitHub Code Style Action Status"></a>
-    <a href="https://packagist.org/packages/darkterminal/libsql-driver-laravel"><img src="https://img.shields.io/packagist/dt/darkterminal/libsql-driver-laravel.svg?style=flat-square" alt="Total Downloads"></a>
+    <a href="https://packagist.org/packages/darkterminal/turso-driver-laravel"><img src="https://img.shields.io/packagist/v/darkterminal/turso-driver-laravel.svg?style=flat-square" alt="Latest Version on Packagist"></a>
+    <a href="https://github.com/darkterminal/turso-driver-laravel/actions?query=workflow%3Arun-tests+branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/darkterminal/turso-driver-laravel/run-tests.yml?branch=main&amp;label=tests&amp;style=flat-square" alt="GitHub Tests Action Status"></a>
+    <a href="https://github.com/darkterminal/turso-driver-laravel/actions?query=workflow%3A&quot;Fix+PHP+code+style+issues&quot;+branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/darkterminal/turso-driver-laravel/fix-php-code-style-issues.yml?branch=main&amp;label=code%20style&amp;style=flat-square" alt="GitHub Code Style Action Status"></a>
+    <a href="https://packagist.org/packages/darkterminal/turso-driver-laravel"><img src="https://img.shields.io/packagist/dt/darkterminal/turso-driver-laravel.svg?style=flat-square" alt="Total Downloads"></a>
 </p>
 
 LibSQL is a fork of SQLite and this package is **#1 LibSQL Driver** that run natively using LibSQL Native Extension/Driver/Whatever and support Laravel Ecosystem.
@@ -47,13 +47,13 @@ Before using this package, you need to install and configure LibSQL Native Exten
 You can install the package via composer:
 
 ```bash
-composer require darkterminal/libsql-driver-laravel
+composer require darkterminal/turso-driver-laravel
 ```
 
 You can publish package vendor using this command:
 
 ```bash
-php artisan vendor:publish --tag=libsql-driver-laravel
+php artisan vendor:publish --tag=turso-driver-laravel
 ```
 
 ## Environment Variable Overview
@@ -166,27 +166,27 @@ For database operation usage, everything have same interface like usual when you
 use Illuminate\Support\Facades\DB;
 
 // Create
-DB::connection('libsql')->table('users')->craete([
+DB::table('users')->craete([
     'name' => 'Budi Dalton',
     'email' => 'budi.dalton@duck.com'
 ]);
 
 // Read
-DB::connection('libsql')->table('users')->get();
-DB::connection('libsql')->table('users')->where('id', 2)->first();
-DB::connection('libsql')->table('users')->orderBy('id', 'DESC')->limit(2)->get();
+DB::table('users')->get();
+DB::table('users')->where('id', 2)->first();
+DB::table('users')->orderBy('id', 'DESC')->limit(2)->get();
 
 // Update
-DB::connection('libsql')->table('users')->where('id', 2)->update(['name' => 'Doni Mandala']);
+DB::table('users')->where('id', 2)->update(['name' => 'Doni Mandala']);
 
 // Delete
-DB::connection('libsql')->table('users')->where('id', 2)->delete();
+DB::table('users')->where('id', 2)->delete();
 
 // Transaction
 try {
     DB::beginTransaction();
 
-    $updated = DB::connection('libsql')->table('users')->where('id', 9)->update(['name' => 'Doni Kumala']);
+    $updated = DB::table('users')->where('id', 9)->update(['name' => 'Doni Kumala']);
 
     if ($updated) {
         echo "It's updated";
@@ -196,7 +196,7 @@ try {
         DB::rollBack();
     }
 
-    $data = DB::connection('libsql')->table('users')->orderBy('id', 'DESC')->limit(2)->get();
+    $data = DB::table('users')->orderBy('id', 'DESC')->limit(2)->get();
     dump($data);
 } catch (\Exception $e) {
     DB::rollBack();
@@ -204,7 +204,7 @@ try {
 }
 
 // Sync
-DB::connection('libsql')->sync();
+DB::sync();
 ```
 
 ## Changelog

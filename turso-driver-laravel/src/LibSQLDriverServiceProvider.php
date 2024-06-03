@@ -1,13 +1,12 @@
 <?php
 
-namespace Darkterminal\LibSQLDriver;
+namespace Turso\Driver\Laravel;
 
-use Darkterminal\LibSQLDriver\Database\LibSQLConnection;
-use Darkterminal\LibSQLDriver\Database\LibSQLConnector;
-// use Darkterminal\LibSQLDriver\Database\Connection;
+use Turso\Driver\Laravel\Database\LibSQLConnection;
+use Turso\Driver\Laravel\Database\LibSQLConnector;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Connection;
-use Darkterminal\LibSQLDriver\Database\LibSQLConnectionFactory;
+use Turso\Driver\Laravel\Database\LibSQLConnectionFactory;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 use Spatie\LaravelPackageTools\Package;
 
@@ -54,7 +53,7 @@ class LibSQLDriverServiceProvider extends PackageServiceProvider
          * More info: https://github.com/spatie/laravel-package-tools
          */
         $package
-            ->name('libsql-driver-laravel');
+            ->name('turso-driver-laravel');
     }
 
     public function register(): void

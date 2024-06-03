@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Darkterminal\LibSQLDriver\Database;
+namespace Turso\Driver\Laravel\Database;
 
 use Illuminate\Database\Schema\SQLiteBuilder;
 use Darkterminal\LibSQL\Exceptions\FeatureNotSupportedException;
