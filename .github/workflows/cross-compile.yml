@@ -22,12 +22,12 @@ jobs:
             target: x86_64-unknown-linux-gnu
             php-versions: '8.3'
 
-          # MacOS x64
+          # Macos x64
           - build: x86_64-apple-darwin
             os: macos-latest
             target: x86_64-apple-darwin
             php-versions: '8.3'
-
+          
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -35,54 +35,37 @@ jobs:
       - name: Get the release version from the tag
         shell: bash
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-        working-directory: ./turso-php-extension
 
       - name: Install Rust
+        # Or @stable if you want
         uses: dtolnay/rust-toolchain@nightly
         with:
           targets: ${{ matrix.target }}
-
+      
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-versions }}
-          tools: php-config
-
-      - name: Install build dependencies (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y clang llvm
-
-      - name: Install build dependencies (macOS)
-        if: matrix.os == 'macos-latest'
-        run: brew install llvm
-
-      - name: Export PHP Path
-        run: |
-          echo "PHP=$(which php)" >> $GITHUB_ENV
-          echo "PHP_CONFIG=$(which php-config)" >> $GITHUB_ENV
 
       - name: Build
-        run: |
-          export PATH="${{ runner.tool_cache }}/php/${{ matrix.php-versions }}/bin:$PATH"
-          export PHP_CONFIG_PATH="${{ runner.tool_cache }}/php/${{ matrix.php-versions }}/bin/php-config"
-          export CC=clang
-          export CXX=clang++
-          cd turso-php-extension
-          cargo build --verbose --release --target ${{ matrix.target }}
+        uses: actions-rs/cargo@v1
+        with:
+          use-cross: true
+          command: build
+          args: --verbose --release --target ${{ matrix.target }}
 
       - name: Build archive
         shell: bash
         run: |
-          cd turso-php-extension
+          # Replace with the name of your binary
           binary_name="libsql_php"
+
           dirname="$binary_name-${{ env.VERSION }}-${{ matrix.target }}"
           mkdir "$dirname"
           if [ "${{ matrix.os }}" = "macos-latest" ]; then
-              mv "target/${{ matrix.target }}/release/lib$binary_name.dylib" "$dirname" && mv "libsql_php_extension.stubs.php" "$dirname"
+              mv "target/${{ matrix.target }}/release/lib$binary_name.dylib" "$dirname" && mv "turso-php-extension/libsql_php_extension.stubs.php" "$dirname"
           else
-              mv "target/${{ matrix.target }}/release/lib$binary_name.so" "$dirname" && mv "libsql_php_extension.stubs.php" "$dirname"
+              mv "target/${{ matrix.target }}/release/lib$binary_name.so" "$dirname" && mv "turso-php-extension/libsql_php_extension.stubs.php" "$dirname"
           fi
 
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
@@ -91,8 +74,10 @@ jobs:
           else
             tar -czf "$dirname.tar.gz" "$dirname"
             echo "ASSET=$dirname.tar.gz" >> $GITHUB_ENV
+          fi
 
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: ${{ env.ASSET }}
+          files: |
+            ${{ env.ASSET }}
