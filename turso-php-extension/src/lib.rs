@@ -88,28 +88,23 @@ impl LibSQL {
         ) = match config {
             ConfigValue::String(dsn) => {
                 let dsn_parsed = match parse_dsn(&dsn) {
-                    Some(dsn) => match (dsn.dbname.is_empty(), dsn.auth_token) {
-                        (true, _) => Some((
-                            "".to_string(),
-                            "".to_string(),
-                            "".to_string(),
-                            std::time::Duration::from_secs(5),
-                            true,
-                        )),
-                        (false, None) => Some((
+                    Some(dsn) => match (dsn.dbname.is_empty(), dsn.auth_token.is_empty()) {
+                        (false, true) => Some((
                             dsn.dbname,
                             "".to_string(),
                             "".to_string(),
                             std::time::Duration::from_secs(5),
                             true,
                         )),
-                        (false, Some(auth_token)) => Some((
+                        (false, false) => Some((
                             dsn.dbname,
-                            auth_token,
+                            dsn.auth_token,
                             "".to_string(),
                             std::time::Duration::from_secs(5),
                             true,
                         )),
+                        (true, true) => None,
+                        (true, false) => None
                     },
                     None => None,
                 };
@@ -158,7 +153,7 @@ impl LibSQL {
                 let conn = providers::local::create_local_connection(
                     url,
                     Some(db_flags),
-                    Some(encryption_key.clone()),
+                    Some(encryption_key),
                 );
                 (conn, None)
             }
@@ -180,7 +175,7 @@ impl LibSQL {
                     sync_url.clone(),
                     sync_interval.clone(),
                     read_your_writes.clone(),
-                    Some(encryption_key.clone()),
+                    Some(encryption_key),
                 );
                 (conn, Some(db))
             }
