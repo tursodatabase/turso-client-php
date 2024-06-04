@@ -52,7 +52,7 @@ jobs:
 
       - name: Build
         run: |
-          echo "PHP=${{ runner.tool_cache }}/php/${{ matrix.php-versions }}/bin" >> $GITHUB_ENV
+          echo "${{ runner.tool_cache }}/php/${{ matrix.php-versions }}/bin" >> $GITHUB_ENV
           cd turso-php-extension
           cargo build --verbose --release --target ${{ matrix.target }}
 
