@@ -51,11 +51,9 @@ jobs:
       - name: Export PHP Path
         run: |
           echo "PHP=$(which php)" >> $GITHUB_ENV
-          echo "PHP_CONFIG=$(which php)" >> $GITHUB_ENV
 
       - name: Build
         run: |
-          export PATH="$(which php):$PATH"
           cd turso-php-extension
           cargo build --verbose --release --target ${{ matrix.target }}
 
