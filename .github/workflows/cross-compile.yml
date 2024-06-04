@@ -46,11 +46,13 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-versions }}
-          tools: composer
+          tools: php-config
 
       - name: Install build dependencies (Linux)
         if: matrix.os == 'ubuntu-latest'
-        run: sudo apt-get install -y clang
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang llvm
 
       - name: Install build dependencies (macOS)
         if: matrix.os == 'macos-latest'
@@ -59,9 +61,14 @@ jobs:
       - name: Export PHP Path
         run: |
           echo "PHP=$(which php)" >> $GITHUB_ENV
+          echo "PHP_CONFIG=$(which php-config)" >> $GITHUB_ENV
 
       - name: Build
         run: |
+          export PATH="${{ runner.tool_cache }}/php/${{ matrix.php-versions }}/bin:$PATH"
+          export PHP_CONFIG_PATH="${{ runner.tool_cache }}/php/${{ matrix.php-versions }}/bin/php-config"
+          export CC=clang
+          export CXX=clang++
           cd turso-php-extension
           cargo build --verbose --release --target ${{ matrix.target }}
 
@@ -69,9 +76,7 @@ jobs:
         shell: bash
         run: |
           cd turso-php-extension
-          # Replace with the name of your binary
           binary_name="libsql_php"
-
           dirname="$binary_name-${{ env.VERSION }}-${{ matrix.target }}"
           mkdir "$dirname"
           if [ "${{ matrix.os }}" = "macos-latest" ]; then
