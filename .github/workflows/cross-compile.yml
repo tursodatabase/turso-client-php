@@ -53,6 +53,7 @@ jobs:
       - name: Build
         run: |
           cd turso-php-extension
+          export PATH="${{ runner.tool_cache }}/php/${{ matrix.php-versions }}/bin:$PATH"
           cargo build --verbose --release --target ${{ matrix.target }}
 
       - name: Build archive
