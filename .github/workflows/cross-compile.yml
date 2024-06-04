@@ -32,9 +32,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Change to working directory
-        run: cd turso-php-extension
-
       - name: Get the release version from the tag
         shell: bash
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
@@ -49,10 +46,22 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-versions }}
+          tools: composer
+
+      - name: Export PHP Path
+        run: echo "${{ runner.tool_cache }}/php/${{ matrix.php-versions }}/bin" >> $GITHUB_ENV
+
+      - name: Install build dependencies (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get install -y clang
+
+      - name: Install build dependencies (macOS)
+        if: matrix.os == 'macos-latest'
+        run: brew install llvm
 
       - name: Build
         run: |
-          echo "${{ runner.tool_cache }}/php/${{ matrix.php-versions }}/bin" >> $GITHUB_ENV
+          export PATH="${{ runner.tool_cache }}/php/${{ matrix.php-versions }}/bin:$PATH"
           cd turso-php-extension
           cargo build --verbose --release --target ${{ matrix.target }}
 
