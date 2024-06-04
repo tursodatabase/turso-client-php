@@ -49,19 +49,13 @@ jobs:
           tools: composer
 
       - name: Export PHP Path
-        run: echo "PHP=${{ runner.tool_cache }}/php/${{ matrix.php-versions }}/bin:$PATH" >> $GITHUB_ENV
-
-      - name: Install build dependencies (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        run: sudo apt-get install -y clang
-
-      - name: Install build dependencies (macOS)
-        if: matrix.os == 'macos-latest'
-        run: brew install llvm
+        run: |
+          echo "PHP=$(which php)" >> $GITHUB_ENV
+          echo "PHP_CONFIG=$(which php)" >> $GITHUB_ENV
 
       - name: Build
         run: |
-          export PATH="${{ runner.tool_cache }}/php/${{ matrix.php-versions }}/bin:$PATH"
+          export PATH="$(which php)"
           cd turso-php-extension
           cargo build --verbose --release --target ${{ matrix.target }}
 
