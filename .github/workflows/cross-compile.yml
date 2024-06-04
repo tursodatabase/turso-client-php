@@ -60,7 +60,10 @@ jobs:
           # Replace with the name of your binary
           binary_name="libsql_php"
 
-          dirname="$binary_name-${{ env.VERSION }}-${{ matrix.target }}"
+          str_version=${{ env.VERSION }}
+          version=${str_version#turso-php-extension/}
+
+          dirname="$binary_name-$version-${{ matrix.target }}"
           mkdir "$dirname"
           if [ "${{ matrix.os }}" = "macos-latest" ]; then
               mv "target/${{ matrix.target }}/release/lib$binary_name.dylib" "$dirname" && mv "turso-php-extension/libsql_php_extension.stubs.php" "$dirname"
