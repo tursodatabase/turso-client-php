@@ -49,7 +49,7 @@ jobs:
           tools: composer
 
       - name: Export PHP Path
-        run: echo "PHP=${{ runner.tool_cache }}/php/${{ matrix.php-versions }}/bin" >> $GITHUB_ENV
+        run: echo "PHP=${{ runner.tool_cache }}/php/${{ matrix.php-versions }}/bin:$PATH" >> $GITHUB_ENV
 
       - name: Install build dependencies (Linux)
         if: matrix.os == 'ubuntu-latest'
