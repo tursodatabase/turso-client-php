@@ -166,6 +166,84 @@ namespace {
     }
 
     /**
+     * Represents the result of a LibSQL query.
+     */
+    class LibSQLResult
+    {
+        /**
+         * Creates a new LibSQLResult instance.
+         *
+         * @param string $config The configuration string for the database connection.
+         * @param string $sql The SQL query that produced this result.
+         * @param array $parameters The parameters for the SQL query (optional).
+         */
+        public function __construct(string $config, string $sql, array $parameters = [])
+        {
+        }
+
+        /**
+         * Fetches the result set as an array.
+         *
+         * @param int $mode The fetching mode (optional, default is 3).
+         *
+         * @return array The fetched result set.
+         */
+        public function fetchArray(int $mode = 3)
+        {
+        }
+
+        /**
+         * Finalizes the result set and frees the associated resources.
+         *
+         * @return void
+         */
+        public function finalize()
+        {
+        }
+
+        /**
+         * Resets the result set for re-execution.
+         *
+         * @return void
+         */
+        public function reset()
+        {
+        }
+
+        /**
+         * Retrieves the name of a column by its index.
+         *
+         * @param int $column The index of the column.
+         *
+         * @return string The name of the column.
+         */
+        public function columnName(int $column)
+        {
+        }
+
+        /**
+         * Retrieves the type of a column by its index.
+         *
+         * @param int $column The index of the column.
+         *
+         * @return string The type of the column.
+         */
+        public function columnType(int $column)
+        {
+        }
+
+        /**
+         * Retrieves the number of columns in the result set.
+         *
+         * @return int The number of columns.
+         */
+        public function numColumns()
+        {
+        }
+    }
+
+
+    /**
      * Represents a connection to a LibSQL database.
      */
     class LibSQL
@@ -184,6 +262,26 @@ namespace {
          * Specifies create mode when opening the database connection.
          */
         const OPEN_CREATE = 4;
+
+        /**
+         * Return associative array.
+         */
+        const LIBSQL_ASSOC = 1;
+
+        /**
+         * Return numerical array
+         */
+        const LIBSQL_NUM = 2;
+
+        /**
+         * Return both associative and numerical array
+         */
+        const LIBSQL_BOTH = 3;
+
+        /**
+         * Return a result sets
+         */
+        const LIBSQL_ALL = 4;
 
         /**
          * The mode of the connection.
@@ -408,7 +506,7 @@ namespace {
          * @param string $stmt The SQL query to execute.
          * @param array $parameters The parameters for the query (optional).
          *
-         * @return array The result of the query.
+         * @return LibSQLResult The result of the query.
          */
         public function query(string $stmt, array $parameters = [])
         {

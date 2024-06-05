@@ -4,10 +4,12 @@
 extern crate lazy_static;
 pub mod hooks;
 pub mod providers;
+pub mod result;
 pub mod statement;
 pub mod transaction;
 pub mod utils;
 extern crate ext_php_rs;
+use crate::result::LibSQLResult;
 use crate::statement::LibSQLStatement;
 use crate::transaction::LibSQLTransaction;
 use ext_php_rs::prelude::*;
@@ -35,6 +37,11 @@ pub const LIBSQL_OPEN_READWRITE: i32 = 2;
 /// Represents the flag for creating a new database if it does not exist.
 pub const LIBSQL_OPEN_CREATE: i32 = 4;
 
+pub const LIBSQL_ASSOC: i32 = 1;
+pub const LIBSQL_NUM: i32 = 2;
+pub const LIBSQL_BOTH: i32 = 3;
+pub const LIBSQL_ALL: i32 = 4;
+
 /// Struct representing LibSQL PHP Class.
 #[php_class]
 struct LibSQL {
@@ -59,6 +66,11 @@ impl LibSQL {
 
     /// Represents the flag for creating a new database if it does not exist.
     const OPEN_CREATE: i32 = 4;
+
+    const LIBSQL_ASSOC: i32 = 1;
+    const LIBSQL_NUM: i32 = 2;
+    const LIBSQL_BOTH: i32 = 3;
+    const LIBSQL_ALL: i32 = 4;
 
     /// Constructs a new `LibSQLConnection` object.
     ///
@@ -263,8 +275,8 @@ impl LibSQL {
         &self,
         stmt: &str,
         parameters: Option<QueryParameters>,
-    ) -> Result<ext_php_rs::types::Zval, PhpException> {
-        hooks::use_query::query(self.conn_id.to_string(), stmt, parameters)
+    ) -> Result<LibSQLResult, PhpException> {
+        LibSQLResult::__construct(self.conn_id.to_string(), stmt, parameters)
     }
 
     /// Initiates a transaction with the specified behavior.

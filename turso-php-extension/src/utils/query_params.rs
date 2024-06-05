@@ -13,7 +13,7 @@ enum QueryValue {
 }
 
 /// Represents query parameters for database queries.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct QueryParameters {
     positional: Option<Vec<QueryValue>>,
     named: Option<HashMap<String, QueryValue>>,
