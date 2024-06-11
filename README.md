@@ -1,32 +1,60 @@
 <p align="center">
-    <img src="https://i.imgur.com/Alogfmc.png" width="1000" />
+  <a href="https://docs.turso.tech/sdk/php/quickstart">
+    <img alt="Turso + PHP" src="https://github.com/tursodatabase/turso-client-php/assets/950181/f007cbca-02f7-46c4-a502-392484e76bc7" width="1000">
+    <h3 align="center">Turso + PHP</h3>
+  </a>
 </p>
-
-<p align="center" style="font-size: 24px;font-weight:bold;margin:0;">Native <a href="https://turso.tech/libsql">libSQL</a> Driver for PHP</p>
 <p align="center">
-    Build by Handsome Person from 🇮🇩 <br /> 
-    <a href="https://twitter.com/panggilmeiam" target="_blank">@panggilmeiam</a> or <a href="https://github.com/darkterminal" target="_blank">.darkterminal</a>
+  SQLite for Production. Powered by <a href="https://turso.tech/libsql">libSQL</a>.
 </p>
 
 <p align="center">
   <a href="https://turso.tech"><strong>Turso</strong></a> ·
-  <a href="https://darkterminal.mintlify.app/dark-extensions/introduction#quickstart"><strong>Quickstart</strong></a> ·
-  <a href="https://darkterminal.mintlify.app/dark-extensions/local-connection#usage-example"><strong>Examples</strong></a> ·
-  <a href="https://darkterminal.mintlify.app/dark-extensions/introduction"><strong>Docs</strong></a> ·
-  <a href="https://discord.com/invite/4B5D7hYwub"><strong>Discord</strong></a> ·
-  <a href="https://blog.turso.tech/"><strong>Blog &amp; Tutorials</strong></a>
+  <a href="https://docs.turso.tech/quickstart"><strong>Quickstart</strong></a> ·
+  <a href="/examples"><strong>Examples</strong></a> ·
+  <a href="https://docs.turso.tech"><strong>Docs</strong></a> ·
+  <a href="https://discord.gg/turso"><strong>Discord</strong></a> ·
+  <a href="https://turso.tech/blog"><strong>Blog &amp; Tutorials</strong></a>
 </p>
 
+<p align="center">
+  <a href="https://discord.com/invite/4B5D7hYwub">
+    <img src="https://dcbadge.vercel.app/api/server/4B5D7hYwub?style=flat" alt="discord activity" title="join us on discord" />
+  </a>
+</p>
+    
 ---
 
-LibSQL PHP Driver/Extension/Whatever designed to seamlessly handle local, remote, and remote replica/embedded replica connections, offering versatility and efficiency for your application's data management needs. With an intuitive interface and flexible configuration options, LibSQL empowers developers to effortlessly integrate database operations into your PHP projects.
+## Documentation
+
+1. [Turso Quickstart](https://docs.turso.tech/quickstart) &mdash; Learn how create and connect your first database.
+2. [SDK Quickstart](https://docs.turso.tech/sdk/php/quickstart) &mdash; Learn how to install and execute queries using the libSQL client.
+3. [SDK Reference](https://docs.turso.tech/sdk/php/reference) &mdash; Dive deeper with the libSQL SDK reference and examples.
+
+### What is Turso?
+
+[Turso](https://turso.tech) is a SQLite-compatible database built on [libSQL](https://docs.turso.tech/libsql), the Open Contribution fork of SQLite. It enables scaling to hundreds of thousands of databases per organization and supports replication to any location, including your own servers, for zero-latency reads.
+
+Learn more about what you can do with Turso:
+
+-   [Embedded Replicas](https://docs.turso.tech/features/embedded-replicas)
+-   [Multi-DB Schemas](https://docs.turso.tech/features/multi-db-schemas)
+-   [ATTACH Database](https://docs.turso.tech/features/attach-database)
+-   [Platform API](https://docs.turso.tech/features/platform-api)
+-   [Data Edge](https://docs.turso.tech/features/data-edge)
+-   [Branching](https://docs.turso.tech/features/branching)
+-   [Point-in-Time Recovery](https://docs.turso.tech/features/point-in-time-recovery)
+-   [Scale to Zero](https://docs.turso.tech/features/scale-to-zero)
 
 ## Download
 
-Download the latest build extension/driver binary you can see at [Release](https://github.com/darkterminal/libsql-extension/releases) page. It's available for:
+Download the latest build extension/driver binary you can see at [Release](https://github.com/darkterminal/libsql-extension/releases) page. 
+
+It's available for:
+
 - Linux
 - Mac/Darwin
-- Windows (still struggle, WSL are welcome!)
+- Windows (WSL)
 
 ## Installation
 
@@ -41,34 +69,3 @@ Check on your console/terminal
 ```bash
 php --m | grep libsql
 ```
-
-## Quickstart
-
-Remember, this is not a library or ORM, this is the native extension for LibSQL.
-
-```php
-<?php
-
-// Instanciate
-$db = new LibSQL(":memory:");
-
-// Create table
-$sql = "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, age INTEGER)";
-$db->execute($sql);
-
-// Insert data
-$db->execute("INSERT INTO users (name. age) VALUES ('Diana Hooggan', 24)");
-
-// Read data
-$results = $db->query("SELECT * FROM users");
-
-// Display data
-foreach ($results->fetchArray() as $row) {
-    echo "ID: " . $row['id'] . ", Name: " . $row['name'] . ", Age: " . $row['age'] . "\n";
-}
-
-// Close database
-$db->close();
-```
-
-How easy is that!?
