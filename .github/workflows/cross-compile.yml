@@ -1,9 +1,9 @@
-name: Cross Deploy
+name: Build and Publish PHP Extension
 
 on:
   push:
     tags:
-      - turso-php-extension/v*.*.*
+      - turso-php-extension-v*.*.*
 
 permissions:
   contents: write
