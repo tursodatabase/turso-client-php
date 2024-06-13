@@ -6,3 +6,4 @@ playground.rs
 *.env
 downloader.php
 bin/
+test-parse.php

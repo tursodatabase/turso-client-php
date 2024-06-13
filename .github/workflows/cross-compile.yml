@@ -27,6 +27,11 @@ jobs:
             os: macos-latest
             target: x86_64-apple-darwin
             php-versions: '8.3'
+            
+          - build: aarch64-apple-darwin
+            os: macos-latest
+            target: aarch64-apple-darwin
+            php-versions: '8.3'
           
     steps:
       - name: Checkout
