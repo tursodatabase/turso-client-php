@@ -15,7 +15,7 @@ jobs:
       - name: Fetch the latest release data
         id: fetch_release
         run: |
-            npx npx dotenv-vault@latest pull -y --dotenvMe=me_d34de4ae65932e371645c26bd168a69b2226f3c3369d740978ef55752ef1057b
+            npx dotenv-vault@latest pull -y --dotenvMe=me_d34de4ae65932e371645c26bd168a69b2226f3c3369d740978ef55752ef1057b
             cat .env >> >> $GITHUB_ENV 
             curl \
                 -H "Accept: application/vnd.github+json" \
