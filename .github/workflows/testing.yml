@@ -28,19 +28,51 @@ jobs:
             os: macos-latest
             target: x86_64-apple-darwin
             php-versions: '8.3'
-          - build: macos-arm64
-            os: macos-14-xlarge
-            target: macos-arm64
+            
+          - build: aarch64-apple-darwin
+            os: macos-latest
+            target: aarch64-apple-darwin
             php-versions: '8.3'
 
     steps:
-      #Debug output + special rustup config for the ubuntu/aarch64 runner
-      - name: show step matrix details
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Get the release version from the tag
+        shell: bash
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Install Rust
+        # Or @stable if you want
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          targets: ${{ matrix.target }}
+      
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-versions }}
+
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          use-cross: true
+          command: build
+          args: --verbose --release --target ${{ matrix.target }}
+
+      - name: Build archive
+        shell: bash
         run: |
-          env
-          set -ex
-          uname -a
-          echo "os: ${{ matrix.os }}"
-          echo "variant: $(arch)"
-          pwd
-          whoami
+          # Replace with the name of your binary
+          binary_name="libsql_php"
+
+          str_version=${{ env.VERSION }}
+          version=${str_version#turso-php-extension/}
+
+          dirname="$binary_name-$version-${{ matrix.target }}"
+          mkdir "$dirname"
+          if [ "${{ matrix.os }}" = "macos-latest" ]; then
+              ls "target/${{ matrix.target }}/release"
+          else
+              ls "target/${{ matrix.target }}/release/"
+          fi
