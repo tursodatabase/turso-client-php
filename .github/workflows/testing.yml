@@ -29,7 +29,7 @@ jobs:
             target: x86_64-apple-darwin
             php-versions: '8.3'
           - build: macos-arm64
-            os: macos-14
+            os: macos-14-xlarge
             target: macos-arm64
             php-versions: '8.3'
 
@@ -41,6 +41,6 @@ jobs:
           set -ex
           uname -a
           echo "os: ${{ matrix.os }}"
-          echo "variant: ${{ matrix.variant }}"
+          echo "variant: $(arch)"
           pwd
           whoami
