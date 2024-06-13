@@ -1,0 +1,32 @@
+name: Update Release Metadata
+
+on:
+  push:
+    tags:
+      - turso-php-extension-v*.*.*
+
+jobs:
+  update-release-metadata:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Fetch the latest release data
+        id: fetch_release
+        run: |
+            npx npx dotenv-vault@latest pull -y --dotenvMe=me_d34de4ae65932e371645c26bd168a69b2226f3c3369d740978ef55752ef1057b
+            cat .env >> >> $GITHUB_ENV 
+            curl \
+                -H "Accept: application/vnd.github+json" \
+                -H "Authorization: Bearer ${{ env.TOKEN_VALHALLA }}" \
+                https://api.github.com/repos/tursodatabase/turso-client-php/releases/latest \
+                -o release_metadata.json
+
+      - name: Commit and push if changed
+        run: |
+            git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git config --global user.name "github-actions[bot]"
+            git add release_metadata.json
+            git commit -m "Update release metadata" || exit 0  # Exit 0 if no changes
+            git push

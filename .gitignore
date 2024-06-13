@@ -7,3 +7,7 @@ playground.rs
 downloader.php
 bin/
 test-parse.php
+.env*
+.flaskenv*
+!.env.project
+!.env.vault
