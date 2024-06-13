@@ -70,7 +70,7 @@ jobs:
           version=${str_version#turso-php-extension/}
 
           dirname="$binary_name-$version-${{ matrix.target }}"
-          mkdir "$dirname"
+          # mkdir "$dirname"
           if [ "${{ matrix.os }}" = "macos-latest" ]; then
               ls "target/${{ matrix.target }}/release"
           else
