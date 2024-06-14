@@ -11,3 +11,4 @@ test-parse.php
 .flaskenv*
 !.env.project
 !.env.vault
+notes/
