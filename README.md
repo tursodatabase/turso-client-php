@@ -48,7 +48,7 @@ Learn more about what you can do with Turso:
 
 ## Download
 
-Download the latest build extension/driver binary you can see at [Release](https://github.com/darkterminal/libsql-extension/releases) page. 
+Download the latest build extension/driver binary you can see at [Release](https://github.com/tursodatabase/turso-client-php/releases) page. 
 
 It's available for:
 
