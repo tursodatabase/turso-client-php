@@ -36,4 +36,8 @@ jobs:
         run: |
           git add release_metadata.json
           git commit -m "Update release metadata"
+      
+      - name: Push changes
+        run: |
+          git remote set-url origin https://x-access-token:${{ env.TOKEN_VALHALLA }}@github.com/tursodatabase/turso-client-php.git
           git push origin main
