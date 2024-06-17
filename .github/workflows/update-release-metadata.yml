@@ -26,10 +26,13 @@ jobs:
                 -H "Authorization: Bearer ${{ env.TOKEN_VALHALLA }}" \
                 https://api.github.com/repos/tursodatabase/turso-client-php/releases/latest \
                 -o release_metadata.json
-
-      - name: "Commit and Push"
-        uses: EndBug/add-and-commit@v9
-        with:
-          message: Update release metadata
-          committer_name: Imam Ali Mustofa
-          committer_email: d.darkterminal@gmail.com
+                
+      - name: Add release metadata to repository
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git add release_metadata.json
+          git commit -m "Update release metadata"
+          git push
+        env:
+          TOKEN_VALHALLA: ${{ env.TOKEN_VALHALLA }}
