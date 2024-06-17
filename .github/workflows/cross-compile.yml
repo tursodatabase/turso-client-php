@@ -71,7 +71,8 @@ jobs:
           dirname="$binary_name-$version-${{ matrix.target }}"
           mkdir "$dirname"
           if [ "${{ matrix.os }}" = "macos-latest" ]; then
-              mv "target/${{ matrix.target }}/release/lib$binary_name.dylib" "$dirname" && mv "libsql_php_extension.stubs.php" "$dirname"
+              cp "target/${{ matrix.target }}/release/lib$binary_name.dylib" "target/${{ matrix.target }}/release/lib$binary_name.so"
+              mv "target/${{ matrix.target }}/release/lib$binary_name.dylib" "$dirname" && mv "target/${{ matrix.target }}/release/lib$binary_name.so" "$dirname" && mv "libsql_php_extension.stubs.php" "$dirname"
           else
               mv "target/${{ matrix.target }}/release/lib$binary_name.so" "$dirname" && mv "libsql_php_extension.stubs.php" "$dirname"
           fi
