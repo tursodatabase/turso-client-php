@@ -10,12 +10,17 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+      
+      - name: Download .env.development file and delete it after the workflow is finished
+        uses: zdeneklapes/dotenv-vault-action@v2
+        with:
+          dotenvMe: ${{ secrets.VAULT_TOKEN }}
+          stage: "development"
+          delete: "true"
 
       - name: Fetch the latest release data
         id: fetch_release
         run: |
-            npx dotenv-vault@latest pull -y --dotenvMe=${{ secrets.VAULT_TOKEN }}
-            cat .env >> $GITHUB_ENV 
             curl \
                 -H "Accept: application/vnd.github+json" \
                 -H "Authorization: Bearer ${{ env.TOKEN_VALHALLA }}" \
