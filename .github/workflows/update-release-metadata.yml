@@ -27,15 +27,9 @@ jobs:
                 https://api.github.com/repos/tursodatabase/turso-client-php/releases/latest \
                 -o release_metadata.json
 
-      - name: Configure git
-        run: |
-          git config --global user.email "32319439+darkterminal@users.noreply.github.com"
-          git config --global user.name "darkterminal"
-
-      - name: Commit and push if changed
-        env:
-          GITHUB_TOKEN: ${{ env.TOKEN_VALHALLA }}
-        run: |
-          git add release_metadata.json
-          git commit -m "Update release metadata" || exit 0  # Exit 0 if no changes
-          git push https://${{ env.TOKEN_VALHALLA }}@github.com/tursodatabase/turso-client-php.git
+      - name: "Commit and Push"
+        uses: EndBug/add-and-commit@v9
+        with:
+          message: Update release metadata
+          committer_name: Imam Ali Mustofa
+          committer_email: 32319439+darkterminal@users.noreply.github.com
