@@ -29,8 +29,8 @@ jobs:
 
       - name: Commit and push if changed
         run: |
-            git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git config --global user.name "github-actions[bot]"
+            git config --global user.email "32319439+darkterminal@users.noreply.github.com"
+            git config --global user.name "darkterminal"
             git add release_metadata.json
             git commit -m "Update release metadata" || exit 0  # Exit 0 if no changes
             git push
