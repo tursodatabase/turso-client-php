@@ -1,9 +1,8 @@
 name: Build and Publish PHP Extension
 
 on:
-  push:
-    tags:
-      - turso-php-extension-v*.*.*
+  release:
+    types: [created]
 
 permissions:
   contents: write
@@ -16,13 +15,30 @@ jobs:
     strategy:
       matrix:
         include:
-          # Linux x64
+          # Linux x64 - PHP8.2
+          - build: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            php-versions: '8.2'
+
+          # Macos x64 - PHP8.2
+          - build: x86_64-apple-darwin
+            os: macos-latest
+            target: x86_64-apple-darwin
+            php-versions: '8.2'
+            
+          - build: aarch64-apple-darwin
+            os: macos-latest
+            target: aarch64-apple-darwin
+            php-versions: '8.2'
+
+          # Linux x64 - PHP8.3
           - build: x86_64-unknown-linux-gnu
             os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             php-versions: '8.3'
 
-          # Macos x64
+          # Macos x64 - PHP8.3
           - build: x86_64-apple-darwin
             os: macos-latest
             target: x86_64-apple-darwin
@@ -57,7 +73,7 @@ jobs:
         with:
           use-cross: true
           command: build
-          args: --verbose --release --target ${{ matrix.target }}
+          args: --release --target ${{ matrix.target }}
 
       - name: Build archive
         shell: bash
@@ -68,8 +84,9 @@ jobs:
           str_version=${{ env.VERSION }}
           version=${str_version#turso-php-extension/}
 
-          dirname="$binary_name-$version-${{ matrix.target }}"
+          dirname="$binary_name-$version-php-${{ matrix.php-versions }}-${{ matrix.target }}"
           mkdir "$dirname"
+
           if [ "${{ matrix.os }}" = "macos-latest" ]; then
               cp "target/${{ matrix.target }}/release/lib$binary_name.dylib" "target/${{ matrix.target }}/release/lib$binary_name.so"
               mv "target/${{ matrix.target }}/release/lib$binary_name.dylib" "$dirname" && mv "target/${{ matrix.target }}/release/lib$binary_name.so" "$dirname" && mv "libsql_php_extension.stubs.php" "$dirname"
