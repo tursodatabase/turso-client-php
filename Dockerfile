@@ -17,8 +17,8 @@ RUN apt-get update && apt-get install -y \
     && add-apt-repository ppa:ondrej/php -y \
     && apt-get update
 
-# Install PHP 8.3 and php8.3-dev
-RUN apt-get install -y php8.3 php8.3-cli php8.3-common php8.3-dev
+# Install PHP 8.0,8.1,8.3
+RUN apt-get install -y php8.0 php8.0-cli php8.0-common php8.0-dev php8.1 php8.1-cli php8.1-common php8.1-dev php8.2 php8.2-cli php8.2-common php8.2-dev php8.3 php8.3-cli php8.3-common php8.3-dev
 
 # Create a non-root user and switch to it
 RUN useradd -m dockeruser
