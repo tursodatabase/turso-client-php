@@ -1,5 +1,5 @@
 # Use the latest version of Ubuntu
-FROM ubuntu:latest
+FROM ubuntu:20.04
 
 # Avoid prompts from apt
 ENV DEBIAN_FRONTEND=noninteractive
@@ -15,11 +15,8 @@ RUN apt-get update && apt-get install -y \
     llvm \
     libclang-dev
 
-# Function to retry commands
-RUN echo 'retry() { for i in $(seq 1 5); do $@ && return 0 || sleep 15; done; return 1; }' >> ~/.bashrc
-
 # Install PHP 8.0, 8.1, 8.2, 8.3 using retry logic
-RUN . ~/.bashrc && retry add-apt-repository ppa:ondrej/php -y && apt-get update && apt-get install -y \
+RUN LC_ALL=C.UTF-8 add-apt-repository -y ppa:ondrej/php && apt-get update && apt-get install -y \
     php8.0 php8.0-cli php8.0-common php8.0-dev \
     php8.1 php8.1-cli php8.1-common php8.1-dev \
     php8.2 php8.2-cli php8.2-common php8.2-dev \
