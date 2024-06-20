@@ -54,7 +54,14 @@ It's available for:
 
 - Linux
 - Mac/Darwin
-- Windows (WSL)
+- Windows (WSL) / [Windows x64](docs/WINDOWS_REQUIREMENT.md)
+
+## PHP Versions
+
+- PHP 8.0
+- PHP 8.1
+- PHP 8.2
+- PHP 8.3
 
 ## Installation
 
@@ -69,3 +76,7 @@ Check on your console/terminal
 ```bash
 php --m | grep libsql
 ```
+
+## Installer Script
+
+Install Turso Client PHP / libSQL Extension without worry using installer script, only for Linux and MacOS [Turso PHP Installer](https://github.com/darkterminal/turso-php-installer)
