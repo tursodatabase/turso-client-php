@@ -134,13 +134,12 @@ jobs:
 
       - name: Build (Linux)
         if: matrix.os == 'ubuntu-latest'
-        uses: actions-rs/cargo@v1
-        with:
-          use-cross: true
-          command: build
-          args: --release --target ${{ matrix.target }}
+        run: |
+          cargo install cross
+          export CROSS_CONFIG=./Cross_php-${{ matrix.php-versions }}.toml
+          cross build --release --target ${{ matrix.target }}
       
-      - name: Build (MacOS and Windows)
+      - name: Build Extension
         if: matrix.os != 'ubuntu-latest'
         run: cargo build --release --target ${{ matrix.target }}
 
