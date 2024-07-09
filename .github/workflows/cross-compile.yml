@@ -34,7 +34,7 @@ jobs:
           
           # Windows x64 - PHP8.0
           - build: x86_64-pc-windows-msvc
-            os: windows-latest
+            os: windows-2019
             target: x86_64-pc-windows-msvc
             php-versions: '8.0'
 
@@ -57,7 +57,7 @@ jobs:
           
           # Windows x64 - PHP8.1
           - build: x86_64-pc-windows-msvc
-            os: windows-latest
+            os: windows-2019
             target: x86_64-pc-windows-msvc
             php-versions: '8.1'
             
@@ -80,7 +80,7 @@ jobs:
           
           # Windows x64 - PHP8.2
           - build: x86_64-pc-windows-msvc
-            os: windows-latest
+            os: windows-2019
             target: x86_64-pc-windows-msvc
             php-versions: '8.2'
 
@@ -103,7 +103,7 @@ jobs:
           
           # Windows x64 - PHP8.3
           - build: x86_64-pc-windows-msvc
-            os: windows-latest
+            os: windows-2019
             target: x86_64-pc-windows-msvc
             php-versions: '8.3'
           
