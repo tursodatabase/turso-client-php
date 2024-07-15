@@ -1,10 +1,8 @@
 name: Update Release Metadata
 
 on:
-  workflow_run:
-    workflows: ["Build and Publish PHP Extension"]
-    types:
-      - completed
+  schedule:
+    - cron: '0 1 * * *'
 
 permissions:
   contents: write
