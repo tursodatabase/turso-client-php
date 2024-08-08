@@ -62,7 +62,7 @@
       "content_type": "application/gzip",
       "state": "uploaded",
       "size": 7810270,
-      "download_count": 6,
+      "download_count": 9,
       "created_at": "2024-06-21T04:21:44Z",
       "updated_at": "2024-06-21T04:21:45Z",
       "browser_download_url": "https://github.com/tursodatabase/turso-client-php/releases/download/turso-php-extension-v1.2.6/libsql_php-turso-php-extension-v1.2.6-php-8.0-aarch64-apple-darwin.tar.gz"
@@ -96,7 +96,7 @@
       "content_type": "application/gzip",
       "state": "uploaded",
       "size": 6258295,
-      "download_count": 2,
+      "download_count": 3,
       "created_at": "2024-06-21T04:24:45Z",
       "updated_at": "2024-06-21T04:24:45Z",
       "browser_download_url": "https://github.com/tursodatabase/turso-client-php/releases/download/turso-php-extension-v1.2.6/libsql_php-turso-php-extension-v1.2.6-php-8.0-x86_64-apple-darwin.tar.gz"
@@ -130,7 +130,7 @@
       "content_type": "application/zip",
       "state": "uploaded",
       "size": 3649239,
-      "download_count": 3,
+      "download_count": 4,
       "created_at": "2024-06-21T04:25:25Z",
       "updated_at": "2024-06-21T04:25:26Z",
       "browser_download_url": "https://github.com/tursodatabase/turso-client-php/releases/download/turso-php-extension-v1.2.6/libsql_php-turso-php-extension-v1.2.6-php-8.0-x86_64-pc-windows-msvc.zip"
@@ -164,7 +164,7 @@
       "content_type": "application/gzip",
       "state": "uploaded",
       "size": 4507086,
-      "download_count": 5,
+      "download_count": 6,
       "created_at": "2024-06-21T04:24:09Z",
       "updated_at": "2024-06-21T04:24:10Z",
       "browser_download_url": "https://github.com/tursodatabase/turso-client-php/releases/download/turso-php-extension-v1.2.6/libsql_php-turso-php-extension-v1.2.6-php-8.0-x86_64-unknown-linux-gnu.tar.gz"
@@ -198,7 +198,7 @@
       "content_type": "application/gzip",
       "state": "uploaded",
       "size": 7810190,
-      "download_count": 1,
+      "download_count": 2,
       "created_at": "2024-06-21T04:21:04Z",
       "updated_at": "2024-06-21T04:21:05Z",
       "browser_download_url": "https://github.com/tursodatabase/turso-client-php/releases/download/turso-php-extension-v1.2.6/libsql_php-turso-php-extension-v1.2.6-php-8.1-aarch64-apple-darwin.tar.gz"
@@ -232,7 +232,7 @@
       "content_type": "application/gzip",
       "state": "uploaded",
       "size": 6258785,
-      "download_count": 0,
+      "download_count": 2,
       "created_at": "2024-06-21T04:21:26Z",
       "updated_at": "2024-06-21T04:21:27Z",
       "browser_download_url": "https://github.com/tursodatabase/turso-client-php/releases/download/turso-php-extension-v1.2.6/libsql_php-turso-php-extension-v1.2.6-php-8.1-x86_64-apple-darwin.tar.gz"
@@ -266,7 +266,7 @@
       "content_type": "application/zip",
       "state": "uploaded",
       "size": 3648753,
-      "download_count": 0,
+      "download_count": 1,
       "created_at": "2024-06-21T04:25:08Z",
       "updated_at": "2024-06-21T04:25:08Z",
       "browser_download_url": "https://github.com/tursodatabase/turso-client-php/releases/download/turso-php-extension-v1.2.6/libsql_php-turso-php-extension-v1.2.6-php-8.1-x86_64-pc-windows-msvc.zip"
@@ -300,7 +300,7 @@
       "content_type": "application/gzip",
       "state": "uploaded",
       "size": 4506999,
-      "download_count": 9,
+      "download_count": 10,
       "created_at": "2024-06-21T04:23:54Z",
       "updated_at": "2024-06-21T04:23:55Z",
       "browser_download_url": "https://github.com/tursodatabase/turso-client-php/releases/download/turso-php-extension-v1.2.6/libsql_php-turso-php-extension-v1.2.6-php-8.1-x86_64-unknown-linux-gnu.tar.gz"
@@ -334,7 +334,7 @@
       "content_type": "application/gzip",
       "state": "uploaded",
       "size": 7810247,
-      "download_count": 9,
+      "download_count": 12,
       "created_at": "2024-06-21T04:21:27Z",
       "updated_at": "2024-06-21T04:21:28Z",
       "browser_download_url": "https://github.com/tursodatabase/turso-client-php/releases/download/turso-php-extension-v1.2.6/libsql_php-turso-php-extension-v1.2.6-php-8.2-aarch64-apple-darwin.tar.gz"
@@ -368,7 +368,7 @@
       "content_type": "application/gzip",
       "state": "uploaded",
       "size": 6258097,
-      "download_count": 7,
+      "download_count": 9,
       "created_at": "2024-06-21T04:24:14Z",
       "updated_at": "2024-06-21T04:24:15Z",
       "browser_download_url": "https://github.com/tursodatabase/turso-client-php/releases/download/turso-php-extension-v1.2.6/libsql_php-turso-php-extension-v1.2.6-php-8.2-x86_64-apple-darwin.tar.gz"
@@ -470,7 +470,7 @@
       "content_type": "application/gzip",
       "state": "uploaded",
       "size": 7809978,
-      "download_count": 18,
+      "download_count": 22,
       "created_at": "2024-06-21T04:21:02Z",
       "updated_at": "2024-06-21T04:21:03Z",
       "browser_download_url": "https://github.com/tursodatabase/turso-client-php/releases/download/turso-php-extension-v1.2.6/libsql_php-turso-php-extension-v1.2.6-php-8.3-aarch64-apple-darwin.tar.gz"
@@ -504,7 +504,7 @@
       "content_type": "application/gzip",
       "state": "uploaded",
       "size": 6258298,
-      "download_count": 5,
+      "download_count": 7,
       "created_at": "2024-06-21T04:24:15Z",
       "updated_at": "2024-06-21T04:24:16Z",
       "browser_download_url": "https://github.com/tursodatabase/turso-client-php/releases/download/turso-php-extension-v1.2.6/libsql_php-turso-php-extension-v1.2.6-php-8.3-x86_64-apple-darwin.tar.gz"
@@ -538,7 +538,7 @@
       "content_type": "application/zip",
       "state": "uploaded",
       "size": 3648631,
-      "download_count": 5,
+      "download_count": 6,
       "created_at": "2024-06-21T04:25:08Z",
       "updated_at": "2024-06-21T04:25:08Z",
       "browser_download_url": "https://github.com/tursodatabase/turso-client-php/releases/download/turso-php-extension-v1.2.6/libsql_php-turso-php-extension-v1.2.6-php-8.3-x86_64-pc-windows-msvc.zip"
@@ -572,7 +572,7 @@
       "content_type": "application/gzip",
       "state": "uploaded",
       "size": 4507185,
-      "download_count": 80,
+      "download_count": 83,
       "created_at": "2024-06-21T04:23:55Z",
       "updated_at": "2024-06-21T04:23:56Z",
       "browser_download_url": "https://github.com/tursodatabase/turso-client-php/releases/download/turso-php-extension-v1.2.6/libsql_php-turso-php-extension-v1.2.6-php-8.3-x86_64-unknown-linux-gnu.tar.gz"
