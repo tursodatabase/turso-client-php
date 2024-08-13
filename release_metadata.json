@@ -436,7 +436,7 @@
       "content_type": "application/gzip",
       "state": "uploaded",
       "size": 4597347,
-      "download_count": 12,
+      "download_count": 21,
       "created_at": "2024-08-08T02:22:33Z",
       "updated_at": "2024-08-08T02:22:34Z",
       "browser_download_url": "https://github.com/tursodatabase/turso-client-php/releases/download/turso-php-extension-v1.2.7/libsql_php-turso-php-extension-v1.2.7-php-8.2-x86_64-unknown-linux-gnu.tar.gz"
@@ -572,7 +572,7 @@
       "content_type": "application/gzip",
       "state": "uploaded",
       "size": 4597326,
-      "download_count": 8,
+      "download_count": 12,
       "created_at": "2024-08-08T02:22:46Z",
       "updated_at": "2024-08-08T02:22:47Z",
       "browser_download_url": "https://github.com/tursodatabase/turso-client-php/releases/download/turso-php-extension-v1.2.7/libsql_php-turso-php-extension-v1.2.7-php-8.3-x86_64-unknown-linux-gnu.tar.gz"
