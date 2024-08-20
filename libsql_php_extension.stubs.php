@@ -15,18 +15,14 @@ namespace {
          * @param string $conn_id The connection ID.
          * @param string $sql The SQL statement.
          */
-        public function __construct(string $conn_id, string $sql)
-        {
-        }
+        public function __construct(string $conn_id, string $sql) {}
 
         /**
          * Finalizes the prepared statement.
          *
          * @return void
          */
-        public function finalize()
-        {
-        }
+        public function finalize() {}
 
         /**
          * Executes the prepared statement with given parameters.
@@ -35,9 +31,7 @@ namespace {
          * 
          * @return int The number of affected rows.
          */
-        public function execute(array $parameters)
-        {
-        }
+        public function execute(array $parameters) {}
 
         /**
          * Executes the prepared statement and retrieves the result set.
@@ -46,27 +40,21 @@ namespace {
          * 
          * @return LibSQLResult The result set.
          */
-        public function query(array $parameters = [])
-        {
-        }
+        public function query(array $parameters = []) {}
 
         /**
          * Resets the prepared statement.
          *
          * @return void
          */
-        public function reset()
-        {
-        }
+        public function reset() {}
 
         /**
          * Gets the number of parameters in the prepared statement.
          *
          * @return int The number of parameters.
          */
-        public function parameterCount()
-        {
-        }
+        public function parameterCount() {}
 
         /**
          * Gets the name of a parameter by index.
@@ -75,18 +63,14 @@ namespace {
          * 
          * @return string The name of the parameter.
          */
-        public function parameterName(int $idx)
-        {
-        }
+        public function parameterName(int $idx) {}
 
         /**
          * Gets the column names of the result set.
          *
          * @return array The column names.
          */
-        public function columns()
-        {
-        }
+        public function columns() {}
     }
 
     /**
@@ -100,27 +84,21 @@ namespace {
          * @param string $conn_id The connection ID.
          * @param string $trx_mode The transaction mode.
          */
-        public function __construct(string $conn_id, string $trx_mode)
-        {
-        }
+        public function __construct(string $conn_id, string $trx_mode) {}
 
         /**
          * Retrieves the number of rows changed by the last SQL statement.
          *
          * @return int The number of rows changed.
          */
-        public function changes()
-        {
-        }
+        public function changes() {}
 
         /**
          * Checks if the transaction is set to autocommit.
          *
          * @return bool True if autocommit is enabled, otherwise false.
          */
-        public function isAutocommit()
-        {
-        }
+        public function isAutocommit() {}
 
         /**
          * Executes an SQL statement within the transaction.
@@ -130,9 +108,7 @@ namespace {
          *
          * @return int The number of affected rows.
          */
-        public function execute(string $stmt, array $parameters = [])
-        {
-        }
+        public function execute(string $stmt, array $parameters = []) {}
 
         /**
          * Executes a query within the transaction and returns the result set.
@@ -142,27 +118,21 @@ namespace {
          *
          * @return array The result set.
          */
-        public function query(string $stmt, array $parameters = [])
-        {
-        }
+        public function query(string $stmt, array $parameters = []) {}
 
         /**
          * Commits the transaction.
          *
          * @return void
          */
-        public function commit()
-        {
-        }
+        public function commit() {}
 
         /**
          * Rolls back the transaction.
          *
          * @return void
          */
-        public function rollback()
-        {
-        }
+        public function rollback() {}
     }
 
     /**
@@ -177,38 +147,30 @@ namespace {
          * @param string $sql The SQL query that produced this result.
          * @param array $parameters The parameters for the SQL query (optional).
          */
-        public function __construct(string $config, string $sql, array $parameters = [])
-        {
-        }
+        public function __construct(string $config, string $sql, array $parameters = []) {}
 
         /**
          * Fetches the result set as an array.
          *
          * @param int $mode The fetching mode (optional, default is 3).
          *
-         * @return array The fetched result set.
+         * @return array|LibSQLIterator The fetched result set.
          */
-        public function fetchArray(int $mode = 3)
-        {
-        }
+        public function fetchArray(int $mode = 3) {}
 
         /**
          * Finalizes the result set and frees the associated resources.
          *
          * @return void
          */
-        public function finalize()
-        {
-        }
+        public function finalize() {}
 
         /**
          * Resets the result set for re-execution.
          *
          * @return void
          */
-        public function reset()
-        {
-        }
+        public function reset() {}
 
         /**
          * Retrieves the name of a column by its index.
@@ -217,9 +179,7 @@ namespace {
          *
          * @return string The name of the column.
          */
-        public function columnName(int $column)
-        {
-        }
+        public function columnName(int $column) {}
 
         /**
          * Retrieves the type of a column by its index.
@@ -228,18 +188,14 @@ namespace {
          *
          * @return string The type of the column.
          */
-        public function columnType(int $column)
-        {
-        }
+        public function columnType(int $column) {}
 
         /**
          * Retrieves the number of columns in the result set.
          *
          * @return int The number of columns.
          */
-        public function numColumns()
-        {
-        }
+        public function numColumns() {}
     }
 
 
@@ -282,6 +238,11 @@ namespace {
          * Return a result sets
          */
         const LIBSQL_ALL = 4;
+        
+        /**
+         * Return a result Generator
+         */
+        const LIBSQL_LAZY = 5;
 
         /**
          * The mode of the connection.
@@ -353,9 +314,7 @@ namespace {
          * @param integer|null $flags
          * @param string|null $encryption_key
          */
-        public function __construct(string|array $config, ?int $flags = 6, ?string $encryption_key = "")
-        {
-        }
+        public function __construct(string|array $config, ?int $flags = 6, ?string $encryption_key = "") {}
 
         /**
          * Retrieves the version of the LibSQL library.
@@ -372,9 +331,7 @@ namespace {
          *
          * @return string The version string.
          */
-        public static function version()
-        {
-        }
+        public static function version() {}
 
         /**
          * Retrieves the number of rows changed by the last SQL statement.
@@ -396,9 +353,7 @@ namespace {
          * ```
          * @return int The number of rows changed.
          */
-        public function changes()
-        {
-        }
+        public function changes() {}
 
         /**
          * Checks if autocommit mode is enabled for the connection.
@@ -420,9 +375,7 @@ namespace {
          *
          * @return bool True if autocommit is enabled, otherwise false.
          */
-        public function isAutocommit()
-        {
-        }
+        public function isAutocommit() {}
 
         /**
          * Executes an SQL statement on the database.
@@ -448,9 +401,7 @@ namespace {
          *
          * @return int The number of rows affected by the statement.
          */
-        public function execute(string $stmt, array $parameters = [])
-        {
-        }
+        public function execute(string $stmt, array $parameters = []) {}
 
         /**
          * Executes a batch of SQL statements on the database.
@@ -482,9 +433,7 @@ namespace {
          *
          * @return bool True if the batch execution was successful, otherwise false.
          */
-        public function executeBatch(string $stmt)
-        {
-        }
+        public function executeBatch(string $stmt) {}
 
         /**
          * Executes an SQL query on the database.
@@ -508,9 +457,7 @@ namespace {
          *
          * @return LibSQLResult The result of the query.
          */
-        public function query(string $stmt, array $parameters = [])
-        {
-        }
+        public function query(string $stmt, array $parameters = []) {}
 
         /**
          * Initiates a new database transaction.
@@ -543,9 +490,7 @@ namespace {
          *
          * @return \LibSQLTransaction The transaction object.
          */
-        public function transaction(string $behavior = "DEFERRED")
-        {
-        }
+        public function transaction(string $behavior = "DEFERRED") {}
 
         /**
          * Prepares an SQL statement for execution.
@@ -576,9 +521,7 @@ namespace {
          *
          * @return \LibSQLStatement The prepared statement object.
          */
-        public function prepare(string $sql)
-        {
-        }
+        public function prepare(string $sql) {}
 
         /**
          * Closes the database connection.
@@ -591,9 +534,7 @@ namespace {
          *
          * @return void The result of the close operation.
          */
-        public function close()
-        {
-        }
+        public function close() {}
 
         /**
          * Sync the database.
@@ -606,8 +547,64 @@ namespace {
          *
          * @return void The result of the sync operation.
          */
-        public function sync()
-        {
-        }
+        public function sync() {}
+    }
+
+    /**
+     * Class LibSQLIterator
+     *
+     * A custom iterator class for traversing a data structure, typically a PHP array.
+     * The iterator wraps a data object and provides the necessary methods to
+     * iterate through the data.
+     */
+    class LibSQLIterator
+    {
+        /**
+         * Constructor for LibSQLIterator.
+         *
+         * @param mixed $data The data to be iterated over. This can be any type of data,
+         *                    but it is typically expected to be a PHP array or an object
+         *                    that can be iterated over.
+         */
+        public function __construct(mixed $data) {}
+
+        /**
+         * Returns the current element in the iteration.
+         *
+         * @return mixed|null The current element. If no element exists at the current position,
+         *                    this will return null.
+         */
+        public function current() {}
+
+        /**
+         * Returns the key of the current element in the iteration.
+         *
+         * @return int The current key, typically an integer representing the position in the iteration.
+         */
+        public function key() {}
+
+        /**
+         * Moves the iterator to the next element.
+         *
+         * This method advances the internal pointer of the iterator to the next element.
+         */
+        public function next() {}
+
+        /**
+         * Rewinds the iterator to the first element.
+         *
+         * This method resets the internal pointer of the iterator to the start.
+         */
+        public function rewind() {}
+
+        /**
+         * Checks if the current position is valid.
+         *
+         * This method determines whether the current position in the iteration is valid,
+         * i.e., if there is an element at the current position.
+         *
+         * @return bool True if the current position is valid, false otherwise.
+         */
+        public function valid() {}
     }
 }
