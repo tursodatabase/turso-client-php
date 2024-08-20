@@ -25,6 +25,12 @@
     
 ---
 
+<p align="center">
+  <a href="https://tur.so/dt" target="_blank">🚀 I'll give you 10% off Turso Scaler and Pro for 1 Year 🚀</a>
+</p>
+
+---
+
 ## Documentation
 
 1. [Turso Quickstart](https://docs.turso.tech/quickstart) &mdash; Learn how create and connect your first database.
