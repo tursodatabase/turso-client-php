@@ -2,17 +2,21 @@
 #[allow(non_snake_case, deprecated, unused_attributes)]
 #[cfg_attr(windows, feature(abi_vectorcall))]
 extern crate lazy_static;
+extern crate ext_php_rs;
 pub mod hooks;
 pub mod providers;
 pub mod result;
 pub mod statement;
 pub mod transaction;
 pub mod utils;
-extern crate ext_php_rs;
+pub mod generator;
+use crate::result::FetchResult;
 use crate::result::LibSQLResult;
 use crate::statement::LibSQLStatement;
 use crate::transaction::LibSQLTransaction;
+use crate::generator::LibSQLIterator;
 use ext_php_rs::prelude::*;
+use ext_php_rs::types::Zval;
 use std::{collections::HashMap, sync::Mutex};
 use utils::{
     config_value::ConfigValue,
@@ -41,6 +45,7 @@ pub const LIBSQL_ASSOC: i32 = 1;
 pub const LIBSQL_NUM: i32 = 2;
 pub const LIBSQL_BOTH: i32 = 3;
 pub const LIBSQL_ALL: i32 = 4;
+pub const LIBSQL_LAZY: i32 = 5;
 
 /// Struct representing LibSQL PHP Class.
 #[php_class]
@@ -71,6 +76,7 @@ impl LibSQL {
     const LIBSQL_NUM: i32 = 2;
     const LIBSQL_BOTH: i32 = 3;
     const LIBSQL_ALL: i32 = 4;
+    const LIBSQL_LAZY: i32 = 5;
 
     /// Constructs a new `LibSQLConnection` object.
     ///
