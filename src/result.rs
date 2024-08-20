@@ -8,11 +8,36 @@ use std::collections::HashMap;
 use ext_php_rs::prelude::*;
 
 use crate::{
-    hooks, utils::{
+    generator::LibSQLIterator,
+    hooks,
+    utils::{
         query_params::QueryParameters,
         runtime::{convert_libsql_value_to_zval, runtime},
-    }, CONNECTION_REGISTRY, LIBSQL_ALL, LIBSQL_ASSOC, LIBSQL_NUM
+    },
+    CONNECTION_REGISTRY, LIBSQL_ALL, LIBSQL_ASSOC, LIBSQL_LAZY, LIBSQL_NUM,
 };
+
+pub enum FetchResult {
+    Zval(ext_php_rs::types::Zval),
+    Iterator(LibSQLIterator),
+}
+
+impl IntoZval for FetchResult {
+    fn set_zval(self, zv: &mut ext_php_rs::types::Zval, _: bool) -> ext_php_rs::error::Result<()> {
+        match self {
+            FetchResult::Zval(zval) => zval.set_zval(zv, false),
+            FetchResult::Iterator(iterator) => iterator.set_zval(zv, false),
+        }
+    }
+
+    const TYPE: ext_php_rs::flags::DataType = ext_php_rs::flags::DataType::Mixed; // You need to specify the correct DataType here
+
+    fn into_zval(self, persistent: bool) -> ext_php_rs::error::Result<ext_php_rs::types::Zval> {
+        let mut zval = ext_php_rs::types::Zval::new();
+        self.set_zval(&mut zval, persistent)?;
+        Ok(zval)
+    }
+}
 
 #[php_class]
 pub struct LibSQLResult {
@@ -50,9 +75,9 @@ impl LibSQLResult {
         })
     }
 
-    pub fn fetch_array(&self, mode: Option<i32>) -> Result<ext_php_rs::types::Zval, PhpException> {
+    pub fn fetch_array(&self, mode: Option<i32>) -> Result<FetchResult, PhpException> {
         let mode = mode.unwrap_or(3);
-        
+
         if mode != LIBSQL_ALL {
             let query_result = runtime().block_on(async {
                 let mut rows = self
@@ -61,22 +86,22 @@ impl LibSQLResult {
                     .await
                     .map_err(|e| PhpException::from(e.to_string()))?;
                 let mut results: Vec<HashMap<String, libsql::Value>> = Vec::new();
-    
+
                 while let Ok(Some(row)) = rows.next().await {
                     let mut result = HashMap::new();
-    
+
                     if mode == LIBSQL_ASSOC {
                         for idx in 0..rows.column_count() {
                             let column_name = row.column_name(idx as i32).unwrap();
                             let value = row.get_value(idx).unwrap();
-    
+
                             result.insert(column_name.to_string(), value);
                         }
                         results.push(result);
                     } else if mode == LIBSQL_NUM {
                         for idx in 0..rows.column_count() {
                             let value = row.get_value(idx).unwrap();
-    
+
                             result.insert(idx.to_string(), value);
                         }
                         results.push(result);
@@ -84,21 +109,21 @@ impl LibSQLResult {
                         for idx in 0..rows.column_count() {
                             let column_name = row.column_name(idx as i32).unwrap();
                             let value = row.get_value(idx).unwrap();
-    
+
                             result.insert(column_name.to_string(), value.clone());
                             result.insert(idx.to_string(), value);
                         }
                         results.push(result);
                     }
                 }
-    
+
                 Ok(results)
             });
-    
+
             match query_result {
                 Ok(results) => {
                     let mut arr = ext_php_rs::types::ZendHashTable::new();
-    
+
                     for result in results {
                         let mut sub_arr = ext_php_rs::types::ZendHashTable::new();
                         for (key, value) in result {
@@ -110,14 +135,23 @@ impl LibSQLResult {
                         }
                         arr.push(sub_arr)?;
                     }
-    
-                    let zval_arr = arr.into_zval(false)?;
+
+                    let zval_arr = if mode == LIBSQL_LAZY {
+                        let data = arr.into_zval(false).unwrap();
+                        FetchResult::Iterator(LibSQLIterator::__construct(&data))
+                    } else {
+                        FetchResult::Zval(arr.into_zval(false).unwrap())
+                    };
                     Ok(zval_arr)
                 }
                 Err(e) => Err(e),
             }
         } else {
-            hooks::use_query::query(self.conn_string.clone(), self.sql.as_str(), self.query_params.clone())
+            Ok(FetchResult::Zval(hooks::use_query::query(
+                self.conn_string.clone(),
+                self.sql.as_str(),
+                self.query_params.clone(),
+            )?))
         }
     }
 
@@ -130,8 +164,9 @@ impl LibSQLResult {
                 .map_err(|e| PhpException::from(e.to_string()))?;
 
             if let Ok(Some(row)) = rows.next().await {
-                let column_name = row.column_name(column_index)
-                    .ok_or_else(|| PhpException::from(format!("Column index {} out of bounds", column_index)))?;
+                let column_name = row.column_name(column_index).ok_or_else(|| {
+                    PhpException::from(format!("Column index {} out of bounds", column_index))
+                })?;
                 Ok(column_name.to_string())
             } else {
                 Err(PhpException::from("No rows returned from query"))
@@ -148,9 +183,10 @@ impl LibSQLResult {
                 .map_err(|e| PhpException::from(e.to_string()))?;
 
             if let Ok(Some(row)) = rows.next().await {
-                let column_type = row.column_type(column_index)
+                let column_type = row
+                    .column_type(column_index)
                     .map_err(|e| PhpException::from(e.to_string()))?;
-                
+
                 let column_type_str = match column_type {
                     libsql::ValueType::Integer => "Integer",
                     libsql::ValueType::Real => "Real",
@@ -178,7 +214,9 @@ impl LibSQLResult {
                 let num_columns = rows.column_count();
                 Ok(num_columns as i32)
             } else {
-                Err(PhpException::from("No rows returned from query, unable to determine number of columns"))
+                Err(PhpException::from(
+                    "No rows returned from query, unable to determine number of columns",
+                ))
             }
         })
     }
@@ -189,9 +227,7 @@ impl LibSQLResult {
     }
 
     pub fn reset(&self) -> Result<(), PhpException> {
-        runtime().block_on(async {
-            self.conn.reset().await
-        });
+        runtime().block_on(async { self.conn.reset().await });
 
         Ok(())
     }
