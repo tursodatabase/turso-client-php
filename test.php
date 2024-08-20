@@ -20,7 +20,14 @@ STMT;
 
 $db->executeBatch($createUsers);
 
-$getAllUsers = $db->query("SELECT * FROM users")->fetchArray();
-var_dump($getAllUsers);
+$users = $db->query("SELECT * FROM users")->fetchArray(LibSQL::LIBSQL_LAZY);
 
-$db->close();
+do {
+    
+    $user = $users->current();
+    
+    echo "Age: {$user['age']}, Name: {$user['name']}\n";
+    
+    $users->next();
+
+} while ($users->valid());
