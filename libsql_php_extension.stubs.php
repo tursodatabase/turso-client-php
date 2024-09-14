@@ -548,6 +548,32 @@ namespace {
          * @return void The result of the sync operation.
          */
         public function sync() {}
+
+        /**
+         * Enable or disable the loading of extensions.
+         * 
+         * # Example Usage
+         * ```
+         * $db->enableLoadExtension(true);
+         * ```
+         * 
+         * @param bool $onoff Enable or disable the loading of extensions.
+         * @return void
+         */
+        public function enableLoadExtension(?bool $onoff) {}
+
+        /**
+         * Load extensions.
+         * 
+         * # Example Usage
+         * ```
+         * $db->loadExtensions(["extension1", "extension2"]);
+         * ```
+         * 
+         * @param array|string $extension_paths The paths to the extensions to load.
+         * @return void
+         */
+        public function loadExtensions(array|string $extension_paths) {}
     }
 
     /**
