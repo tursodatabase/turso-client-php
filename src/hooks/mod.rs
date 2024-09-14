@@ -1,3 +1,4 @@
+pub mod load_extensions;
 pub mod use_exec_batch;
 pub mod close;
 pub mod use_query;

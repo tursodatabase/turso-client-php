@@ -1,23 +1,24 @@
 #![feature(abi_vectorcall)]
+extern crate ext_php_rs;
 #[allow(non_snake_case, deprecated, unused_attributes)]
 #[cfg_attr(windows, feature(abi_vectorcall))]
 extern crate lazy_static;
-extern crate ext_php_rs;
+pub mod generator;
 pub mod hooks;
 pub mod providers;
 pub mod result;
 pub mod statement;
 pub mod transaction;
 pub mod utils;
-pub mod generator;
+use crate::generator::LibSQLIterator;
 use crate::result::FetchResult;
 use crate::result::LibSQLResult;
 use crate::statement::LibSQLStatement;
 use crate::transaction::LibSQLTransaction;
-use crate::generator::LibSQLIterator;
 use ext_php_rs::prelude::*;
 use ext_php_rs::types::Zval;
-use std::{collections::HashMap, sync::Mutex};
+use hooks::load_extensions::ExtensionParams;
+use std::{path::Path, collections::HashMap, sync::Mutex};
 use utils::{
     config_value::ConfigValue,
     query_params::QueryParameters,
@@ -122,7 +123,7 @@ impl LibSQL {
                             true,
                         )),
                         (true, true) => None,
-                        (true, false) => None
+                        (true, false) => None,
                     },
                     None => None,
                 };
@@ -180,7 +181,6 @@ impl LibSQL {
                 (conn, None)
             }
             "remote_replica" => {
-                
                 let cleared_url = if url.starts_with("file:") {
                     url.strip_prefix("file:").unwrap().to_string()
                 } else {
@@ -366,6 +366,38 @@ impl LibSQL {
                 self.mode
             )))
         }
+    }
+
+    pub fn enable_load_extension(&self, onoff: Option<bool>) -> Result<(), PhpException> {
+        hooks::load_extensions::enable_load_extension(self.conn_id.to_string(), onoff)
+    }
+
+    pub fn load_extensions(
+        &self,
+        extension_paths: Option<ExtensionParams>
+    ) -> Result<(), PhpException> {
+        
+        let entry_point = None;
+    
+        match extension_paths {
+            Some(ExtensionParams::String(extension)) => {
+                hooks::load_extensions::load_extension(self.conn_id.to_string(), Path::new(&extension), entry_point).unwrap();
+            },
+            Some(ExtensionParams::Array(extensions)) => {
+                for extension in extensions {
+                    hooks::load_extensions::load_extension(
+                        self.conn_id.to_string(),
+                        Path::new(&extension),
+                        entry_point,
+                    ).unwrap();
+                }
+            },
+            None => Err(PhpException::default(
+                "No extension paths provided".to_string()
+            )).unwrap(),
+        }
+    
+        Ok(())
     }
 }
 
