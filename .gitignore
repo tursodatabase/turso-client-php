@@ -12,3 +12,4 @@ test-parse.php
 !.env.project
 !.env.vault
 notes/
+.idea
