@@ -13,30 +13,35 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      # Step 1: Checkout the repository
+      # Step 1: Set PowerShell Execution Policy
+      - name: Set PowerShell Execution Policy
+        shell: powershell
+        run: Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
+
+      # Step 2: Checkout the repository
       - name: Checkout
         uses: actions/checkout@v3
 
-      # Step 2: Get the release version from the tag
+      # Step 3: Get the release version from the tag
       - name: Get the release version from the tag
         shell: powershell
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $env:GITHUB_ENV
 
-      # Step 3: Install Rust (Windows)
+      # Step 4: Install Rust (Windows)
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
-      # Step 4: Setup PHP
+      # Step 5: Setup PHP
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
 
-      # Step 5: Build the extension
+      # Step 6: Build the extension
       - name: Build Extension
         run: cargo build --release --target x86_64-pc-windows-msvc
 
-      # Step 6: Build archive
+      # Step 7: Build archive
       - name: Build archive
         shell: powershell
         run: |
@@ -53,7 +58,7 @@ jobs:
           & "C:\Program Files\7-Zip\7z.exe" a "$dirname.zip" $dirname
           echo "ASSET=$dirname.zip" >> $env:GITHUB_ENV
 
-      # Step 7: Upload release asset
+      # Step 8: Upload release asset
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
