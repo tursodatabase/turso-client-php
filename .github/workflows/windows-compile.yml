@@ -1,0 +1,42 @@
+name: Build for Windows
+
+on: workflow_dispatch
+
+jobs:
+  build-and-upload:
+    name: Build and upload
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Get the release version from the tag
+        shell: bash
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Install Rust (Windows)
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+
+      - name: Build Extension
+        run: cargo build --release --target x86_64-pc-windows-msvc
+      
+      - name: Build archive
+        shell: bash
+        run: |
+          # Replace with the name of your binary
+          binary_name="libsql_php"
+
+          str_version=${{ env.VERSION }}
+          version=${str_version#turso-php-extension/}
+
+          dirname="$binary_name-$version-php-${{ matrix.php-versions }}-${{ matrix.target }}"
+          mkdir "$dirname"
+
+          7z a "$dirname.zip" "$dirname"
+          echo "ASSET=$dirname.zip" >> $GITHUB_ENV
