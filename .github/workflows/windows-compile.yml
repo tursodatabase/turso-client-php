@@ -22,6 +22,8 @@ jobs:
       - uses: actions/checkout@master
       - name: Compile and release
         uses: rust-build/rust-build.action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         with:
           RUSTTARGET: ${{ matrix.target }}
           EXTRA_FILES: "README.md"
