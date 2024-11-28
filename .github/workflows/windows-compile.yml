@@ -10,43 +10,23 @@ permissions:
 jobs:
   build-and-upload:
     name: Build and upload
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-pc-windows-gnu
+            archive: zip
 
     steps:
-      # Step 1: Set PowerShell Execution Policy
-      - name: Set PowerShell Execution Policy
-        shell: powershell
-        run: Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
-
-      # Step 2: Checkout the repository
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      # Step 3: Get the release version from the tag
-      - name: Get the release version from the tag
-        shell: powershell
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $env:GITHUB_ENV
-
-      # Step 4: Build the extension
-      - name: Build Extension
-        run: cargo build --release --target x86_64-pc-windows-msvc
-
-      # Step 5: Build archive
-      - name: Build archive
-        shell: powershell
-        run: |
-          # Replace with the name of your binary
-          $binary_name = "libsql_php"
-          
-          $str_version = "${{ env.VERSION }}"
-          $version = $str_version -replace 'turso-php-extension/', ''
-          
-          $dirname = "$binary_name-$version-php-8.3-windows"
-          mkdir $dirname
-          Copy-Item "target\x86_64-pc-windows-msvc\release\$binary_name.dll" $dirname
-
-          & "C:\Program Files\7-Zip\7z.exe" a "$dirname.zip" $dirname
-          echo "ASSET=$dirname.zip" >> $env:GITHUB_ENV
+      - uses: actions/checkout@master
+      - name: Compile and release
+        uses: rust-build/rust-build.action@master
+        with:
+          RUSTTARGET: ${{ matrix.target }}
+          EXTRA_FILES: "README.md"
+          ARCHIVE_TYPES: ${{ matrix.archive }}
+          MINIFY: "yes"
 
       # Step 6: Upload release asset
       - name: Release
