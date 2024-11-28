@@ -1,6 +1,11 @@
 name: Build for Windows
 
-on: workflow_dispatch
+on:
+  release:
+    types: [created]
+
+permissions:
+  contents: write
 
 jobs:
   build-and-upload:
@@ -40,3 +45,9 @@ jobs:
 
           7z a "$dirname.zip" "$dirname"
           echo "ASSET=$dirname.zip" >> $GITHUB_ENV
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            ${{ env.ASSET }}
