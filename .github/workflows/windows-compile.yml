@@ -11,41 +11,51 @@ jobs:
   build-and-upload:
     name: Build and upload
     runs-on: self-hosted
+    env:
+      PATH: ${{ env.PATH }};C:\Program Files\7-Zip
 
     steps:
+      # Step 1: Checkout the repository
       - name: Checkout
         uses: actions/checkout@v3
 
+      # Step 2: Get the release version from the tag
       - name: Get the release version from the tag
-        shell: bash
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+        shell: powershell
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $env:GITHUB_ENV
 
-      - name: Install Rust (Windows)
+      # Step 3: Install Rust (Windows)
+      - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
-      
+
+      # Step 4: Setup PHP
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
 
+      # Step 5: Build the extension
       - name: Build Extension
         run: cargo build --release --target x86_64-pc-windows-msvc
-      
+
+      # Step 6: Build archive
       - name: Build archive
-        shell: bash
+        shell: powershell
         run: |
           # Replace with the name of your binary
-          binary_name="libsql_php"
+          $binary_name = "libsql_php"
+          
+          $str_version = "${{ env.VERSION }}"
+          $version = $str_version -replace 'turso-php-extension/', ''
+          
+          $dirname = "$binary_name-$version-php-8.3-windows"
+          mkdir $dirname
+          Copy-Item "target\x86_64-pc-windows-msvc\release\$binary_name.dll" $dirname
 
-          str_version=${{ env.VERSION }}
-          version=${str_version#turso-php-extension/}
+          & "C:\Program Files\7-Zip\7z.exe" a "$dirname.zip" $dirname
+          echo "ASSET=$dirname.zip" >> $env:GITHUB_ENV
 
-          dirname="$binary_name-$version-php-${{ matrix.php-versions }}-${{ matrix.target }}"
-          mkdir "$dirname"
-
-          7z a "$dirname.zip" "$dirname"
-          echo "ASSET=$dirname.zip" >> $GITHUB_ENV
-
+      # Step 7: Upload release asset
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
