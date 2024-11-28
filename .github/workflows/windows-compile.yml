@@ -11,8 +11,6 @@ jobs:
   build-and-upload:
     name: Build and upload
     runs-on: self-hosted
-    env:
-      PATH: ${{ env.PATH }};C:\Program Files\7-Zip
 
     steps:
       # Step 1: Checkout the repository
