@@ -27,21 +27,11 @@ jobs:
         shell: powershell
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $env:GITHUB_ENV
 
-      # Step 4: Install Rust (Windows)
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      # Step 5: Setup PHP
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.3'
-
-      # Step 6: Build the extension
+      # Step 4: Build the extension
       - name: Build Extension
         run: cargo build --release --target x86_64-pc-windows-msvc
 
-      # Step 7: Build archive
+      # Step 5: Build archive
       - name: Build archive
         shell: powershell
         run: |
@@ -58,7 +48,7 @@ jobs:
           & "C:\Program Files\7-Zip\7z.exe" a "$dirname.zip" $dirname
           echo "ASSET=$dirname.zip" >> $env:GITHUB_ENV
 
-      # Step 8: Upload release asset
+      # Step 6: Upload release asset
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
