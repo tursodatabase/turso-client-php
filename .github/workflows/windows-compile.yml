@@ -29,10 +29,5 @@ jobs:
           EXTRA_FILES: "README.md"
           ARCHIVE_TYPES: ${{ matrix.archive }}
           MINIFY: "yes"
-
-      # Step 6: Upload release asset
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            ${{ env.ASSET }}
+      - name: Checkout output
+        run: ls -laR
