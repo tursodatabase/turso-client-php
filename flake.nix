@@ -17,7 +17,7 @@
           combine [
             minimal.rustc
             minimal.cargo
-            targets.x86_64-unknown-linux-musl.latest.rust-std
+            # targets.x86_64-unknown-linux-musl.latest.rust-std
             targets.x86_64-pc-windows-gnu.latest.rust-std
             targets.i686-pc-windows-gnu.latest.rust-std
           ];
@@ -49,7 +49,7 @@
           # linked by ldd, but that's just because the binary might have
           # position-independent-execution enabled.
           # (see: https://github.com/rust-lang/rust/issues/79624#issuecomment-737415388)
-          CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_RUSTFLAGS = "-C target-feature=+crt-static";
+          # CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_RUSTFLAGS = "-C target-feature=+crt-static";
 
           # Tells Cargo that it should use Wine to run tests.
           # (https://doc.rust-lang.org/cargo/reference/config.html#targettriplerunner)
@@ -60,14 +60,14 @@
         };
 
       in rec {
-        defaultPackage = packages.x86_64-unknown-linux-musl;
+        defaultPackage = packages.x86_64-pc-windows-gnu;
 
         # For `nix build .#x86_64-unknown-linux-musl`:
-        packages.x86_64-unknown-linux-musl = naerskBuildPackage "x86_64-unknown-linux-musl" {
-          src = ./.;
-          doCheck = true;
-          nativeBuildInputs = with pkgs; [ pkgsStatic.stdenv.cc ];
-        };
+        # packages.x86_64-unknown-linux-musl = naerskBuildPackage "x86_64-unknown-linux-musl" {
+        #   src = ./.;
+        #   doCheck = true;
+        #   nativeBuildInputs = with pkgs; [ pkgsStatic.stdenv.cc ];
+        # };
 
         # For `nix build .#x86_64-pc-windows-gnu`:
         packages.x86_64-pc-windows-gnu = naerskBuildPackage "x86_64-pc-windows-gnu" {
@@ -136,8 +136,10 @@
 
         devShell = pkgs.mkShell (
           {
-            inputsFrom = with packages; [ x86_64-unknown-linux-musl x86_64-pc-windows-gnu ];
-            CARGO_BUILD_TARGET = "x86_64-unknown-linux-musl";
+            # inputsFrom = with packages; [ x86_64-unknown-linux-musl x86_64-pc-windows-gnu ];
+            # CARGO_BUILD_TARGET = "x86_64-unknown-linux-musl";
+            inputsFrom = with packages; [ x86_64-pc-windows-gnu ];
+            CARGO_BUILD_TARGET = "x86_64-pc-windows-gnu";
           } // cargoConfig
         );
       }
