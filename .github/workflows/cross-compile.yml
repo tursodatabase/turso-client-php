@@ -107,29 +107,6 @@ jobs:
             target: x86_64-pc-windows-msvc
             php-versions: '8.3'
           
-          # Linux x64 - PHP8.4
-          - build: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-            php-versions: '8.4'
-
-          # Macos x64 - PHP8.4
-          - build: x86_64-apple-darwin
-            os: macos-latest
-            target: x86_64-apple-darwin
-            php-versions: '8.4'
-            
-          - build: aarch64-apple-darwin
-            os: macos-latest
-            target: aarch64-apple-darwin
-            php-versions: '8.4'
-          
-          # Windows x64 - PHP8.4
-          - build: x86_64-pc-windows-msvc
-            os: windows-2019
-            target: x86_64-pc-windows-msvc
-            php-versions: '8.4'
-          
     steps:
       - name: Checkout
         uses: actions/checkout@v3
