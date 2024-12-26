@@ -1,0 +1,54 @@
+#!/bin/bash
+
+# File paths
+CARGO_TOML="Cargo.toml"
+LIB_RS="src/lib.rs"
+
+# Function to update version in Cargo.toml's [package] block
+update_cargo_toml_version() {
+    local new_version=$1
+    local version_pattern='version = "[0-9]+\.[0-9]+\.[0-9]+"'
+
+    # Check if Cargo.toml exists
+    if [[ -f "$CARGO_TOML" ]]; then
+        echo "Updating [package] version in $CARGO_TOML to $new_version..."
+
+        # Update only the version inside the [package] block
+        sed -i.bak -E "/^\[package\]/,/^\[/ s/$version_pattern/version = \"$new_version\"/" "$CARGO_TOML"
+
+        echo "Cargo.toml updated. Backup saved as ${CARGO_TOML}.bak."
+    else
+        echo "File $CARGO_TOML does not exist."
+    fi
+}
+
+# Function to update specific version strings in lib.rs
+update_lib_rs_version() {
+    local new_version=$1
+    local version_pattern='[0-9]+\.[0-9]+\.[0-9]+'
+
+    # Check if lib.rs exists
+    if [[ -f "$LIB_RS" ]]; then
+        echo "Updating version strings in $LIB_RS to $new_version..."
+
+        # Replace all version strings in the file
+        sed -i.bak -E "s/$version_pattern/$new_version/g" "$LIB_RS"
+
+        echo "lib.rs updated. Backup saved as ${LIB_RS}.bak."
+    else
+        echo "File $LIB_RS does not exist."
+    fi
+}
+
+# Check for required arguments
+if [[ $# -lt 1 ]]; then
+    echo "Usage: $0 <new_version>"
+    exit 1
+fi
+
+# Get the new version from the first argument
+new_version=$1
+
+# Update the versions
+update_cargo_toml_version "$new_version"
+update_lib_rs_version "$new_version"

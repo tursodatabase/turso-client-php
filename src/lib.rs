@@ -31,7 +31,7 @@ lazy_static::lazy_static! {
     static ref STATEMENT_REGISTRY: Mutex<HashMap<String, libsql::Statement>> = Mutex::new(HashMap::new());
 }
 
-pub const LIBSQL_PHP_VERSION: &str = "1.4.0";
+pub const LIBSQL_PHP_VERSION: &str = "1.4.2";
 
 /// Represents the flag for opening a database in read-only mode.
 pub const LIBSQL_OPEN_READONLY: i32 = 1;
@@ -435,7 +435,7 @@ pub extern "C" fn libsql_php_extension_info(_module: *mut ext_php_rs::zend::Modu
         ext_php_rs::ffi::php_info_print_table_row(
             2,
             "LibSQL PHP version\0".as_ptr() as *const i8,
-            "1.4.0\0".as_ptr() as *const i8,
+            "1.4.2\0".as_ptr() as *const i8,
         );
         ext_php_rs::ffi::php_info_print_table_row(
             2,
@@ -445,7 +445,7 @@ pub extern "C" fn libsql_php_extension_info(_module: *mut ext_php_rs::zend::Modu
         ext_php_rs::ffi::php_info_print_table_row(
             2,
             "GitHub\0".as_ptr() as *const i8,
-            "https://github.com/darkterminal/libsql-extension\0".as_ptr() as *const i8,
+            "https://github.com/tursodatabase/turso-client-php\0".as_ptr() as *const i8,
         );
         // End the PHP info table.
         ext_php_rs::ffi::php_info_print_table_end();
