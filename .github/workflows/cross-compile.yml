@@ -54,6 +54,7 @@ jobs:
             os: macos-latest
             target: aarch64-apple-darwin
             php-versions: '8.0'
+            phpts: 'nts'
 
           # Macos x64 - PHP8.1 - NTS
           - build: x86_64-apple-darwin
@@ -105,6 +106,7 @@ jobs:
             os: macos-latest
             target: aarch64-apple-darwin
             php-versions: '8.0'
+            phpts: 'ts'
 
           # Macos x64 - PHP8.1 - TS
           - build: x86_64-apple-darwin
