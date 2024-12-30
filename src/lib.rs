@@ -60,6 +60,7 @@ struct LibSQL {
 
     /// Property representing the Database object.
     db: Option<libsql::Database>,
+    conn: libsql::Connection,
 }
 
 #[php_impl]
@@ -204,9 +205,9 @@ impl LibSQL {
         CONNECTION_REGISTRY
             .lock()
             .unwrap()
-            .insert(conn_id.clone(), conn);
+            .insert(conn_id.clone(), conn.clone());
 
-        Ok(Self { mode, conn_id, db })
+        Ok(Self { mode, conn_id, db, conn })
     }
 
     /// Retrieves the version of the LibSQL library.
@@ -234,6 +235,24 @@ impl LibSQL {
     /// Returns `true` if autocommit mode is enabled, otherwise `false`.
     pub fn is_autocommit(&self) -> Result<bool, PhpException> {
         hooks::is_autocommit::get_is_autocommit(self.conn_id.to_string())
+    }
+
+    /// Retrieves the total number of changes made by the connection.
+    ///
+    /// # Returns
+    ///
+    /// Returns the total number of changes made by the connection.
+    pub fn total_changes(&self) -> Result<u64, PhpException> {
+        Ok(self.conn.total_changes())
+    }
+
+    /// Retrieves the rowid of the last inserted row.
+    ///
+    /// # Returns
+    ///
+    /// Returns the rowid of the last inserted row.
+    pub fn last_inserted_id(&self) -> Result<i64, PhpException> {
+        Ok(self.conn.last_insert_rowid())
     }
 
     /// Executes a SQL statement.

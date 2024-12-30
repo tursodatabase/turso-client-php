@@ -20,6 +20,9 @@ STMT;
 
 $db->executeBatch($createUsers);
 
+echo $db->totalChanges() . PHP_EOL;
+echo $db->lastInsertedId() . PHP_EOL;
+
 $users = $db->query("SELECT * FROM users")->fetchArray(LibSQL::LIBSQL_LAZY);
 
 do {
