@@ -25,13 +25,31 @@ namespace {
         public function finalize() {}
 
         /**
+         * Binds a value to a named parameter in the prepared statement.
+         *
+         * @param array<string, mixed> $parameters The parameters to bind.
+         * 
+         * @return void
+         */
+        public function bindNamed(array $parameters) {}
+
+        /**
+         * Binds a value to a positionalparameter in the prepared statement.
+         *
+         * @param array<mixed> $parameters The value to bind.
+         * 
+         * @return void
+         */
+        public function bindPositional(array $parameters) {}
+
+        /**
          * Executes the prepared statement with given parameters.
          *
          * @param array $parameters The parameters for the statement.
          * 
          * @return int The number of affected rows.
          */
-        public function execute(array $parameters) {}
+        public function execute(array $parameters = []) {}
 
         /**
          * Executes the prepared statement and retrieves the result set.
