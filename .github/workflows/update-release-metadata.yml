@@ -1,7 +1,8 @@
 name: Update Release Metadata
 
 on:
-  workflow_run:
+  workflow_dispatch:  # Allows the workflow to be run manually via the GitHub Actions interface
+  workflow_run:       # Allows the workflow to trigger when another workflow completes
     workflows: ["Build and Publish PHP Extension"]
     types:
       - completed
@@ -14,7 +15,8 @@ jobs:
     name: Update release metadata
     runs-on: ubuntu-latest
 
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    # Run the job only when triggered manually or when the triggering workflow completed successfully
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: Checkout
