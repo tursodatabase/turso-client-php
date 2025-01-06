@@ -1,10 +1,10 @@
+use std::fmt;
 use std::collections::HashMap;
-
 use ext_php_rs::{convert::FromZval, flags::DataType, types::{ArrayKey, Zval}};
 
 /// Represents a value used in query parameters.
 #[derive(Debug, Clone)]
-enum QueryValue {
+pub enum QueryValue {
     Integer(i64),
     Real(f64),
     Text(String),
@@ -12,11 +12,26 @@ enum QueryValue {
     Null,
 }
 
+impl fmt::Display for QueryValue {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            QueryValue::Integer(i) => write!(f, "{}", i),
+            QueryValue::Real(fl) => write!(f, "{}", fl),
+            QueryValue::Text(text) => write!(f, "{}", text),
+            QueryValue::Null => write!(f, "NULL"),
+            QueryValue::Blob(blob) => {
+                let blob_str = blob.iter().map(|b| format!("{:02X}", b)).collect::<String>();
+                write!(f, "X'{}'", blob_str)
+            }
+        }
+    }
+}
+
 /// Represents query parameters for database queries.
 #[derive(Debug, Clone)]
 pub struct QueryParameters {
-    positional: Option<Vec<QueryValue>>,
-    named: Option<HashMap<String, QueryValue>>,
+    pub positional: Option<Vec<QueryValue>>,
+    pub named: Option<HashMap<String, QueryValue>>,
 }
 
 /// Converts QueryParameters to libsql parameters.
@@ -60,6 +75,14 @@ impl QueryParameters {
             (true, false) => libsql::params::Params::Named(param_named.unwrap()),
             _ => libsql::params::Params::None,
         }
+    }
+
+    pub fn get_named(&self) -> Option<&HashMap<String, QueryValue>> {
+        self.named.as_ref()
+    }
+
+    pub fn get_positional(&self) -> Option<&Vec<QueryValue>> {
+        self.positional.as_ref()
     }
 }
 

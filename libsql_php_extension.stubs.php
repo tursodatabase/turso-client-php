@@ -25,13 +25,31 @@ namespace {
         public function finalize() {}
 
         /**
+         * Binds a value to a named parameter in the prepared statement.
+         *
+         * @param array<string, mixed> $parameters The parameters to bind.
+         * 
+         * @return void
+         */
+        public function bindNamed(array $parameters) {}
+
+        /**
+         * Binds a value to a positionalparameter in the prepared statement.
+         *
+         * @param array<mixed> $parameters The value to bind.
+         * 
+         * @return void
+         */
+        public function bindPositional(array $parameters) {}
+
+        /**
          * Executes the prepared statement with given parameters.
          *
          * @param array $parameters The parameters for the statement.
          * 
          * @return int The number of affected rows.
          */
-        public function execute(array $parameters) {}
+        public function execute(array $parameters = []) {}
 
         /**
          * Executes the prepared statement and retrieves the result set.
@@ -376,6 +394,52 @@ namespace {
          * @return bool True if autocommit is enabled, otherwise false.
          */
         public function isAutocommit() {}
+
+        /**
+         * Retrieves the number of rows changed by the last SQL statement.
+         * 
+         * ## Example Usage
+         * 
+         * ```
+         * // Create a new LibSQL instance
+         * $db = new LibSQL("libsql:dbname=database.db");
+         * 
+         * $stmt = "UPDATE users SET age = 28 WHERE id = 1";
+         * $db->execute($stmt);
+         * 
+         * // Retrieve the number of rows changed
+         * $changes = $db->totalChanges();
+         * echo "Number of Rows Changed: " . $changes;
+         * 
+         * $db->close();
+         * ```
+         * 
+         * @return int The total number of rows changed.
+         */
+        public function totalChanges() {}
+        
+        /**
+         * Retrieves the ID of the last inserted row.
+         * 
+         * ## Example Usage
+         * 
+         * ```
+         * // Create a new LibSQL instance
+         * $db = new LibSQL("libsql:dbname=database.db");
+         * 
+         * $stmt = "INSERT INTO users (name, age) VALUES ('John Doe', 30)";
+         * $db->execute($stmt);
+         * 
+         * // Retrieve the ID of the last inserted row
+         * $id = $db->lastInsertedId();
+         * echo "Last inserted row ID: " . $id;
+         * 
+         * $db->close();
+         * ```
+         * 
+         * @return int The ID of the last inserted row.
+         */
+        public function lastInsertedId() {}
 
         /**
          * Executes an SQL statement on the database.

@@ -1,7 +1,5 @@
 <?php
 
-// Noting here
-
 $db = new LibSQL(":memory:");
 
 if (!$db) {
@@ -20,6 +18,9 @@ STMT;
 
 $db->executeBatch($createUsers);
 
+echo $db->totalChanges() . PHP_EOL;
+echo $db->lastInsertedId() . PHP_EOL;
+
 $users = $db->query("SELECT * FROM users")->fetchArray(LibSQL::LIBSQL_LAZY);
 
 do {
@@ -31,3 +32,29 @@ do {
     $users->next();
 
 } while ($users->valid());
+
+$stmt = $db->prepare("SELECT * FROM users WHERE age = ?1");
+$stmt->bindPositional([21]);
+
+var_dump($stmt->query()->fetchArray(LibSQL::LIBSQL_ASSOC));
+
+$stmt = $db->prepare("DELETE FROM users WHERE age = :age");
+$stmt->bindNamed([':age' => 22]);
+
+var_dump($stmt->execute());
+
+$stmt = $db->prepare("SELECT * FROM users");
+$users =$stmt->query()->fetchArray(LibSQL::LIBSQL_LAZY);
+
+do {
+    
+    $user = $users->current();
+    
+    echo "Age: {$user['age']}, Name: {$user['name']}\n";
+    
+    $users->next();
+
+} while ($users->valid());
+
+$db->close();
+
