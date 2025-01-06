@@ -1,7 +1,7 @@
 <p align="center">
   <a href="https://docs.turso.tech/sdk/php/quickstart">
     <img alt="Turso + PHP" src="https://github.com/tursodatabase/turso-client-php/assets/950181/f007cbca-02f7-46c4-a502-392484e76bc7" width="1000">
-    <h3 align="center">Turso + PHP</h3>
+    <h3 align="center">Turso + PHP (Community SDK)</h3>
   </a>
 </p>
 <p align="center">
