@@ -4,9 +4,7 @@ extern crate ext_php_rs;
 use ext_php_rs::prelude::*;
 
 use crate::{
-    hooks,
-    utils::{query_params::QueryParameters, runtime::runtime},
-    CONNECTION_REGISTRY, TRANSACTION_REGISTRY,
+    hooks, statement::LibSQLStatement, utils::{query_params::QueryParameters, runtime::runtime}, CONNECTION_REGISTRY, TRANSACTION_REGISTRY
 };
 
 /// Represents a LibSQLTransaction object for managing transactions.
@@ -99,6 +97,19 @@ impl LibSQLTransaction {
         parameters: Option<QueryParameters>,
     ) -> Result<u64, PhpException> {
         hooks::use_exec::exec(self.conn_id.to_string(), stmt, parameters)
+    }
+
+    /// Prepares a SQL statement for execution.
+    ///
+    /// # Arguments
+    ///
+    /// * `sql` - The SQL statement to prepare.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing a `LibSQLStatement` instance or a `PhpException` if an error occurs.
+    pub fn prepare(&self, sql: &str) -> Result<LibSQLStatement, PhpException> {
+        LibSQLStatement::__construct(self.conn_id.clone(), sql)
     }
 
     /// Executes a query within the transaction.
