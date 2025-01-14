@@ -63,7 +63,6 @@ jobs:
         run: |
           npx dotenv-vault@latest pull development -y --dotenvMe=${{ secrets.VAULT_TOKEN }}
           source .env
-          echo "GIST_ID=$GIST_ID"
           python scripts/release_metadata.py \
             --gist-id $GIST_ID \
             --actor ${{ github.actor }} \
