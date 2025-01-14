@@ -2,6 +2,9 @@ import os
 import sys
 import argparse
 import requests
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def update_gist(gist_id, actor, file_content):
     # Retrieve the GIST_TOKEN from the environment
