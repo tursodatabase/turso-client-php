@@ -99,6 +99,7 @@ So you need to go with the **Manual Installation**.
 
 <details>
   <summary><b>Manual Installation<b></summary>
+
   Download the latest build extension/driver binary you can see at <a href="https://github.com/tursodatabase/turso-client-php/releases">release</a> page.
 
   - Extract the archive
