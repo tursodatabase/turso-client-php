@@ -129,6 +129,15 @@ namespace {
         public function execute(string $stmt, array $parameters = []) {}
 
         /**
+         * Prepares an SQL statement for execution within the transaction.
+         *
+         * @param string $sql The SQL statement to prepare.
+         *
+         * @return LibSQLStatement The prepared statement object.
+         */
+        public function prepare(string $sql) {}
+
+        /**
          * Executes a query within the transaction and returns the result set.
          *
          * @param string $stmt The SQL statement to execute.

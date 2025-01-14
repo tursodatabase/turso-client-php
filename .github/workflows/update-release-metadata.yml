@@ -1,7 +1,8 @@
 name: Update Release Metadata
 
 on:
-  workflow_run:
+  workflow_dispatch:  # Allows the workflow to be run manually via the GitHub Actions interface
+  workflow_run:       # Allows the workflow to trigger when another workflow completes
     workflows: ["Build and Publish PHP Extension"]
     types:
       - completed
@@ -14,7 +15,8 @@ jobs:
     name: Update release metadata
     runs-on: ubuntu-latest
 
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    # Run the job only when triggered manually or when the triggering workflow completed successfully
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: Checkout
@@ -24,9 +26,30 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 20
-        
-      - name: Fetch the latest release data
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      
+      - name: Cache Python Dependencies
+        uses: actions/cache@v3
+        id: cache
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/scripts/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install Python Dependencies
+        run: |
+          pip install -r scripts/requirements.txt
+
+      - name: Fetch the Latest Release Data
         id: fetch_release
+        env:
+          VAULT_TOKEN: ${{ secrets.VAULT_TOKEN }}
+          TOKEN_VALHALLA: ${{ secrets.TOKEN_VALHALLA }}
         run: |
           npx dotenv-vault@latest pull development -y --dotenvMe=${{ secrets.VAULT_TOKEN }}
           source .env
@@ -36,16 +59,12 @@ jobs:
             https://api.github.com/repos/${{ github.repository }}/releases/latest \
             -o $GITHUB_WORKSPACE/release_metadata.json
 
-      - name: Setup Git
+      - name: Update Gist File
+        env:
+          GIST_ID: ${{ secrets.GIST_ID }}
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
         run: |
-          git config user.name "${{ github.actor }}"
-          git config user.email "${{ github.actor }}@users.noreply.github.com"
-
-      - name: Commit and push changes
-        run: |
-          npx dotenv-vault@latest pull development -y --dotenvMe=${{ secrets.VAULT_TOKEN }}
-          source .env
-          git add $GITHUB_WORKSPACE/release_metadata.json
-          git commit -m "Update release metadata"
-          git remote set-url origin https://x-access-token:${TOKEN_VALHALLA}@github.com/${{ github.repository }}.git
-          git push origin main
+          python scripts/release_metadata.py \
+            --gist-id $GIST_ID \
+            --actor ${{ github.actor }} \
+            --file-content "$(cat $GITHUB_WORKSPACE/release_metadata.json)"
