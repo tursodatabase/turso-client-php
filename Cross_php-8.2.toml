@@ -1,5 +1,5 @@
 [target.x86_64-unknown-linux-gnu]
-dockerfile = "../docker/php82/Dockerfile"
+dockerfile = "./docker/php82/Dockerfile"
 
 [build]
 rust-toolchain = "nightly"
