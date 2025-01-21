@@ -1263,7 +1263,7 @@ dependencies = [
 
 [[package]]
 name = "libsql_php"
-version = "1.4.3"
+version = "1.4.4"
 dependencies = [
  "base64 0.22.1",
  "ext-php-rs",

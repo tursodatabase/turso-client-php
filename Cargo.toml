@@ -1,6 +1,6 @@
 [package]
 name = "libsql_php"
-version = "1.4.3"
+version = "1.4.4"
 edition = "2021"
 authors = ["Imam Ali Mustofa <darkterminal@duck.com>"]
 
