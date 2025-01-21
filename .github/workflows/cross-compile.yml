@@ -350,34 +350,54 @@ jobs:
         run: |
           # Replace with the name of your binary
           binary_name="libsql_php"
-
           str_version=${{ env.VERSION }}
           version=${str_version#turso-php-extension/}
+          dirname="$binary_name-$version-php-${{ matrix.php-versions }}-${{ matrix.phpts }}-${{ matrix.build }}"
 
-          dirname="$binary_name-$version-php-${{ matrix.php-versions }}-${{ matrix.phpts }}-${{ matrix.target }}"
-          mkdir "$dirname"
+          mkdir -p "$dirname"
 
-          if [ "${{ matrix.os }}" == *"macos"* ]; then
-            cp "target/${{ matrix.target }}/release/lib${binary_name}.dylib" "target/${{ matrix.target }}/release/lib${binary_name}.so"
-            mv "target/${{ matrix.target }}/release/lib${binary_name}.dylib" "$dirname" 
-            mv "target/${{ matrix.target }}/release/lib${binary_name}.so" "$dirname"
-            mv "libsql_php_extension.stubs.php" "$dirname"
-          elif [ "${{ matrix.os }}" = "windows-2019" ]; then
-            mv "target/${{ matrix.target }}/release/${binary_name}.dll" "$dirname"
-            mv "libsql_php_extension.stubs.php" "$dirname"
-            ls "target/${{ matrix.target }}/release"
+          # Check if we are on macOS
+          if [[ "${{ matrix.os }}" == *"macos"* ]]; then
+            if [[ -f "target/${{ matrix.target }}/release/lib${binary_name}.dylib" ]]; then
+              cp "target/${{ matrix.target }}/release/lib${binary_name}.dylib" "target/${{ matrix.target }}/release/lib${binary_name}.so"
+              mv "target/${{ matrix.target }}/release/lib${binary_name}.dylib" "$dirname"
+              mv "target/${{ matrix.target }}/release/lib${binary_name}.so" "$dirname"
+            else
+              echo "Error: lib${binary_name}.dylib not found in target/${{ matrix.target }}/release/"
+              exit 1
+            fi
+          elif [[ "${{ matrix.os }}" == "windows-2019" ]]; then
+            if [[ -f "target/${{ matrix.target }}/release/${binary_name}.dll" ]]; then
+              mv "target/${{ matrix.target }}/release/${binary_name}.dll" "$dirname"
+            else
+              echo "Error: ${binary_name}.dll not found in target/${{ matrix.target }}/release/"
+              exit 1
+            fi
           else
-            mv "target/${{ matrix.target }}/release/lib${binary_name}.so" "$dirname"
-            mv "libsql_php_extension.stubs.php" "$dirname"
+            if [[ -f "target/${{ matrix.target }}/release/lib${binary_name}.so" ]]; then
+              mv "target/${{ matrix.target }}/release/lib${binary_name}.so" "$dirname"
+            else
+              echo "Error: lib${binary_name}.so not found in target/${{ matrix.target }}/release/"
+              exit 1
+            fi
           fi
 
-          if [ "${{ matrix.os }}" = "windows-2019" ]; then
+          # Move stubs file if it exists
+          if [[ -f "libsql_php_extension.stubs.php" ]]; then
+            mv "libsql_php_extension.stubs.php" "$dirname"
+          else
+            echo "Warning: libsql_php_extension.stubs.php not found."
+          fi
+
+          # Archive the build
+          if [[ "${{ matrix.os }}" == "windows-2019" ]]; then
             7z a "$dirname.zip" "$dirname"
             echo "ASSET=$dirname.zip" >> $GITHUB_ENV
           else
             tar -czf "$dirname.tar.gz" "$dirname"
             echo "ASSET=$dirname.tar.gz" >> $GITHUB_ENV
           fi
+
 
       - name: Release
         uses: softprops/action-gh-release@v1
