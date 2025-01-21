@@ -46,13 +46,13 @@
 
 ## PHP Versions
 
-| PHP Versions  | Build Versions |
-| ------------- | -------------- |
-| 8.0           | TS / NTS       |
-| 8.1           | TS / NTS       |
-| 8.2           | TS / NTS       |
-| 8.3           | TS / NTS       |
-| 8.4           | TS / NTS       |
+| PHP Versions  | Build Versions  |
+| ------------- | ----------------|
+| 8.0           | TS / NTS        |
+| 8.1           | TS / NTS        |
+| 8.2           | TS / NTS        |
+| 8.3           | TS / NTS        |
+| 8.4           | TS / NTS (Soon) |
 
 **Note**: TS (Thread Safe), NTS (Non Thread-Safe). **Support for:** Linux/ Mac/Darwin / Windows/WSL
 
