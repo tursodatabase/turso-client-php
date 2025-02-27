@@ -341,7 +341,7 @@ namespace {
          * @param integer|null $flags
          * @param string|null $encryption_key
          */
-        public function __construct(string|array $config, ?int $flags = 6, ?string $encryption_key = "") {}
+        public function __construct(string|array $config, ?int $flags = 6, ?string $encryption_key = "", ?bool $offline_writes = false) {}
 
         /**
          * Retrieves the version of the LibSQL library.

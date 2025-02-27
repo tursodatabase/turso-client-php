@@ -1,10 +1,11 @@
 #[allow(non_snake_case, deprecated, unused_attributes)]
 #[cfg_attr(windows, feature(abi_vectorcall))]
-extern crate ext_php_rs;
 use std::{collections::HashMap, sync::{Arc, Mutex}};
+use ext_php_rs::convert::IntoZval;
 
-use crate::{ext_php_rs::convert::IntoZval, result::LibSQLResult, utils::query_params::QueryValue};
+use crate::{result::LibSQLResult, utils::query_params::QueryValue};
 use ext_php_rs::prelude::*;
+use ext_php_rs::{php_class, php_impl};
 
 use crate::{
     utils::{query_params::QueryParameters, runtime::runtime},

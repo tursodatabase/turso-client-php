@@ -14,3 +14,4 @@ test-parse.php
 notes/
 *.bak
 src/*.bak
+vendor/

@@ -1,8 +1,6 @@
 #![feature(abi_vectorcall)]
-extern crate ext_php_rs;
 #[allow(non_snake_case, deprecated, unused_attributes)]
 #[cfg_attr(windows, feature(abi_vectorcall))]
-extern crate lazy_static;
 pub mod generator;
 pub mod hooks;
 pub mod providers;
@@ -16,6 +14,7 @@ use crate::result::LibSQLResult;
 use crate::statement::LibSQLStatement;
 use crate::transaction::LibSQLTransaction;
 use ext_php_rs::prelude::*;
+use ext_php_rs::{php_class, php_impl, php_module};
 use ext_php_rs::types::Zval;
 use hooks::load_extensions::ExtensionParams;
 use std::{path::Path, collections::HashMap, sync::Mutex};
@@ -95,9 +94,11 @@ impl LibSQL {
         config: ConfigValue,
         flags: Option<i32>,
         encryption_key: Option<String>,
+        offline_writes: Option<bool>,
     ) -> Result<Self, PhpException> {
         let db_flags = flags.unwrap_or(6);
         let encryption_key = encryption_key.unwrap_or_default();
+        let offline_writes = offline_writes.unwrap_or(false);
 
         let (url, auth_token, sync_url, sync_interval, read_your_writes): (
             String,
@@ -188,14 +189,21 @@ impl LibSQL {
                     url.clone()
                 };
 
-                let (db, conn) = providers::remote_replica::create_remote_replica_connection(
-                    cleared_url.clone(),
-                    auth_token.clone(),
-                    sync_url.clone(),
-                    sync_interval.clone(),
-                    read_your_writes.clone(),
-                    Some(encryption_key),
-                );
+                let (db, conn) = match offline_writes {
+                    false => providers::remote_replica::create_remote_replica_connection(
+                        cleared_url.clone(),
+                        auth_token.clone(),
+                        sync_url.clone(),
+                        sync_interval.clone(),
+                        read_your_writes.clone(),
+                        Some(encryption_key),
+                    ),
+                    true => providers::offline_write::create_offline_write_connection(
+                        cleared_url.clone(),
+                        auth_token,
+                        sync_url,
+                    ),
+                };
                 (conn, Some(db))
             }
             _ => return Err(PhpException::default("Mode is not available!".into())),
