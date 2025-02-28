@@ -14,9 +14,9 @@ $config = [
 try {
     $db = new LibSQL(
         config: $config,
-        flags: 6,
+        flags: LibSQL::OPEN_READWRITE | LibSQL::OPEN_CREATE,
         encryption_key: "",
-        offline_writes: true
+        offline_writes: false
     );
 
     $db->query("SELECT 1");

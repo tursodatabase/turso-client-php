@@ -332,7 +332,8 @@ namespace {
          * 
          *    b. Instantiate a new LibSQL object with the configuration array:
          *       ```
-         *       $db = new LibSQL($config);
+         *       $db = new LibSQL($config, LibSQL::OPEN_READWRITE | LibSQL::OPEN_CREATE, "", false);
+         *       $db = new LibSQL($config, LibSQL::OPEN_READWRITE | LibSQL::OPEN_CREATE, "", true); // Offline Write BETA
          *       ```
          * 
          * With this Quick Start guide, you're ready to seamlessly integrate LibSQL PHP Extension into your projects, whether for local, remote, or distributed database connections. 
@@ -340,6 +341,7 @@ namespace {
          * @param string|array $config
          * @param integer|null $flags
          * @param string|null $encryption_key
+         * @param bool|null $offline_writes
          */
         public function __construct(string|array $config, ?int $flags = 6, ?string $encryption_key = "", ?bool $offline_writes = false) {}
 
