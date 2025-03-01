@@ -2,6 +2,7 @@
 #[cfg_attr(windows, feature(abi_vectorcall))]
 use ext_php_rs::convert::IntoZval;
 
+use ext_php_rs::types::Zval;
 use std::collections::HashMap;
 use ext_php_rs::prelude::*;
 use ext_php_rs::{php_class, php_impl};
@@ -151,6 +152,99 @@ impl LibSQLResult {
                 self.sql.as_str(),
                 self.query_params.clone(),
             )?))
+        }
+    }
+
+    pub fn fetch_single(&self, mode: Option<i32>) -> Result<FetchResult, PhpException> {
+        let mode = mode.unwrap_or(3);
+
+        if mode != LIBSQL_ALL {
+            let query_result = runtime().block_on(async {
+                let mut rows = self
+                    .conn
+                    .query(self.sql.as_str(), self.parameters.clone())
+                    .await
+                    .map_err(|e| PhpException::from(e.to_string()))?;
+                let mut result = HashMap::new();
+
+                if let Ok(Some(row)) = rows.next().await {
+                    match mode {
+                        LIBSQL_ASSOC => {
+                            for idx in 0..rows.column_count() {
+                                let column_name = row.column_name(idx as i32).unwrap();
+                                result.insert(column_name.to_string(), row.get_value(idx).unwrap());
+                            }
+                        }
+                        LIBSQL_NUM => {
+                            for idx in 0..rows.column_count() {
+                                result.insert(idx.to_string(), row.get_value(idx).unwrap());
+                            }
+                        }
+                        _ => {
+                            for idx in 0..rows.column_count() {
+                                let column_name = row.column_name(idx as i32).unwrap();
+                                let value = row.get_value(idx).unwrap();
+                                result.insert(column_name.to_string(), value.clone());
+                                result.insert(idx.to_string(), value);
+                            }
+                        }
+                    }
+                }
+
+                Ok(result)
+            });
+
+            match query_result {
+                Ok(result) => {
+                    let mut sub_arr = ext_php_rs::types::ZendHashTable::new();
+                    for (key, value) in result {
+                        let zval_value = convert_libsql_value_to_zval(value);
+                        match key.parse::<usize>() {
+                            Ok(_) => sub_arr.push(zval_value)?,
+                            Err(_) => sub_arr.insert(&key, zval_value)?,
+                        }
+                    }
+
+                    let fetch_result = if mode == LIBSQL_LAZY {
+                        let data = sub_arr.into_zval(false)?;
+                        FetchResult::Iterator(LibSQLIterator::__construct(&data))
+                    } else {
+                        FetchResult::Zval(sub_arr.into_zval(false)?)
+                    };
+                    Ok(fetch_result)
+                }
+                Err(e) => Err(e),
+            }
+        } else {
+            let result_set = hooks::use_query::query(
+                self.conn_string.clone(),
+                self.sql.as_str(),
+                self.query_params.clone(),
+            )?;
+
+            let arr = result_set
+                .array()
+                .ok_or_else(|| PhpException::from("Result set is not an array"))?;
+
+            let rows = arr.get("rows")
+                .and_then(|zv| zv.array())
+                .ok_or_else(|| PhpException::from("Missing rows in result set"))?;
+
+            let first_row = rows.get_index(0)
+                .map(|zv| {
+                    let z = Zval::new();
+                    unsafe {
+                        std::ptr::copy_nonoverlapping(
+                            zv.value.counted,
+                            z.value.counted,
+                            1
+                        );
+                    }
+                    z
+                })
+                .unwrap_or_else(Zval::new);
+
+            Ok(FetchResult::Zval(first_row))
         }
     }
 

@@ -70,13 +70,17 @@ impl LibSQLStatement {
     /// A `Result` containing a `()` if the binding was successful or a `PhpException` if an error occurs.
     pub fn bind_named(&self, parameters: QueryParameters) -> Result<(), PhpException> {
         let mut params = self.params.lock().expect("Failed to lock params mutex");
-
+    
         if let Some(named_params) = parameters.get_named() {
             for (key, value) in named_params {
-                params.insert(key.to_string(), value.to_string());
+                let clean_key = key
+                .trim_start_matches(|c| c == '@' || c == '$' || c == '?' || c == ':')
+                .to_string();
+                
+                params.insert(clean_key, value.to_string());
             }
         }
-
+    
         Ok(())
     }
 
@@ -151,15 +155,14 @@ impl LibSQLStatement {
     pub fn execute(&self, parameters: Option<QueryParameters>) -> Result<usize, PhpException> {
         let mut stmt_registry = STATEMENT_REGISTRY.lock().unwrap();
     
-        let mut stmt = stmt_registry
-            .remove(&self.stmt_id)
+        let stmt = stmt_registry
+            .get_mut(&self.stmt_id)
             .ok_or_else(|| PhpException::from("Statement not found"))?;
     
         // Default parameters from `params` if none are provided
         let params = match parameters {
             Some(p) => p,
             None => {
-                // Default to the current parameters stored in the object
                 let params = self.params.lock().unwrap();
                 QueryParameters {
                     positional: Some(
@@ -258,13 +261,12 @@ impl LibSQLStatement {
     /// A `Result` indicating success or a `PhpException` if an error occurs.
     pub fn reset(&self) -> Result<(), PhpException> {
         let mut stmt_registry = STATEMENT_REGISTRY.lock().unwrap();
-
-        let mut stmt = stmt_registry
-            .remove(&self.stmt_id)
+        
+        let stmt = stmt_registry
+            .get_mut(&self.stmt_id)
             .ok_or_else(|| PhpException::from("Statement not found"))?;
-
+        
         stmt.reset();
-
         self.params.lock().unwrap().clear();
         Ok(())
     }
@@ -278,7 +280,7 @@ impl LibSQLStatement {
         let mut stmt_registry = STATEMENT_REGISTRY.lock().unwrap();
 
         let stmt = stmt_registry
-            .remove(&self.stmt_id)
+            .get_mut(&self.stmt_id)
             .ok_or_else(|| PhpException::from("Statement not found"))?;
 
         let result = stmt.parameter_count();
@@ -297,12 +299,18 @@ impl LibSQLStatement {
     /// or a `PhpException` if an error occurs.
     pub fn parameter_name(&self, idx: i32) -> Result<Option<String>, PhpException> {
         let stmt_registry = STATEMENT_REGISTRY.lock().unwrap();
-
+    
         let stmt = stmt_registry
             .get(&self.stmt_id)
             .ok_or_else(|| PhpException::from("Statement not found"))?;
-
-        let result = stmt.parameter_name(idx).map(|s| s.to_owned());
+    
+        let result = stmt.parameter_name(idx)
+            .map(|name| {
+                // Strip leading @, $, : or ? from parameter names
+                name.trim_start_matches(|c| c == '@' || c == '$' || c == '?' || c == ':')
+                    .to_string()
+            });
+        
         Ok(result)
     }
 

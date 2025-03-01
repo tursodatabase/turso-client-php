@@ -186,6 +186,15 @@ namespace {
         public function fetchArray(int $mode = 3) {}
 
         /**
+         * Fetche single result set as an array.
+         *
+         * @param int $mode The fetching mode (optional, default is 3).
+         *
+         * @return array|LibSQLIterator The fetched result set.
+         */
+        public function fetchSingle(int $mode = 3) {}
+
+        /**
          * Finalizes the result set and frees the associated resources.
          *
          * @return void
