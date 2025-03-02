@@ -6,31 +6,6 @@ if (!$db) {
     throw new Exception("Database Not Connected!");
 }
 
-$db->execute("CREATE TABLE products (
-    id INTEGER PRIMARY KEY,
-    name TEXT,
-    price REAL
-)");
-
-$stmt = $db->prepare("INSERT INTO products (id, name, price) VALUES (:id, :name, :price)");
-
-echo $stmt->parameterName(1) . PHP_EOL;
-echo $stmt->parameterName(2) . PHP_EOL;
-echo $stmt->parameterName(3) . PHP_EOL;
-
-$stmt->bindNamed([
-    'id' => 1,
-    'name' => 'Test',
-    'price' => 9.99
-]);
-$stmt->execute();
-
-$result = $db->query("SELECT name FROM products WHERE id = 1");
-$data = $result->fetchSingle(LibSQL::LIBSQL_ASSOC);
-print_r($data);
-
-$db->close();
-die();
 $createUsers = <<<STMT
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -11,6 +11,9 @@ $config = [
     "encryptionKey" => "",
 ];
 
-test('embedded replica connection', function () use ($config) {
-    expect(fn() => new LibSQL(config: $config, offline_writes: true))->not->toThrow(Exception::class);
+test('embedded replica connection + offline write', function () use ($config) {
+    expect(fn() => new LibSQL(
+        config: $config, 
+        offline_writes: true
+    ))->not->toThrow(Exception::class);
 })->group('OfflineWriteConnectionTest', 'DatabaseConnectionTest');

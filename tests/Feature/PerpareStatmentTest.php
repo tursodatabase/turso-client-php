@@ -44,6 +44,6 @@ describe('Prepared Statements', function () {
         $stmt->execute();
 
         $result = $this->db->query("SELECT name FROM products WHERE id = 1");
-        expect($result->fetchArray(LibSQL::LIBSQL_ASSOC)['name'])->toBe('Test');
+        expect($result->fetchSingle(LibSQL::LIBSQL_ASSOC)['name'])->toBe('Test');
     });
 })->group("PreparedStatementTest", "Feature");
