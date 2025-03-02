@@ -15,13 +15,6 @@ jobs:
     strategy:
       matrix:
         include:
-          # Linux x64 - PHP8.0 - NTS
-          - build: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-            php-versions: '8.0'
-            phpts: 'nts'
-
           # Linux x64 - PHP8.1 - NTS
           - build: x86_64-unknown-linux-gnu
             os: ubuntu-latest
@@ -43,33 +36,14 @@ jobs:
             php-versions: '8.3'
             phpts: 'nts'
           
+          # Linux x64 - PHP8.4 - NTS
+          - build: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            php-versions: '8.4'
+            phpts: 'nts'
+          
           # -------------------------- Start BETA MacOS 14 --------------------------
-
-          # Macos x64 - PHP8.0 - NTS
-          - build: x86_64-apple-darwin-macos-14
-            os: macos-latest-large
-            target: x86_64-apple-darwin
-            php-versions: '8.0'
-            phpts: 'nts'
-            
-          - build: aarch64-apple-darwin-macos-14
-            os: macos-latest
-            target: aarch64-apple-darwin
-            php-versions: '8.0'
-            phpts: 'nts'
-
-          # Macos x64 - PHP8.0 - TS
-          - build: x86_64-apple-darwin-macos-14
-            os: macos-latest-large
-            target: x86_64-apple-darwin
-            php-versions: '8.0'
-            phpts: 'ts'
-            
-          - build: aarch64-apple-darwin-macos-14
-            os: macos-latest
-            target: aarch64-apple-darwin
-            php-versions: '8.0'
-            phpts: 'ts'
 
           # Macos x64 - PHP8.1 - NTS
           - build: x86_64-apple-darwin-macos-14
@@ -147,38 +121,38 @@ jobs:
             os: macos-latest
             target: aarch64-apple-darwin
             php-versions: '8.3'
+            phpts: 'ts'
+          
+          # Macos x64 - PHP8.4 - NTS
+          - build: x86_64-apple-darwin-macos-14
+            os: macos-latest-large
+            target: x86_64-apple-darwin
+            php-versions: '8.4'
+            phpts: 'nts'
+            
+          - build: aarch64-apple-darwin-macos-14
+            os: macos-latest
+            target: aarch64-apple-darwin
+            php-versions: '8.4'
+            phpts: 'nts'
+
+          # Macos x64 - PHP8.4 - TS
+          - build: x86_64-apple-darwin-macos-14
+            os: macos-latest-large
+            target: x86_64-apple-darwin
+            php-versions: '8.4'
+            phpts: 'ts'
+            
+          - build: aarch64-apple-darwin-macos-14
+            os: macos-latest
+            target: aarch64-apple-darwin
+            php-versions: '8.4'
             phpts: 'ts'
           
           # -------------------------- End BETA MacOS 14 --------------------------
           
           # -------------------------- Start BETA MacOS 15 --------------------------
 
-          # Macos x64 - PHP8.0 - NTS
-          - build: x86_64-apple-darwin-macos-15-beta
-            os: macos-15-large
-            target: x86_64-apple-darwin
-            php-versions: '8.0'
-            phpts: 'nts'
-            
-          - build: aarch64-apple-darwin-macos-15-beta
-            os: macos-15
-            target: aarch64-apple-darwin
-            php-versions: '8.0'
-            phpts: 'nts'
-
-          # Macos x64 - PHP8.0 - TS
-          - build: x86_64-apple-darwin-macos-15-beta
-            os: macos-15-large
-            target: x86_64-apple-darwin
-            php-versions: '8.0'
-            phpts: 'ts'
-            
-          - build: aarch64-apple-darwin-macos-15-beta
-            os: macos-15
-            target: aarch64-apple-darwin
-            php-versions: '8.0'
-            phpts: 'ts'
-
           # Macos x64 - PHP8.1 - NTS
           - build: x86_64-apple-darwin-macos-15-beta
             os: macos-15-large
@@ -256,15 +230,34 @@ jobs:
             target: aarch64-apple-darwin
             php-versions: '8.3'
             phpts: 'ts'
+          
+          # Macos x64 - PHP8.4 - NTS
+          - build: x86_64-apple-darwin-macos-15-beta
+            os: macos-15-large
+            target: x86_64-apple-darwin
+            php-versions: '8.4'
+            phpts: 'nts'
+            
+          - build: aarch64-apple-darwin-macos-15-beta
+            os: macos-15
+            target: aarch64-apple-darwin
+            php-versions: '8.4'
+            phpts: 'nts'
+
+          # Macos x64 - PHP8.4 - TS
+          - build: x86_64-apple-darwin-macos-15-beta
+            os: macos-15-large
+            target: x86_64-apple-darwin
+            php-versions: '8.4'
+            phpts: 'ts'
+            
+          - build: aarch64-apple-darwin-macos-15-beta
+            os: macos-15
+            target: aarch64-apple-darwin
+            php-versions: '8.4'
+            phpts: 'ts'
 
           # -------------------------- End BETA MacOS 15 --------------------------
-          
-          # Windows x64 - PHP8.0 - NTS
-          - build: x86_64-pc-windows-msvc
-            os: windows-2019
-            target: x86_64-pc-windows-msvc
-            php-versions: '8.0'
-            phpts: 'nts'
           
           # Windows x64 - PHP8.1 - NTS
           - build: x86_64-pc-windows-msvc
@@ -287,12 +280,12 @@ jobs:
             php-versions: '8.3'
             phpts: 'nts'
           
-          # Windows x64 - PHP8.0 - TS
+          # Windows x64 - PHP8.4 - NTS
           - build: x86_64-pc-windows-msvc
             os: windows-2019
             target: x86_64-pc-windows-msvc
-            php-versions: '8.0'
-            phpts: 'ts'
+            php-versions: '8.4'
+            phpts: 'nts'
           
           # Windows x64 - PHP8.1 - TS
           - build: x86_64-pc-windows-msvc
@@ -313,6 +306,13 @@ jobs:
             os: windows-2019
             target: x86_64-pc-windows-msvc
             php-versions: '8.3'
+            phpts: 'ts'
+          
+          # Windows x64 - PHP8.4 - TS
+          - build: x86_64-pc-windows-msvc
+            os: windows-2019
+            target: x86_64-pc-windows-msvc
+            php-versions: '8.4'
             phpts: 'ts'
           
     steps:
