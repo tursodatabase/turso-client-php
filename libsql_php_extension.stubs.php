@@ -186,6 +186,15 @@ namespace {
         public function fetchArray(int $mode = 3) {}
 
         /**
+         * Fetche single result set as an array.
+         *
+         * @param int $mode The fetching mode (optional, default is 3).
+         *
+         * @return array|LibSQLIterator The fetched result set.
+         */
+        public function fetchSingle(int $mode = 3) {}
+
+        /**
          * Finalizes the result set and frees the associated resources.
          *
          * @return void
@@ -332,7 +341,8 @@ namespace {
          * 
          *    b. Instantiate a new LibSQL object with the configuration array:
          *       ```
-         *       $db = new LibSQL($config);
+         *       $db = new LibSQL($config, LibSQL::OPEN_READWRITE | LibSQL::OPEN_CREATE, "", false);
+         *       $db = new LibSQL($config, LibSQL::OPEN_READWRITE | LibSQL::OPEN_CREATE, "", true); // Offline Write BETA
          *       ```
          * 
          * With this Quick Start guide, you're ready to seamlessly integrate LibSQL PHP Extension into your projects, whether for local, remote, or distributed database connections. 
@@ -340,8 +350,9 @@ namespace {
          * @param string|array $config
          * @param integer|null $flags
          * @param string|null $encryption_key
+         * @param bool|null $offline_writes
          */
-        public function __construct(string|array $config, ?int $flags = 6, ?string $encryption_key = "") {}
+        public function __construct(string|array $config, ?int $flags = 6, ?string $encryption_key = "", ?bool $offline_writes = false) {}
 
         /**
          * Retrieves the version of the LibSQL library.

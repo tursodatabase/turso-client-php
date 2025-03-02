@@ -24,11 +24,11 @@ echo $db->lastInsertedId() . PHP_EOL;
 $users = $db->query("SELECT * FROM users")->fetchArray(LibSQL::LIBSQL_LAZY);
 
 do {
-    
+
     $user = $users->current();
-    
+
     echo "Age: {$user['age']}, Name: {$user['name']}\n";
-    
+
     $users->next();
 
 } while ($users->valid());
@@ -44,14 +44,14 @@ $stmt->bindNamed([':age' => 22]);
 var_dump($stmt->execute());
 
 $stmt = $db->prepare("SELECT * FROM users");
-$users =$stmt->query()->fetchArray(LibSQL::LIBSQL_LAZY);
+$users = $stmt->query()->fetchArray(LibSQL::LIBSQL_LAZY);
 
 do {
-    
+
     $user = $users->current();
-    
+
     echo "Age: {$user['age']}, Name: {$user['name']}\n";
-    
+
     $users->next();
 
 } while ($users->valid());
