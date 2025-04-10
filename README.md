@@ -117,6 +117,8 @@ So you need to go with the **Manual Installation**.
 ## Contributors
 
 ![Contributors](https://contrib.nn.ci/api?no_bot=true&repo=tursodatabase/turso-client-php)
+<!-- GitAds-Verify: GNERMDZMKVBUBHB6PDQEGGLSUJM87SOR -->
+
 
 ## License
 
