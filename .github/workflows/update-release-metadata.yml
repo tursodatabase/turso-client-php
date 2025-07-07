@@ -48,11 +48,8 @@ jobs:
       - name: Fetch the Latest Release Data
         id: fetch_release
         env:
-          VAULT_TOKEN: ${{ secrets.VAULT_TOKEN }}
           TOKEN_VALHALLA: ${{ secrets.TOKEN_VALHALLA }}
         run: |
-          npx dotenv-vault@latest pull development -y --dotenvMe=${{ secrets.VAULT_TOKEN }}
-          source .env
           curl \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${TOKEN_VALHALLA}" \
@@ -60,9 +57,10 @@ jobs:
             -o $GITHUB_WORKSPACE/release_metadata.json
 
       - name: Update Gist File
+        env:
+          GIST_ID: ${{ secrets.GIST_ID }}
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
         run: |
-          npx dotenv-vault@latest pull development -y --dotenvMe=${{ secrets.VAULT_TOKEN }}
-          source .env
           python scripts/release_metadata.py \
             --gist-id $GIST_ID \
             --actor ${{ github.actor }} \
