@@ -336,6 +336,7 @@ namespace {
          *          "syncInterval" => 5,
          *          "read_your_writes" => true,
          *          "encryptionKey" => "",
+         *          "offline_writes" => false
          *       ];
          *       ```
          * 

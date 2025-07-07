@@ -436,28 +436,28 @@ pub extern "C" fn libsql_php_extension_info(_module: *mut ext_php_rs::zend::Modu
         // Add rows to the PHP info table.
         ext_php_rs::ffi::php_info_print_table_row(
             2,
-            "LibSQL Support\0".as_ptr() as *const i8,
-            "Enabled\0".as_ptr() as *const i8,
-        );
-        ext_php_rs::ffi::php_info_print_table_row(
-            2,
             "LibSQL Local Connection Support\0".as_ptr() as *const i8,
-            "Enabled\0".as_ptr() as *const i8,
+            "Support\0".as_ptr() as *const i8,
         );
         ext_php_rs::ffi::php_info_print_table_row(
             2,
             "LibSQL In-Memory Connection Support\0".as_ptr() as *const i8,
-            "Enabled\0".as_ptr() as *const i8,
+            "Support\0".as_ptr() as *const i8,
         );
         ext_php_rs::ffi::php_info_print_table_row(
             2,
             "LibSQL Remote Connection Support\0".as_ptr() as *const i8,
-            "Enabled\0".as_ptr() as *const i8,
+            "Support\0".as_ptr() as *const i8,
         );
         ext_php_rs::ffi::php_info_print_table_row(
             2,
             "LibSQL Remote Replica Connection Support\0".as_ptr() as *const i8,
-            "Enabled\0".as_ptr() as *const i8,
+            "Support\0".as_ptr() as *const i8,
+        );
+        ext_php_rs::ffi::php_info_print_table_row(
+            2,
+            "LibSQL Offline Writes Support\0".as_ptr() as *const i8,
+            "Support\0".as_ptr() as *const i8,
         );
         ext_php_rs::ffi::php_info_print_table_row(
             2,
@@ -479,7 +479,16 @@ pub extern "C" fn libsql_php_extension_info(_module: *mut ext_php_rs::zend::Modu
     }
 }
 
+extern "C" fn libsql_php_shutdown(_type: i32, _module_number: i32) -> i32 {
+    CONNECTION_REGISTRY.lock().unwrap().clear();
+    TRANSACTION_REGISTRY.lock().unwrap().clear();
+    STATEMENT_REGISTRY.lock().unwrap().clear();
+    0  // return SUCCESS
+}
+
 #[php_module]
 pub fn get_module(module: ModuleBuilder) -> ModuleBuilder {
-    module.info_function(libsql_php_extension_info)
+    module
+    .info_function(libsql_php_extension_info)
+    .shutdown_function(libsql_php_shutdown)
 }

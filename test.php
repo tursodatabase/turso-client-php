@@ -1,5 +1,10 @@
 <?php
 
+if (!class_exists('LibSQL')) {
+    echo "LibSQL Not Found!" . PHP_EOL;
+    exit(1);
+}
+
 $db = new LibSQL(":memory:");
 
 if (!$db) {
