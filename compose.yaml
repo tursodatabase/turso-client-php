@@ -1,0 +1,24 @@
+services:
+  dev:
+    container_name: turso-client-php-development
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 6969:6969
+    volumes:
+      - ./php-server/php.ini:/etc/php/8.4/cli/php.ini
+      - ./:/app
+    profiles: ["dev"]
+
+  dev-arm64:
+    container_name: turso-client-php-development-arm64
+    build:
+      context: .
+      dockerfile: Dockerfile.arm64
+    ports:
+      - 6969:6969
+    volumes:
+      - ./php-server/php.ini:/etc/php/8.4/cli/php.ini
+      - ./:/app
+    profiles: ["dev-arm64"]

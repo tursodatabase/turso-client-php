@@ -91,7 +91,7 @@ So you need to go with the **Manual Installation**.
 
   **Non-interactive Mode**
   ```bash
-  turso-php-installer install -y --php-version=8.3
+  turso-php-installer install -n --php-version=8.3
   ```
   <img src="https://i.imgur.com/s60hh5T.gif" />
 </details>
@@ -114,10 +114,58 @@ So you need to go with the **Manual Installation**.
   ```
 </details>
 
+## Development
+
+
+### Requirements
+
+- Unix/Unix Like
+- PHP >= 8.1
+- [Rustlang](https://www.rust-lang.org/tools/install)
+- Git
+- Docker & Docker Compose (Docker Development)
+
+Fork it First and Build from source:
+
+```bash
+# Clone
+git clone git@github.com:<username>/turso-client-php.git
+
+# Move to project directory
+cd turso-client-php
+
+# Make sure you have rust nightly toolchain
+rustup toolchain install nightly
+rustup default nightly 
+
+# Build the binary
+cargo build # or cargo build --release for production
+```
+
+Or using Develop inside Docker Container
+
+```bash
+# Clone
+git clone git@github.com:<username>/turso-client-php.git
+
+# Move to project directory
+cd turso-client-php
+
+# Build the binary
+make compose/up
+```
+
+if using `arm64` then use this command:
+
+```bash
+make compose-arm64/up
+```
+
+For all make command check `make help`
+
 ## Contributors
 
 ![Contributors](https://contrib.nn.ci/api?no_bot=true&repo=tursodatabase/turso-client-php)
-<!-- GitAds-Verify: GNERMDZMKVBUBHB6PDQEGGLSUJM87SOR -->
 
 
 ## License

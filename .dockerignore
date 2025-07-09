@@ -1,0 +1,7 @@
+.vscode/
+.cargo/
+.github/
+target/
+vendor/
+
+*.bak
