@@ -4,7 +4,7 @@
 # --- Stage 1: Builder for Rust ---
 # This stage installs Rust and its build dependencies.
 # Using debian:bookworm-slim as a lightweight base image.
-FROM --platform=linux/arm64 debian:bookworm-slim AS builde
+FROM --platform=linux/arm64 debian:bookworm-slim AS builder
 
 # Set environment variables for non-interactive apt operations
 ENV DEBIAN_FRONTEND=noninteractive
