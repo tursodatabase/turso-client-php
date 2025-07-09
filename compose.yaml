@@ -21,4 +21,4 @@ services:
     volumes:
       - ./php-server/php.ini:/etc/php/8.4/cli/php.ini
       - ./:/app
-    profiles: ["dev-arm64"]
+    profiles: ["arm64"]
