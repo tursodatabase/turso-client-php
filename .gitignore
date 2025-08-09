@@ -1,5 +1,6 @@
 /target
 *.db
+*.db*
 *.txt
 libsql.stubs.php
 playground.rs
@@ -15,3 +16,4 @@ notes/
 *.bak
 src/*.bak
 vendor/
+mergenation.php
