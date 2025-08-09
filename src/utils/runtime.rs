@@ -1,4 +1,5 @@
-use std::collections::HashMap;
+use std::{collections::HashMap};
+use url::{Url, Host};
 
 use ext_php_rs::{
     exception::PhpException,
@@ -210,4 +211,54 @@ pub fn parse_dsn(dsn: &str) -> Option<Dsn> {
     }
 
     Some(parsed_dsn)
+}
+
+/// Check if a server/URL is reachable
+pub fn is_reachable(url: &str) -> bool {
+    // Format URL or return false on error
+    let transformed_url = match format_url(url) {
+        Ok(url) => url,
+        Err(_) => return false,
+    };
+
+    let client = match reqwest::blocking::Client::builder()
+        .timeout(std::time::Duration::from_secs(20))
+        .build() 
+    {
+        Ok(client) => client,
+        Err(_) => return false,
+    };
+
+    // even errors like 404 mean server is reachable
+    match client.get(&transformed_url).send() {
+        Ok(_) => true,
+        _ => false,
+    }
+}
+
+pub fn format_url(input_url: &str) -> Result<String, url::ParseError> {
+    let mut url = Url::parse(input_url)?;
+
+    if let Some(host) = url.host() {
+        if let Host::Domain(domain) = host {
+            let domain_lower = domain.to_ascii_lowercase();
+            let new_domain = if domain_lower.ends_with(".localhost") || domain_lower == "localhost" {
+                "localhost".to_string()
+            } else {
+                let parts: Vec<&str> = domain.split('.').collect();
+                if parts.len() >= 2 {
+                    format!("{}.{}", parts[parts.len() - 2], parts[parts.len() - 1])
+                } else {
+                    domain.to_string()
+                }
+            };
+            let _ = url.set_host(Some(&new_domain));
+        }
+    }
+
+    url.set_path("/v2");
+    url.set_query(None);
+    url.set_fragment(None);
+
+    Ok(url.to_string())
 }

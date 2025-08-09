@@ -295,16 +295,19 @@ namespace {
          *    Establishing a connection to a local database is straightforward with LibSQL. You have three options:
          * 
          *    a. **Standard DSN Connection:** If you're using a DSN string, use the following format:
+         * 
          *       ```
          *       $db = new LibSQL("libsql:dbname=database.db", LibSQL::OPEN_READWRITE | LibSQL::OPEN_CREATE, "");
          *       ```
          *       
          *    b. **Standard SQLite Connection:** For direct SQLite connections, simply provide the database file name:
+         * 
          *       ```
          *       $db = new LibSQL("database.db", LibSQL::OPEN_READWRITE | LibSQL::OPEN_CREATE, "");
          *       ```
          *       
          *    c. **Standard LibSQL Connection:** Alternatively, you can specify the file protocol explicitly:
+         * 
          *       ```
          *       $db = new LibSQL("file:database.db", LibSQL::OPEN_READWRITE | LibSQL::OPEN_CREATE, "");
          *       ```
@@ -314,11 +317,13 @@ namespace {
          *    Connecting to a remote database is equally effortless. Choose between two options:
          * 
          *    a. **Standard DSN Connection with 'libsql://':**
+         * 
          *       ```
          *       $db = new LibSQL("libsql:dbname=libsql://database-org.turso.io;authToken=random-token");
          *       ```
          *       
          *    b. **Standard DSN Connection with 'https://':**
+         * 
          *       ```
          *       $db = new LibSQL("libsql:dbname=https://database-org.turso.io;authToken=random-token");
          *       ```
@@ -328,6 +333,7 @@ namespace {
          *    To set up a replica connection for distributed systems, follow these steps:
          * 
          *    a. Define the configuration array with the required parameters:
+         * 
          *       ```
          *       $config = [
          *          "url" => "file:database.db",
@@ -335,12 +341,48 @@ namespace {
          *          "syncUrl" => "libsql://database-org.turso.io",
          *          "syncInterval" => 5,
          *          "read_your_writes" => true,
-         *          "encryptionKey" => "",
-         *          "offline_writes" => false
+         *          "encryptionKey" => ""
          *       ];
-         *       ```
          * 
-         *    b. Instantiate a new LibSQL object with the configuration array:
+         *       $db = new LibSQL(
+         *          config: $config,
+         *          sqld_offline_mode: false,
+         *          flags: LibSQL::OPEN_READWRITE | LibSQL::OPEN_CREATE,
+         *          encryption_key: "",
+         *          offline_writes: false
+         *       );
+         *       ```
+         *       
+         *    b. To establish a replica connection with offline writes, set the offline_writes parameter to true:
+         * 
+         *       ```
+         *       $db = new LibSQL(
+         *          config: $config,
+         *          sqld_offline_mode: false,
+         *          flags: LibSQL::OPEN_READWRITE | LibSQL::OPEN_CREATE,
+         *          encryption_key: "",
+         *          offline_writes: true
+         *       );
+         *       ```
+         *       
+         *       Note: The offline_writes parameter is currently in beta and may have some limitations. It's only for Turso Cloud database not Libsql Server (sqld) instance.
+         *       
+         *    c. To establish a replica connection with offline writes for sqld instance, set the offline_writes parameter to true and sqld_offline_mode to true:
+         * 
+         *       ```
+         *       $db = new LibSQL(
+         *          config: $config,
+         *          sqld_offline_mode: true,
+         *          flags: LibSQL::OPEN_READWRITE | LibSQL::OPEN_CREATE,
+         *          encryption_key: "",
+         *          offline_writes: true
+         *       );
+         *       ```
+         *       
+         *       Note: The offline_writes parameter is currently in beta and may have some limitations. It's only for Libsql Server (sqld) instance.
+         * 
+         *    d. Instantiate a new LibSQL object with the configuration array:
+         * 
          *       ```
          *       $db = new LibSQL($config, LibSQL::OPEN_READWRITE | LibSQL::OPEN_CREATE, "", false);
          *       $db = new LibSQL($config, LibSQL::OPEN_READWRITE | LibSQL::OPEN_CREATE, "", true); // Offline Write BETA
@@ -349,11 +391,12 @@ namespace {
          * With this Quick Start guide, you're ready to seamlessly integrate LibSQL PHP Extension into your projects, whether for local, remote, or distributed database connections. 
          *
          * @param string|array $config
+         * @param bool|false $sqld_offline_mode
          * @param integer|null $flags
          * @param string|null $encryption_key
-         * @param bool|null $offline_writes
+         * @param bool|false $offline_writes
          */
-        public function __construct(string|array $config, ?int $flags = 6, ?string $encryption_key = "", ?bool $offline_writes = false) {}
+        public function __construct(string|array $config, ?bool $sqld_offline_mode = false, ?int $flags = 6, ?string $encryption_key = "", ?bool $offline_writes = false) {}
 
         /**
          * Retrieves the version of the LibSQL library.
@@ -539,10 +582,11 @@ namespace {
          *
          * @param string $stmt The SQL query to execute.
          * @param array $parameters The parameters for the query (optional).
+         * @param bool $force_remote Force read from remote (only for sqld offline mode)
          *
          * @return LibSQLResult The result of the query.
          */
-        public function query(string $stmt, array $parameters = []) {}
+        public function query(string $stmt, array $parameters = [], bool $force_remote = false) {}
 
         /**
          * Initiates a new database transaction.
@@ -629,10 +673,33 @@ namespace {
          * ```
          * $db->sync();
          * ```
+         * 
+         * @param bool|false $log_info Whether to log information about the sync operation.
          *
          * @return void The result of the sync operation.
          */
-        public function sync() {}
+        public function sync(?bool $log_info = false) {}
+
+        /**
+         * Checks the connectivity of the database server
+         * 
+         * @return bool
+         */
+        public function checkConnectivity() {}
+
+        /**
+         * Returns the number of pending operations.
+         * 
+         * @return int
+         */
+        public function getPendingOperationsCount() {}
+        
+        /**
+         * Checks if the database connection is online.
+         * 
+         * @return bool
+         */
+        public function isOnline() {}
 
         /**
          * Enable or disable the loading of extensions.

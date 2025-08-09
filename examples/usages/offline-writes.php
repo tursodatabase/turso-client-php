@@ -1,41 +1,57 @@
 <?php
 
-$authToken = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJFZERTQSJ9.eyJpYXQiOjE3NDA2Nzc2ODUsIm5iZiI6MTc0MDY3NzY4NSwiZXhwIjoxNzQxMjgyNDg1LCJqdGkiOiJkYjEifQ.6qW2iglFGkiEDZ9IAp0CL5n2zpz_SlD8EwcSDwEurOdQ9d8qrppek5qJ5rXTyH80hyHi5CruaFsvmkcUZg_UBg';
+$authToken = getenv("TURSO_AUTH_TOKEN");
+$dbUrl = getenv("TURSO_DB_URL");
 
 $config = [
     "url" => "file:database.db",
     "authToken" => $authToken,
-    "syncUrl" => "http://127.0.0.1:8080",
-    "syncInterval" => 5,
-    "read_your_writes" => true,
-    "encryptionKey" => "",
+    "syncUrl" => $dbUrl
 ];
 
-try {
-    $db = new LibSQL(
-        config: $config,
-        flags: LibSQL::OPEN_READWRITE | LibSQL::OPEN_CREATE,
-        encryption_key: "",
-        offline_writes: false
-    );
+$db = new LibSQL(
+    config: $config,
+    flags: LibSQL::OPEN_READWRITE | LibSQL::OPEN_CREATE,
+    encryption_key:"",
+    offline_writes: true
+);
 
-    $db->query("SELECT 1");
+function saveNote(string $content)
+{
+    global $db;
 
-    $db->execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, age INTEGER)");
+    $sql = "CREATE TABLE IF NOT EXISTS notes (
+        id INTEGER PRIMARY KEY,
+        content TEXT,
+        created_at TEXT
+    )";
+    $db->execute($sql);
 
-    $db->execute("INSERT INTO users (name, age) VALUES ('Bilal Ali Maftullah', 21)");
+    $sql = "INSERT INTO notes (content, created_at) VALUES (?, datetime('now'))";
+    $parameters = [$content];
+    $db->execute($sql, $parameters);
 
-    $db->query("SELECT * FROM users");
-
-    $db->execute("DROP TABLE users");
-
-    $db->close();
-
-    if (file_exists("database.db")) {
-        exec("rm database.db*");
+    try {
+        $db->sync();
+        echo "Note synced to cloud" . PHP_EOL;
+    } catch (Exception $e) {
+        echo $e->getMessage() . PHP_EOL;
+        echo "Note saved locally, will sync later" . PHP_EOL;
     }
-} catch (\Throwable $th) {
-    throw $th;
 }
 
-echo "🟩 Offline Writes Database Connection is working fine and thank you!" . PHP_EOL;
+function readNotes()
+{
+    global $db;
+
+    $sql = "SELECT * FROM notes";
+    $result = $db->query($sql);
+    $rows = $result->fetchArray(LibSQL::LIBSQL_ASSOC);
+    foreach ($rows as $row) {
+        echo $row["content"] . PHP_EOL;
+    }
+}
+
+$random = rand(1, 100);
+saveNote("Note $random");
+readNotes();

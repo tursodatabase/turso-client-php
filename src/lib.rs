@@ -9,15 +9,16 @@ pub mod statement;
 pub mod transaction;
 pub mod utils;
 use crate::generator::LibSQLIterator;
+use crate::providers::sqld_offline_write::OfflineWriteConnection;
 use crate::result::FetchResult;
 use crate::result::LibSQLResult;
 use crate::statement::LibSQLStatement;
 use crate::transaction::LibSQLTransaction;
 use ext_php_rs::prelude::*;
-use ext_php_rs::{php_class, php_impl, php_module};
 use ext_php_rs::types::Zval;
+use ext_php_rs::{php_class, php_impl, php_module};
 use hooks::load_extensions::ExtensionParams;
-use std::{path::Path, collections::HashMap, sync::Mutex};
+use std::{collections::HashMap, path::Path, sync::Mutex};
 use utils::{
     config_value::ConfigValue,
     query_params::QueryParameters,
@@ -26,6 +27,7 @@ use utils::{
 
 lazy_static::lazy_static! {
     static ref CONNECTION_REGISTRY: Mutex<HashMap<String, libsql::Connection>> = Mutex::new(HashMap::new());
+    static ref OFFLINE_CONNECTION_REGISTRY: Mutex<HashMap<String, OfflineWriteConnection>> = Mutex::new(HashMap::new());
     static ref TRANSACTION_REGISTRY: Mutex<HashMap<String, libsql::Transaction>> = Mutex::new(HashMap::new());
     static ref STATEMENT_REGISTRY: Mutex<HashMap<String, libsql::Statement>> = Mutex::new(HashMap::new());
 }
@@ -59,7 +61,7 @@ struct LibSQL {
 
     /// Property representing the Database object.
     db: Option<libsql::Database>,
-    conn: libsql::Connection,
+    conn: Option<libsql::Connection>,
 }
 
 #[php_impl]
@@ -84,14 +86,17 @@ impl LibSQL {
     /// # Arguments
     ///
     /// * `config` - The configuration value for the connection.
+    /// * `sqld_offline_mode` - Optional flag to enable SQLD offline mode.
     /// * `flags` - Optional flags for the connection.
     /// * `encryption_key` - Optional encryption key for the connection.
+    /// * `offline_writes` - Optional flag to enable offline writes for Turso Cloud.
     ///
     /// # Returns
     ///
     /// A `Result` containing the constructed `LibSQLConnection` object or a `PhpException` if an error occurs.
     pub fn __construct(
         config: ConfigValue,
+        sqld_offline_mode: Option<bool>,
         flags: Option<i32>,
         encryption_key: Option<String>,
         offline_writes: Option<bool>,
@@ -99,6 +104,7 @@ impl LibSQL {
         let db_flags = flags.unwrap_or(6);
         let encryption_key = encryption_key.unwrap_or_default();
         let offline_writes = offline_writes.unwrap_or(false);
+        let sqld_offline_mode = sqld_offline_mode.unwrap_or(false);
 
         let (url, auth_token, sync_url, sync_interval, read_your_writes): (
             String,
@@ -163,11 +169,41 @@ impl LibSQL {
             return Err(PhpException::default("URL is not defined!".into()));
         }
 
+        let cleared_url = if url.starts_with("file:") {
+            url.strip_prefix("file:").unwrap().to_string()
+        } else {
+            url.clone()
+        };
+
         let mode = get_mode(
             Some(url.clone()),
             Some(auth_token.clone()),
             Some(sync_url.clone()),
         );
+
+        let conn_id = uuid::Uuid::new_v4().to_string();
+
+        if sqld_offline_mode && !auth_token.is_empty() && !sync_url.is_empty() {
+            let offline_conn = providers::sqld_offline_write::create_sqld_offline_write_connection(
+                cleared_url.clone(),
+                auth_token.clone(),
+                sync_url.clone(),
+                Some(db_flags),
+                Some(encryption_key),
+            );
+
+            OFFLINE_CONNECTION_REGISTRY
+                .lock()
+                .unwrap()
+                .insert(conn_id.clone(), offline_conn);
+
+            return Ok(Self {
+                mode: "offline_write".to_string(),
+                conn_id,
+                db: None,
+                conn: None,
+            });
+        }
 
         let (conn, db) = match mode.as_str() {
             "local" => {
@@ -209,13 +245,17 @@ impl LibSQL {
             _ => return Err(PhpException::default("Mode is not available!".into())),
         };
 
-        let conn_id = uuid::Uuid::new_v4().to_string();
         CONNECTION_REGISTRY
             .lock()
             .unwrap()
             .insert(conn_id.clone(), conn.clone());
 
-        Ok(Self { mode, conn_id, db, conn })
+        Ok(Self {
+            mode,
+            conn_id,
+            db,
+            conn: Some(conn),
+        })
     }
 
     /// Retrieves the version of the LibSQL library.
@@ -233,7 +273,16 @@ impl LibSQL {
     ///
     /// Returns the number of changes made as a result of the last executed statement.
     pub fn changes(&self) -> Result<u64, PhpException> {
-        hooks::changes::get_changes(self.conn_id.to_string())
+        if self.mode == "offline_write" {
+            let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().unwrap();
+            let offline_conn = offline_registry
+                .get(&self.conn_id)
+                .ok_or_else(|| PhpException::from("Offline connection not found"))?;
+
+            Ok(offline_conn.changes())
+        } else {
+            hooks::changes::get_changes(self.conn_id.to_string())
+        }
     }
 
     /// Checks if autocommit mode is enabled for the connection.
@@ -251,7 +300,10 @@ impl LibSQL {
     ///
     /// Returns the total number of changes made by the connection.
     pub fn total_changes(&self) -> Result<u64, PhpException> {
-        Ok(self.conn.total_changes())
+        match &self.conn {
+            Some(conn) => Ok(conn.total_changes()),
+            None => Err(PhpException::from("Connection not available")),
+        }
     }
 
     /// Retrieves the rowid of the last inserted row.
@@ -260,7 +312,10 @@ impl LibSQL {
     ///
     /// Returns the rowid of the last inserted row.
     pub fn last_inserted_id(&self) -> Result<i64, PhpException> {
-        Ok(self.conn.last_insert_rowid())
+        match &self.conn {
+            Some(conn) => Ok(conn.last_insert_rowid()),
+            None => Err(PhpException::from("Connection not available")),
+        }
     }
 
     /// Executes a SQL statement.
@@ -278,7 +333,20 @@ impl LibSQL {
         stmt: &str,
         parameters: Option<QueryParameters>,
     ) -> Result<u64, PhpException> {
-        hooks::use_exec::exec(self.conn_id.to_string(), stmt, parameters)
+        if self.mode == "offline_write" {
+            let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().unwrap();
+            let offline_conn = offline_registry
+                .get(&self.conn_id)
+                .ok_or_else(|| PhpException::from("Offline connection not found"))?;
+
+            // Remove the unused params variable and pass parameters directly
+            match offline_conn.execute(stmt, parameters) {
+                Ok(result) => Ok(result),
+                Err(e) => Err(PhpException::from(e.to_string())),
+            }
+        } else {
+            hooks::use_exec::exec(self.conn_id.to_string(), stmt, parameters)
+        }
     }
 
     /// Executes a batch of SQL statements.
@@ -291,7 +359,19 @@ impl LibSQL {
     ///
     /// Returns `true` if the execution is successful, otherwise `false`.
     pub fn execute_batch(&self, stmt: &str) -> Result<bool, PhpException> {
-        hooks::use_exec_batch::exec_batch(self.conn_id.to_string(), stmt)
+        if self.mode == "offline_write" {
+            let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().unwrap();
+            let offline_conn = offline_registry
+                .get(&self.conn_id)
+                .ok_or_else(|| PhpException::from("Offline connection not found"))?;
+
+            match offline_conn.execute_batch(stmt) {
+                Ok(_) => Ok(true),
+                Err(e) => Err(PhpException::from(e.to_string())),
+            }
+        } else {
+            hooks::use_exec_batch::exec_batch(self.conn_id.to_string(), stmt)
+        }
     }
 
     /// Executes a SQL query and returns the result.
@@ -300,6 +380,7 @@ impl LibSQL {
     ///
     /// * `stmt` - The SQL query to execute.
     /// * `parameters` - Parameters to bind to the query.
+    /// * `force_remote` - Whether to force using the remote connection when online (only for sqld offline mode).
     ///
     /// # Returns
     ///
@@ -308,8 +389,15 @@ impl LibSQL {
         &self,
         stmt: &str,
         parameters: Option<QueryParameters>,
+        force_remote: Option<bool>,
     ) -> Result<LibSQLResult, PhpException> {
-        LibSQLResult::__construct(self.conn_id.to_string(), stmt, parameters)
+        if self.mode == "offline_write" {
+            // For offline write mode, we still use the LibSQLResult but we need to handle it differently
+            // We'll create a special result that works with offline connections
+            LibSQLResult::__construct_offline(self.conn_id.to_string(), stmt, parameters, force_remote)
+        } else {
+            LibSQLResult::__construct(self.conn_id.to_string(), stmt, parameters)
+        }
     }
 
     /// Initiates a transaction with the specified behavior.
@@ -349,7 +437,13 @@ impl LibSQL {
     ///
     /// Returns `Ok(())` if the connection is closed successfully, otherwise returns a `PhpException`.
     pub fn close(&self) -> Result<(), PhpException> {
-        hooks::close::disconnect(self.conn_id.to_string())
+        if self.mode == "offline_write" {
+            let mut offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().unwrap();
+            offline_registry.remove(&self.conn_id);
+            Ok(())
+        } else {
+            hooks::close::disconnect(self.conn_id.to_string())
+        }
     }
 
     /// Synchronizes the database for remote replica connections.
@@ -374,7 +468,75 @@ impl LibSQL {
     /// # Panics
     ///
     /// This function will not panic.
-    pub fn sync(&self) -> Result<(), PhpException> {
+    /// Check connectivity status for offline write mode
+    pub fn check_connectivity(&self) -> Result<bool, PhpException> {
+        if self.mode == "offline_write" {
+            let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().unwrap();
+            let offline_conn = offline_registry
+                .get(&self.conn_id)
+                .ok_or_else(|| PhpException::from("Offline connection not found"))?;
+
+            Ok(offline_conn.check_connectivity())
+        } else {
+            Err(PhpException::default(
+                "Connectivity check only available in offline_write mode".to_string(),
+            ))
+        }
+    }
+
+    
+    /// Returns the number of pending operations (e.g. unsent queries)
+    /// stored in the offline connection. This is only available in
+    /// offline_write mode.
+    ///
+    /// # Returns
+    ///
+    /// The number of pending operations as a `usize`.
+    ///
+    /// # Errors
+    ///
+    /// A `PhpException` is returned if the mode is not `offline_write`.
+    pub fn get_pending_operations_count(&self) -> Result<usize, PhpException> {
+        if self.mode == "offline_write" {
+            let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().unwrap();
+            let offline_conn = offline_registry
+                .get(&self.conn_id)
+                .ok_or_else(|| PhpException::from("Offline connection not found"))?;
+
+            Ok(offline_conn.get_pending_operations_count())
+        } else {
+            Err(PhpException::default(
+                "Pending operations only available in offline_write mode".to_string(),
+            ))
+        }
+    }
+
+    
+    /// Synchronizes the database for remote replica connections.
+    ///
+    /// This function attempts to synchronize the database if the connection mode is
+    /// set to `remote_replica`. It uses asynchronous execution to perform the sync operation
+    /// and returns an appropriate result based on the success or failure of the sync process.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing:
+    /// - `()`: An empty tuple on successful synchronization.
+    /// - `PhpException`: An exception in case of failure.
+    ///
+    /// # Errors
+    ///
+    /// This function returns a `PhpException` in the following cases:
+    /// - If the mode is not `remote_replica`.
+    /// - If the database connection is not available for synchronization.
+    /// - If the synchronization operation fails.
+    ///
+    /// # Panics
+    ///
+    /// This function will not panic.
+    pub fn sync(&self, log_info: Option<bool>) -> Result<(), PhpException> {
+        let log_info = log_info.unwrap_or(false);
+
         if self.mode == "remote_replica" {
             match &self.db {
                 Some(db) => utils::runtime::runtime().block_on(async {
@@ -387,6 +549,21 @@ impl LibSQL {
                     "Database connection is not available for sync".to_string(),
                 )),
             }
+        } else if self.mode == "offline_write" {
+            let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().unwrap();
+            let offline_conn = offline_registry
+                .get(&self.conn_id)
+                .ok_or_else(|| PhpException::from("Offline connection not found"))?;
+
+            match offline_conn.manual_sync() {
+                Ok(message) => {
+                    if log_info {
+                        println!("Sync result: {}", message);
+                    }
+                    Ok(())
+                }
+                Err(e) => Err(PhpException::default(e)),
+            }
         } else {
             Err(PhpException::default(format!(
                 "{} mode does not support sync",
@@ -395,40 +572,103 @@ impl LibSQL {
         }
     }
 
+    
+    /// Checks the online status of the connection.
+    ///
+    /// This function returns a boolean indicating if the connection is online.
+    /// Returns `true` if the connection is online, `false` otherwise.
+    ///
+    /// # Errors
+    ///
+    /// This function returns a `PhpException` in the following cases:
+    /// - If the mode is not `offline_write`.
+    /// - If the offline connection is not found.
+    ///
+    /// # Panics
+    ///
+    /// This function will not panic.
+    pub fn is_online(&self) -> Result<bool, PhpException> {
+        if self.mode == "offline_write" {
+            let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().unwrap();
+            let offline_conn = offline_registry
+                .get(&self.conn_id)
+                .ok_or_else(|| PhpException::from("Offline connection not found"))?;
+
+            Ok(offline_conn.is_online())
+        } else {
+            Err(PhpException::default(
+                "Online status check only available in offline_write mode".to_string(),
+            ))
+        }
+    }
+
+    /// Enables or disables the loading of extensions for the given connection.
+    ///
+    /// # Arguments
+    ///
+    /// * `onoff` - An optional boolean parameter to enable or disable the loading of extensions.
+    ///             If `None`, the current status is returned.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(())` if the operation is successful, otherwise returns a `PhpException`.
+    ///
+    /// # Errors
+    ///
+    /// This function returns a `PhpException` in the following cases:
+    /// - If the connection is not available.
+    /// - If the operation fails.
     pub fn enable_load_extension(&self, onoff: Option<bool>) -> Result<(), PhpException> {
         hooks::load_extensions::enable_load_extension(self.conn_id.to_string(), onoff)
     }
 
     pub fn load_extensions(
         &self,
-        extension_paths: Option<ExtensionParams>
+        extension_paths: Option<ExtensionParams>,
     ) -> Result<(), PhpException> {
-        
         let entry_point = None;
-    
+
         match extension_paths {
             Some(ExtensionParams::String(extension)) => {
-                hooks::load_extensions::load_extension(self.conn_id.to_string(), Path::new(&extension), entry_point).unwrap();
-            },
+                hooks::load_extensions::load_extension(
+                    self.conn_id.to_string(),
+                    Path::new(&extension),
+                    entry_point,
+                )
+                .unwrap();
+            }
             Some(ExtensionParams::Array(extensions)) => {
                 for extension in extensions {
                     hooks::load_extensions::load_extension(
                         self.conn_id.to_string(),
                         Path::new(&extension),
                         entry_point,
-                    ).unwrap();
+                    )
+                    .unwrap();
                 }
-            },
+            }
             None => Err(PhpException::default(
-                "No extension paths provided".to_string()
-            )).unwrap(),
+                "No extension paths provided".to_string(),
+            ))
+            .unwrap(),
         }
-    
+
         Ok(())
     }
 }
 
-// The function to display extension info in phpinfo().
+
+/// libsql_php_extension_info is the function called by PHP when the extension is loaded.
+/// This function prints the extension information to the PHP info page.
+///
+/// # Safety
+///
+/// This function is marked as `unsafe` because it calls the foreign function
+/// `php_info_print_table_start` and `php_info_print_table_row`.
+///
+/// # Panics
+///
+/// This function will not panic.
 pub extern "C" fn libsql_php_extension_info(_module: *mut ext_php_rs::zend::ModuleEntry) {
     unsafe {
         // Start the PHP info table.
@@ -479,16 +719,20 @@ pub extern "C" fn libsql_php_extension_info(_module: *mut ext_php_rs::zend::Modu
     }
 }
 
+/// This function is called when the PHP module is shutdown. It is responsible for releasing
+/// any resources allocated by the module. In this case, it clears the connection, offline
+/// connection, transaction, and statement registries.
 extern "C" fn libsql_php_shutdown(_type: i32, _module_number: i32) -> i32 {
     CONNECTION_REGISTRY.lock().unwrap().clear();
+    OFFLINE_CONNECTION_REGISTRY.lock().unwrap().clear();
     TRANSACTION_REGISTRY.lock().unwrap().clear();
     STATEMENT_REGISTRY.lock().unwrap().clear();
-    0  // return SUCCESS
+    0 // return SUCCESS
 }
 
 #[php_module]
 pub fn get_module(module: ModuleBuilder) -> ModuleBuilder {
     module
-    .info_function(libsql_php_extension_info)
-    .shutdown_function(libsql_php_shutdown)
+        .info_function(libsql_php_extension_info)
+        .shutdown_function(libsql_php_shutdown)
 }
