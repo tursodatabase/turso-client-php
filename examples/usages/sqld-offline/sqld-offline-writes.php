@@ -45,7 +45,7 @@ function readNotes()
     }
 }
 
-$random = rand(1, 100);
+$random = bin2hex(random_bytes(16));
 $note = "Note $random";
 echo "Offline Writing: $note" . PHP_EOL;
 saveNote($note);
