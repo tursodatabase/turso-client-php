@@ -23,6 +23,7 @@ use utils::{
     config_value::ConfigValue,
     query_params::QueryParameters,
     runtime::{get_mode, parse_dsn},
+    log_error::log_error_to_tmp
 };
 
 lazy_static::lazy_static! {
@@ -190,11 +191,18 @@ impl LibSQL {
                 sync_url.clone(),
                 Some(db_flags),
                 Some(encryption_key),
-            );
+            ).map_err(|e| {
+                log_error_to_tmp(&format!("Offline connection creation failed: {:?}", e));
+                e
+            })?;
 
             OFFLINE_CONNECTION_REGISTRY
                 .lock()
-                .unwrap()
+                .map_err(|e| {
+                    let err_msg = format!("Mutex lock error: {}", e);
+                    log_error_to_tmp(&err_msg);
+                    PhpException::default(err_msg)
+                })?
                 .insert(conn_id.clone(), offline_conn);
 
             return Ok(Self {
@@ -211,7 +219,10 @@ impl LibSQL {
                     url,
                     Some(db_flags),
                     Some(encryption_key),
-                );
+                ).map_err(|e| {
+                    log_error_to_tmp(&format!("Local connection failed: {:?}", e));
+                    e
+                })?;
                 (conn, None)
             }
             "remote" => {
@@ -247,7 +258,11 @@ impl LibSQL {
 
         CONNECTION_REGISTRY
             .lock()
-            .unwrap()
+            .map_err(|e| {
+                let err_msg = format!("Mutex lock error: {}", e);
+                log_error_to_tmp(&err_msg);
+                PhpException::default(err_msg)
+            })?
             .insert(conn_id.clone(), conn.clone());
 
         Ok(Self {
@@ -342,7 +357,7 @@ impl LibSQL {
             // Remove the unused params variable and pass parameters directly
             match offline_conn.execute(stmt, parameters) {
                 Ok(result) => Ok(result),
-                Err(e) => Err(PhpException::from(e.to_string())),
+                Err(e) => Err(PhpException::from(format!("{:?}", e))),
             }
         } else {
             hooks::use_exec::exec(self.conn_id.to_string(), stmt, parameters)
@@ -367,7 +382,7 @@ impl LibSQL {
 
             match offline_conn.execute_batch(stmt) {
                 Ok(_) => Ok(true),
-                Err(e) => Err(PhpException::from(e.to_string())),
+                Err(e) => Err(PhpException::from(format!("{:?}", e))),
             }
         } else {
             hooks::use_exec_batch::exec_batch(self.conn_id.to_string(), stmt)
@@ -723,11 +738,31 @@ pub extern "C" fn libsql_php_extension_info(_module: *mut ext_php_rs::zend::Modu
 /// any resources allocated by the module. In this case, it clears the connection, offline
 /// connection, transaction, and statement registries.
 extern "C" fn libsql_php_shutdown(_type: i32, _module_number: i32) -> i32 {
-    CONNECTION_REGISTRY.lock().unwrap().clear();
-    OFFLINE_CONNECTION_REGISTRY.lock().unwrap().clear();
-    TRANSACTION_REGISTRY.lock().unwrap().clear();
-    STATEMENT_REGISTRY.lock().unwrap().clear();
-    0 // return SUCCESS
+    if let Ok(mut registry) = CONNECTION_REGISTRY.lock() {
+        registry.clear();
+    } else {
+        log_error_to_tmp("Failed to lock CONNECTION_REGISTRY during shutdown");
+    }
+    
+    if let Ok(mut registry) = OFFLINE_CONNECTION_REGISTRY.lock() {
+        registry.clear();
+    } else {
+        log_error_to_tmp("Failed to lock OFFLINE_CONNECTION_REGISTRY during shutdown");
+    }
+    
+    if let Ok(mut registry) = TRANSACTION_REGISTRY.lock() {
+        registry.clear();
+    } else {
+        log_error_to_tmp("Failed to lock TRANSACTION_REGISTRY during shutdown");
+    }
+    
+    if let Ok(mut registry) = STATEMENT_REGISTRY.lock() {
+        registry.clear();
+    } else {
+        log_error_to_tmp("Failed to lock STATEMENT_REGISTRY during shutdown");
+    }
+    
+    0
 }
 
 #[php_module]

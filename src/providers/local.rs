@@ -1,3 +1,5 @@
+use ext_php_rs::prelude::PhpException;
+
 use crate::{
     utils::runtime::runtime, LIBSQL_OPEN_CREATE, LIBSQL_OPEN_READONLY, LIBSQL_OPEN_READWRITE,
 };
@@ -17,8 +19,8 @@ pub fn create_local_connection(
     url: String,
     flags: Option<i32>,
     encryption_key: Option<String>,
-) -> libsql::Connection {
-    let conn = runtime().block_on(async {
+) -> Result<libsql::Connection, PhpException> {
+    runtime().block_on(async {
         let db_flags = match flags {
             Some(LIBSQL_OPEN_READONLY) => libsql::OpenFlags::SQLITE_OPEN_READ_ONLY,
             Some(LIBSQL_OPEN_READWRITE) => libsql::OpenFlags::SQLITE_OPEN_READ_WRITE,
@@ -43,11 +45,12 @@ pub fn create_local_connection(
             .encryption_config(encryption_config.unwrap())
             .build()
             .await
-            .unwrap();
-        let conn = db.connect().unwrap();
-
-        conn
-    });
-
-    conn
+            .map_err(|e| {
+                PhpException::default(format!("Database build failed: {}", e))
+            })?;
+            
+        db.connect().map_err(|e| {
+            PhpException::default(format!("Connection failed: {}", e))
+        })
+    })
 }

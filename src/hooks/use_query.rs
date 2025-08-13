@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use ext_php_rs::{convert::IntoZval, exception::PhpException, types::Zval};
 
 use crate::{
-    utils::{query_params::QueryParameters, result_set::ResultSet, runtime::{remove_duplicates, runtime}},
+    utils::{log_error::log_error_to_tmp, query_params::QueryParameters, result_set::ResultSet, runtime::{remove_duplicates, runtime}},
     CONNECTION_REGISTRY,
 };
 
@@ -27,31 +27,46 @@ pub fn query(
     stmt: &str,
     parameters: Option<QueryParameters>,
 ) -> Result<Zval, PhpException> {
-    let conn_registry = CONNECTION_REGISTRY.lock().unwrap();
+    let conn_registry = CONNECTION_REGISTRY.lock().map_err(|e| {
+        let err_msg = format!("Mutex lock error: {}", e);
+        log_error_to_tmp(&err_msg);
+        PhpException::default(err_msg)
+    })?;
+    
     let conn = conn_registry
         .get(&conn_id)
-        .ok_or_else(|| PhpException::from("Connection not found"))?;
+        .ok_or_else(|| {
+            let err_msg = "Connection not found".to_string();
+            log_error_to_tmp(&err_msg);
+            PhpException::from(err_msg)
+        })?;
+        
     let params = if let Some(p) = parameters {
-        let params = p.to_params();
-        params
+        p.to_params()
     } else {
         libsql::params::Params::None
     };
 
     let query_result = runtime().block_on(async {
-        let mut rows = conn
-            .query(stmt, params)
-            .await
-            .map_err(|e| PhpException::from(e.to_string()))?;
+        let mut rows = conn.query(stmt, params).await.map_err(|e| {
+            PhpException::from(format!("Query failed: {}", e))
+        })?;
+        
         let mut results: Vec<HashMap<String, libsql::Value>> = Vec::new();
         let mut columns: Vec<String> = Vec::new();
 
-        while let Ok(Some(row)) = rows.next().await {
+        while let Some(row) = rows.next().await.map_err(|e| {
+            PhpException::from(format!("Row fetch failed: {}", e))
+        })? {
             let mut result = HashMap::new();
 
             for idx in 0..rows.column_count() {
-                let column_name = row.column_name(idx as i32).unwrap();
-                let value = row.get_value(idx).unwrap();
+                let column_name = row.column_name(idx as i32).ok_or_else(|| {
+                    PhpException::from(format!("Column index {} out of bounds", idx))
+                })?;
+                let value = row.get_value(idx).map_err(|e| {
+                    PhpException::from(format!("Value retrieval failed: {}", e))
+                })?;
 
                 columns.push(column_name.to_string());
                 result.insert(column_name.to_string(), value);
@@ -73,6 +88,9 @@ pub fn query(
         Ok(result_set) => result_set
             .into_zval(false)
             .map_err(|e| PhpException::from(e.to_string())),
-        Err(e) => Err(e),
+        Err(e) => {
+            log_error_to_tmp(&format!("Query processing error: {:?}", e));
+            Err(e)
+        }
     }
 }
