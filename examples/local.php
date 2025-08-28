@@ -9,10 +9,17 @@ try {
 
     $db->execute("INSERT INTO users (name, age) VALUES ('Bilal Ali Maftullah', 21)");
 
-    $db->query("SELECT * FROM users");
+    $query = $db->query("SELECT * FROM users");
+
+    foreach ($query->fetchArray(LibSQL::LIBSQL_ASSOC) as $row ) {
+        echo "Name: {$row['name']}, Age: {$row['age']}" . PHP_EOL;
+    }
 } catch (\Throwable $th) {
     throw $th;
 }
 
 echo "🟩 Local Database Connection is working fine and thank you!" . PHP_EOL;
-unlink("database.db");
+
+foreach (glob('*.db*') as $file) {
+    unlink($file);
+}
