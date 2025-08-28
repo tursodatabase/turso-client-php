@@ -1,81 +1,88 @@
-# Quick Start Guide for LibSQL PHP Extension
+# Quick Start
 
-1. **Local Connection:**
+This guide shows how to create a database, insert data, and run queries with **Turso Client PHP** in just a few steps.
 
-   Establishing a connection to a local database is straightforward with LibSQL. You have three options:
+---
 
-   a. **Standard DSN Connection:** If you're using a DSN string, use the following format:
-      ```php
-      $db = new LibSQL("libsql:dbname=database.db", LibSQL::OPEN_READWRITE | LibSQL::OPEN_CREATE, "");
-      ```
-      
-   b. **Standard SQLite Connection:** For direct SQLite connections, simply provide the database file name:
-      ```php
-      $db = new LibSQL("database.db", LibSQL::OPEN_READWRITE | LibSQL::OPEN_CREATE, "");
-      ```
-      
-   c. **Standard LibSQL Connection:** Alternatively, you can specify the file protocol explicitly:
-      ```php
-      $db = new LibSQL("file:database.db", LibSQL::OPEN_READWRITE | LibSQL::OPEN_CREATE, "");
-      ```
+## 1. Create a New Database
 
-2. **Remote Connection:**
+Start with a local database file:
 
-   Connecting to a remote database is equally effortless. Choose between two options:
+```php
+<?php
 
-   a. **Standard DSN Connection with 'libsql://':**
-      ```php
-      $db = new LibSQL("libsql:dbname=libsql://database-org.turso.io;authToken=random-token");
-      ```
-      
-   b. **Standard DSN Connection with 'https://':**
-      ```php
-      $db = new LibSQL("libsql:dbname=https://database-org.turso.io;authToken=random-token");
-      ```
+$libsql = new LibSQL("file:example.db");
 
-3. **Remote Replica Connection:**
+// Create a table
+$libsql->execute("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)");
+```
 
-   To set up a replica connection for distributed systems, follow these steps:
+---
 
-   a. Define the configuration array with the required parameters:
-      ```php
-      $config = [
-         "url" => "file:database.db",
-         "authToken" => "secrettoken",
-         "syncUrl" => "libsql://database-org.turso.io",
-         "syncInterval" => 5,
-         "read_your_writes" => true,
-         "encryptionKey" => "",
-      ];
-      ```
+## 2. Insert Data
 
-   b. Instantiate a new LibSQL object with the configuration array:
-      ```php
-      $db = new LibSQL($config);
-      ```
+```php
+// Insert one row
+$libsql->execute("INSERT INTO users (name) VALUES (?)", ["Alice"]);
 
-With this Quick Start guide, you're ready to seamlessly integrate LibSQL PHP Extension into your projects, whether for local, remote, or distributed database connections. Enjoy the simplicity and power of LibSQL for efficient database management in your PHP applications!
+// Insert multiple rows with batch execution
+$libsql->executeBatch([
+    ["INSERT INTO users (name) VALUES (?)", ["Bob"]],
+    ["INSERT INTO users (name) VALUES (?)", ["Charlie"]],
+]);
+```
 
+---
 
-## Read More
+## 3. Query Data
 
-- **[Quickstart Guide](quick-start.md)**
-- [LibSQL Configuration Options](000-configuration.md)
-    - [Local Connection](001-local-connection.md)
-    - [In-Memory Connection](002-memory-connection.md)
-    - [Remote Connection](003-remote-connection.md)
-    - [Remote Replica Connection](004-remote-replica-connection.md)
-- [LibSQL Class](005-LibSQL-class.md)
-    - [Version](006-version.md)
-    - [Changes](007-changes.md)
-    - [Is Auto Commit](008-isAutocommit.md)
-    - [Execute](009-execute.md)
-    - [Execute Batch](010-executeBatch.md)
-    - [Query](011-query.md)
-    - [Transaction](012-transaction.md)
-    - [Prepare](013-prepare.md)
-    - [Close](014-close.md)
-    - [Sync](015-sync.md)
-- [LibSQLStatement](016-LibSQLStatement.md)
-- [LibSQLTransaction](017-LibSQLTransaction.md)
+```php
+// Fetch results
+$result = $libsql->query("SELECT * FROM users");
+$rows = $result->fetchArray(LibSQL::LIBSQL_ASSOC);
 
+foreach ($rows as $row) {
+    echo $row["id"] . " - " . $row["name"] . PHP_EOL;
+}
+```
+
+**Output:**
+
+```
+1 - Alice
+2 - Bob
+3 - Charlie
+```
+
+---
+
+## 4. Using Transactions
+
+```php
+// Begin a transaction
+$tx = $libsql->transaction();
+
+$tx->execute("INSERT INTO users (name) VALUES (?)", ["Diana"]);
+$tx->execute("INSERT INTO users (name) VALUES (?)", ["Evan"]);
+
+// Commit changes
+$tx->commit();
+```
+
+---
+
+## 5. Verify Extension Installation
+
+You can confirm the extension is installed by running:
+
+```bash
+php -m | grep libsql
+```
+
+---
+
+## Next Steps
+
+* 👉 [Local Connection](local-connection.md) — run SQLite/libSQL locally
+* 👉 [Remote Connection](remote-connection.md) — connect to Turso or libSQL server
+* 👉 [Core API](LibSQL-class.md) — deep dive into methods and transactions

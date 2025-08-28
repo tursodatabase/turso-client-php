@@ -1,173 +1,172 @@
 <p align="center">
-  <a href="https://discord.gg/turso">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://i.imgur.com/UhuW3zm.png">
-      <source media="(prefers-color-scheme: light)" srcset="https://i.imgur.com/vljWbfr.png">
-      <img alt="Shows a black logo in light color mode and a white one in dark color mode." src="https://i.imgur.com/vGCC0I4.png">
-    </picture>
-  </a>
+  <img alt="Turso + PHP" src="https://i.imgur.com/zRVfWL3.png" width="800">
+</p>
+
+<h1 align="center">Turso Client PHP</h1>
+<p align="center">
+  A community-driven PHP SDK for <a href="https://turso.tech/libsql">libSQL</a> — the SQLite fork designed for the edge, replication, and production workloads.
 </p>
 
 <p align="center">
-  <img alt="Turso + PHP" src="https://i.imgur.com/zRVfWL3.png" width="1000">
-    <h1 align="center" style="border: 0;margin-bottom: 0;">Turso + PHP (Community SDK)</h1>
-    <p align="center">
-      SQLite for Production. Powered by <a href="https://turso.tech/libsql">libSQL</a>.
-    </p>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/tursodatabase/turso-client-php?color=01c3b0" alt="MIT License"></a>
+  <a href="https://tur.so/discord-php"><img src="https://img.shields.io/discord/933071162680958986?color=01c3b0" alt="Discord"></a>
+  <a href="#contributors"><img src="https://img.shields.io/github/contributors/tursodatabase/turso-client-php?color=01c3b0" alt="Contributors"></a>
+  <a href="https://github.com/tursodatabase/turso-client-php/releases"><img src="https://img.shields.io/github/downloads/tursodatabase/turso-client-php/total.svg?color=01c3b0" alt="Downloads"></a>
+  <a href="https://github.com/tursodatabase/turso-client-php/releases"><img src="https://img.shields.io/github/v/release/tursodatabase/turso-client-php?color=01c3b0" alt="Release"></a>
 </p>
 
-<p align="center">
-  <a href="LICENSE">
-    <picture>
-      <img src="https://img.shields.io/github/license/tursodatabase/turso-client-php?color=01c3b0" alt="MIT License" />
-    </picture>
-  </a>
-  <a href="https://tur.so/discord-php">
-    <picture>
-      <img src="https://img.shields.io/discord/933071162680958986?color=01c3b0" alt="Discord" />
-    </picture>
-  </a>
-  <a href="#contributors">
-    <picture>
-      <img src="https://img.shields.io/github/contributors/tursodatabase/turso-client-php?color=01c3b0" alt="Contributors" />
-    </picture>
-  </a>
-  <a href="https://github.com/tursodatabase/turso-client-php/releases">
-    <picture>
-      <img src="https://img.shields.io/github/downloads/tursodatabase/turso-client-php/total.svg?color=01c3b0" alt="Total downloads" />
-    </picture>
-  </a>
-  <a href="https://github.com/tursodatabase/turso-client-php/releases">
-    <picture>
-      <img src="https://img.shields.io/github/v/release/tursodatabase/turso-client-php?color=01c3b0" alt="Release" />
-    </picture>
-  </a>
-</p>
+---
 
-## PHP Versions
+## Overview
 
-| PHP Versions  | Build Versions  |
-| ------------- | ----------------|
-| 8.1           | TS / NTS        |
-| 8.2           | TS / NTS        |
-| 8.3           | TS / NTS        |
-| 8.4           | TS / NTS        |
+**turso-client-php** (libSQL Extension) brings the power of [libSQL](https://turso.tech/libsql) to PHP applications. It’s more than just SQLite — with built-in support for **remote connections, replicas, sync, offline writes, and transactions**.
 
-**Note**: TS (Thread Safe), NTS (Non Thread-Safe). **Support for:** Linux/ Mac/Darwin / Windows/WSL
+✨ Key features:
+- 🚀 Works with **SQLite** and **libSQL**  
+- 🔌 Multiple connection modes
+  - local
+  - in-memory
+  - remote
+  - remote replica
+  - offline-writes also support for libsql-server (sqld)  
+- 🔒 Transactions, prepared statements, and batch execution  
+- 🐘 Native PHP extension built in **Rust** for speed  
+- 🐳 Easy setup with `turso-php-installer`
+
+---
+
+## Supported Versions
+
+| PHP Version | Build Variants |
+|-------------|----------------|
+| 8.1         | TS / NTS       |
+| 8.2         | TS / NTS       |
+| 8.3         | TS / NTS       |
+| 8.4         | TS / NTS       |
+
+**TS** = Thread Safe, **NTS** = Non Thread Safe  
+✅ Supported on Linux, macOS, Windows, WSL
+
+---
+
+## Quick Start
+
+```php
+<?php
+
+$libsql = new LibSQL("file:example.db");
+
+// Create a table
+$libsql->execute("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)");
+
+// Insert a row
+$libsql->execute("INSERT INTO users (name) VALUES (?)", ["Alice"]);
+
+// Query data
+$result = $libsql->query("SELECT * FROM users");
+$rows = $result->fetchArray(LibSQL::LIBSQL_ASSOC);
+
+foreach ($rows as $row) {
+    echo $row["id"] . " - " . $row["name"] . PHP_EOL;
+}
+````
+
+➡️ See [Quick Start Guide](docs/quick-start.md) for more details.
 
 ---
 
 ## Installation
 
-Installing the extension should be not complecated, it's easy and like using **Composer Package Installer**. Or, if you belive with this quotes:
+The easiest way to install is via the Composer installer:
 
-> If there is a hard way, why choose the easy way?
->
-> &mdash; Me
+```bash
+composer global require darkterminal/turso-php-installer
+```
 
-So you need to go with the **Manual Installation**.
+Add the binary to your `PATH`:
 
-<details>
-  <summary><b>Auto Installer</b></summary>
-  <code>turso-php-installer</code> is a Composer package capable of executing various commands related to libSQL, simplifying the development process, and making it easier to simulate in a local environment.
+```bash
+export COMPOSER_BIN_DIR=$(composer config --global home)/vendor/bin
+```
 
-  ```bash
-  composer global require darkterminal/turso-php-installer
-  ```
-  Add to `PATH` variable:
-  ```bash
-  export COMPOSER_BIN_DIR=$(composer config --global home)/vendor/bin
-  ```
+Run the installer in interactive mode:
 
-  We have two options to install the extension using the installer:
+```bash
+turso-php-installer install
+```
 
-  **Interactive Mode**
-  ```bash
-  turso-php-installer install
-  ```
-  <img src="https://i.imgur.com/DCqTg3l.gif" />
+Or non-interactive (example for PHP 8.3):
 
-  ---
+```bash
+turso-php-installer install -n --php-version=8.3
+```
 
-  **Non-interactive Mode**
-  ```bash
-  turso-php-installer install -n --php-version=8.3
-  ```
-  <img src="https://i.imgur.com/s60hh5T.gif" />
-</details>
+📦 For alternative methods (manual build, Docker, ARM64), check [Installation Docs](docs/000-configuration.md).
 
-<details>
-  <summary><b>Manual Installation<b></summary>
+---
 
-  Download the latest build extension/driver binary you can see at <a href="https://github.com/tursodatabase/turso-client-php/releases">release</a> page.
+## Documentation
 
-  - Extract the archive
-  - Locate somewhere in your machine
-  - Copy a relative path that address that extension/driver
-  - Open `php.ini` search `;extension` if you using `nano` (`ctrl+w`) then searching for it
-  - add in the next-line `extension=liblibsql_php.so` (in Linux) without `;` at the begining
+* [Installation](docs/000-configuration.md)
+* [Quick Start](docs/quick-start.md)
+* [Connections](docs/001-local-connection.md)
+* [API Reference](docs/005-LibSQL-class.md)
+* [Transactions](docs/012-transaction.md)
+* [Sync & Offline Writes](docs/015-sync.md)
 
-  Check on your console/terminal
+👉 Full documentation available in the [docs/](docs/) folder.
 
-  ```bash
-  php --m | grep libsql
-  ```
-</details>
+---
 
 ## Development
 
+Requirements:
 
-### Requirements
+* PHP ≥ 8.1
+* Rust nightly toolchain
+* Git
+* Docker & Docker Compose (for containerized dev)
 
-- Unix/Unix Like
-- PHP >= 8.1
-- [Rustlang](https://www.rust-lang.org/tools/install)
-- Git
-- Docker & Docker Compose (Docker Development)
-
-Fork it First and Build from source:
+Build from source:
 
 ```bash
-# Clone
 git clone git@github.com:<username>/turso-client-php.git
-
-# Move to project directory
 cd turso-client-php
-
-# Make sure you have rust nightly toolchain
 rustup toolchain install nightly
-rustup default nightly 
-
-# Build the binary
-cargo build # or cargo build --release for production
+rustup default nightly
+cargo build
 ```
 
-Or using Develop inside Docker Container
+Or inside Docker:
 
 ```bash
-# Clone
-git clone git@github.com:<username>/turso-client-php.git
-
-# Move to project directory
-cd turso-client-php
-
-# Build the binary
 make compose/up
-```
-
-if using `arm64` then use this command:
-
-```bash
+# or for arm64
 make compose-arm64/up
 ```
 
-For all make command check `make help`
+For available commands:
+
+```bash
+make help
+```
+
+---
+
+## Community & Support
+
+* 💬 Join us on [Discord](https://tur.so/discord-php)
+* 🐛 Report issues on [GitHub Issues](https://github.com/tursodatabase/turso-client-php/issues)
+* 🤝 Contributions welcome! See [Contributing Guide](CONTRIBUTING.md)
+
+---
 
 ## Contributors
 
-![Contributors](https://contrib.nn.ci/api?no_bot=true&repo=tursodatabase/turso-client-php)
+![Contributors](https://contrib.nn.ci/api?no_bot=true\&repo=tursodatabase/turso-client-php)
 
+---
 
 ## License
 
-The MIT License (MIT). Please see [License File](LICENSE) for more information.
+This project is open-sourced under the [MIT License](LICENSE).
