@@ -399,7 +399,7 @@ namespace {
         public function __construct(string|array $config, ?bool $sqld_offline_mode = false, ?int $flags = 6, ?string $encryption_key = "", ?bool $offline_writes = false) {}
 
         /**
-         * Retrieves the version of the LibSQL library.
+         * Retrieves the version of the LibSQL extension.
          * 
          * ## Example Usage
          * ```

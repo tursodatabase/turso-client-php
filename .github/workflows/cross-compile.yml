@@ -289,56 +289,56 @@ jobs:
           
           # Windows x64 - PHP8.1 - NTS
           - build: x86_64-pc-windows-msvc
-            os: windows-2019
+            os: windows-latest
             target: x86_64-pc-windows-msvc
             php-versions: '8.1'
             phpts: 'nts'
           
           # Windows x64 - PHP8.2 - NTS
           - build: x86_64-pc-windows-msvc
-            os: windows-2019
+            os: windows-latest
             target: x86_64-pc-windows-msvc
             php-versions: '8.2'
             phpts: 'nts'
           
           # Windows x64 - PHP8.3 - NTS
           - build: x86_64-pc-windows-msvc
-            os: windows-2019
+            os: windows-latest
             target: x86_64-pc-windows-msvc
             php-versions: '8.3'
             phpts: 'nts'
           
           # Windows x64 - PHP8.4 - NTS
           - build: x86_64-pc-windows-msvc
-            os: windows-2019
+            os: windows-latest
             target: x86_64-pc-windows-msvc
             php-versions: '8.4'
             phpts: 'nts'
           
           # Windows x64 - PHP8.1 - TS
           - build: x86_64-pc-windows-msvc
-            os: windows-2019
+            os: windows-latest
             target: x86_64-pc-windows-msvc
             php-versions: '8.1'
             phpts: 'ts'
           
           # Windows x64 - PHP8.2 - TS
           - build: x86_64-pc-windows-msvc
-            os: windows-2019
+            os: windows-latest
             target: x86_64-pc-windows-msvc
             php-versions: '8.2'
             phpts: 'ts'
           
           # Windows x64 - PHP8.3 - TS
           - build: x86_64-pc-windows-msvc
-            os: windows-2019
+            os: windows-latest
             target: x86_64-pc-windows-msvc
             php-versions: '8.3'
             phpts: 'ts'
           
           # Windows x64 - PHP8.4 - TS
           - build: x86_64-pc-windows-msvc
-            os: windows-2019
+            os: windows-latest
             target: x86_64-pc-windows-msvc
             php-versions: '8.4'
             phpts: 'ts'
@@ -352,13 +352,13 @@ jobs:
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
       - name: Install Rust (MacOS and Linux)
-        if: matrix.os != 'windows-2019'
+        if: matrix.os != 'windows-latest'
         uses: dtolnay/rust-toolchain@nightly
         with:
           targets: ${{ matrix.target }}
       
       - name: Install Rust (Windows)
-        if: matrix.os == 'windows-2019'
+        if: matrix.os == 'windows-latest'
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
@@ -394,7 +394,7 @@ jobs:
               echo "Error: lib${binary_name}.dylib not found in target/${{ matrix.target }}/release/"
               exit 1
             fi
-          elif [[ "${{ matrix.os }}" == "windows-2019" ]]; then
+          elif [[ "${{ matrix.os }}" == "windows-latest" ]]; then
             if [[ -f "target/${{ matrix.target }}/release/${binary_name}.dll" ]]; then
               mv "target/${{ matrix.target }}/release/${binary_name}.dll" "$dirname"
             else
@@ -418,7 +418,7 @@ jobs:
           fi
 
           # Archive the build
-          if [[ "${{ matrix.os }}" == "windows-2019" ]]; then
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
             7z a "$dirname.zip" "$dirname"
             echo "ASSET=$dirname.zip" >> $GITHUB_ENV
           else
