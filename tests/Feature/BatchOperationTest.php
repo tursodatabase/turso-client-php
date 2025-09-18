@@ -23,6 +23,8 @@ describe('Batch Operations', function () {
         expect($success)->toBeTrue();
 
         $result = $this->db->query("SELECT COUNT(*) FROM cities");
-        expect($result->fetchArray(LibSQL::LIBSQL_NUM)[0])->toBe(3);
+        $countResult = $result->fetchSingle(LibSQL::LIBSQL_NUM);
+        $count = array_shift($countResult);
+        expect($count)->toBe(3);
     });
-});
+})->group('BatchOperationTest', 'Feature');
