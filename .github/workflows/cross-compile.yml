@@ -71,221 +71,221 @@ jobs:
             php-versions: '8.4'
             phpts: 'ts'
           
-          # -------------------------- Start BETA MacOS 14 --------------------------
+          # -------------------------- Start MacOS 14 --------------------------
 
           # Macos x64 - PHP8.1 - NTS
           - build: x86_64-apple-darwin-macos-14
-            os: macos-latest-large
+            os: macos-14-large
             target: x86_64-apple-darwin
             php-versions: '8.1'
             phpts: 'nts'
             
           - build: aarch64-apple-darwin-macos-14
-            os: macos-latest
+            os: macos-14
             target: aarch64-apple-darwin
             php-versions: '8.1'
             phpts: 'nts'
 
           # Macos x64 - PHP8.1 - TS
           - build: x86_64-apple-darwin-macos-14
-            os: macos-latest-large
+            os: macos-14-large
             target: x86_64-apple-darwin
             php-versions: '8.1'
             phpts: 'ts'
             
           - build: aarch64-apple-darwin-macos-14
-            os: macos-latest
+            os: macos-14
             target: aarch64-apple-darwin
             php-versions: '8.1'
             phpts: 'ts'
           
           # Macos x64 - PHP8.2 - NTS
           - build: x86_64-apple-darwin-macos-14
-            os: macos-latest-large
+            os: macos-14-large
             target: x86_64-apple-darwin
             php-versions: '8.2'
             phpts: 'nts'
             
           - build: aarch64-apple-darwin-macos-14
-            os: macos-latest
+            os: macos-14
             target: aarch64-apple-darwin
             php-versions: '8.2'
             phpts: 'nts'
 
           # Macos x64 - PHP8.2 - TS
           - build: x86_64-apple-darwin-macos-14
-            os: macos-latest-large
+            os: macos-14-large
             target: x86_64-apple-darwin
             php-versions: '8.2'
             phpts: 'ts'
             
           - build: aarch64-apple-darwin-macos-14
-            os: macos-latest
+            os: macos-14
             target: aarch64-apple-darwin
             php-versions: '8.2'
             phpts: 'ts'
           
           # Macos x64 - PHP8.3 - NTS
           - build: x86_64-apple-darwin-macos-14
-            os: macos-latest-large
+            os: macos-14-large
             target: x86_64-apple-darwin
             php-versions: '8.3'
             phpts: 'nts'
             
           - build: aarch64-apple-darwin-macos-14
-            os: macos-latest
+            os: macos-14
             target: aarch64-apple-darwin
             php-versions: '8.3'
             phpts: 'nts'
 
           # Macos x64 - PHP8.3 - TS
           - build: x86_64-apple-darwin-macos-14
-            os: macos-latest-large
+            os: macos-14-large
             target: x86_64-apple-darwin
             php-versions: '8.3'
             phpts: 'ts'
             
           - build: aarch64-apple-darwin-macos-14
-            os: macos-latest
+            os: macos-14
             target: aarch64-apple-darwin
             php-versions: '8.3'
             phpts: 'ts'
           
           # Macos x64 - PHP8.4 - NTS
           - build: x86_64-apple-darwin-macos-14
-            os: macos-latest-large
+            os: macos-14-large
             target: x86_64-apple-darwin
             php-versions: '8.4'
             phpts: 'nts'
             
           - build: aarch64-apple-darwin-macos-14
-            os: macos-latest
+            os: macos-14
             target: aarch64-apple-darwin
             php-versions: '8.4'
             phpts: 'nts'
 
           # Macos x64 - PHP8.4 - TS
           - build: x86_64-apple-darwin-macos-14
-            os: macos-latest-large
+            os: macos-14-large
             target: x86_64-apple-darwin
             php-versions: '8.4'
             phpts: 'ts'
             
           - build: aarch64-apple-darwin-macos-14
-            os: macos-latest
+            os: macos-14
             target: aarch64-apple-darwin
             php-versions: '8.4'
             phpts: 'ts'
           
-          # -------------------------- End BETA MacOS 14 --------------------------
+          # -------------------------- End MacOS 14 --------------------------
           
-          # -------------------------- Start BETA MacOS 15 --------------------------
+          # -------------------------- Start MacOS 15 --------------------------
 
           # Macos x64 - PHP8.1 - NTS
-          - build: x86_64-apple-darwin-macos-15-beta
+          - build: x86_64-apple-darwin-macos-15
             os: macos-15-large
             target: x86_64-apple-darwin
             php-versions: '8.1'
             phpts: 'nts'
             
-          - build: aarch64-apple-darwin-macos-15-beta
+          - build: aarch64-apple-darwin-macos-15
             os: macos-15
             target: aarch64-apple-darwin
             php-versions: '8.1'
             phpts: 'nts'
 
           # Macos x64 - PHP8.1 - TS
-          - build: x86_64-apple-darwin-macos-15-beta
+          - build: x86_64-apple-darwin-macos-15
             os: macos-15-large
             target: x86_64-apple-darwin
             php-versions: '8.1'
             phpts: 'ts'
             
-          - build: aarch64-apple-darwin-macos-15-beta
+          - build: aarch64-apple-darwin-macos-15
             os: macos-15
             target: aarch64-apple-darwin
             php-versions: '8.1'
             phpts: 'ts'
           
           # Macos x64 - PHP8.2 - NTS
-          - build: x86_64-apple-darwin-macos-15-beta
+          - build: x86_64-apple-darwin-macos-15
             os: macos-15-large
             target: x86_64-apple-darwin
             php-versions: '8.2'
             phpts: 'nts'
             
-          - build: aarch64-apple-darwin-macos-15-beta
+          - build: aarch64-apple-darwin-macos-15
             os: macos-15
             target: aarch64-apple-darwin
             php-versions: '8.2'
             phpts: 'nts'
 
           # Macos x64 - PHP8.2 - TS
-          - build: x86_64-apple-darwin-macos-15-beta
+          - build: x86_64-apple-darwin-macos-15
             os: macos-15-large
             target: x86_64-apple-darwin
             php-versions: '8.2'
             phpts: 'ts'
             
-          - build: aarch64-apple-darwin-macos-15-beta
+          - build: aarch64-apple-darwin-macos-15
             os: macos-15
             target: aarch64-apple-darwin
             php-versions: '8.2'
             phpts: 'ts'
           
           # Macos x64 - PHP8.3 - NTS
-          - build: x86_64-apple-darwin-macos-15-beta
+          - build: x86_64-apple-darwin-macos-15
             os: macos-15-large
             target: x86_64-apple-darwin
             php-versions: '8.3'
             phpts: 'nts'
             
-          - build: aarch64-apple-darwin-macos-15-beta
+          - build: aarch64-apple-darwin-macos-15
             os: macos-15
             target: aarch64-apple-darwin
             php-versions: '8.3'
             phpts: 'nts'
 
           # Macos x64 - PHP8.3 - TS
-          - build: x86_64-apple-darwin-macos-15-beta
+          - build: x86_64-apple-darwin-macos-15
             os: macos-15-large
             target: x86_64-apple-darwin
             php-versions: '8.3'
             phpts: 'ts'
             
-          - build: aarch64-apple-darwin-macos-15-beta
+          - build: aarch64-apple-darwin-macos-15
             os: macos-15
             target: aarch64-apple-darwin
             php-versions: '8.3'
             phpts: 'ts'
           
           # Macos x64 - PHP8.4 - NTS
-          - build: x86_64-apple-darwin-macos-15-beta
+          - build: x86_64-apple-darwin-macos-15
             os: macos-15-large
             target: x86_64-apple-darwin
             php-versions: '8.4'
             phpts: 'nts'
             
-          - build: aarch64-apple-darwin-macos-15-beta
+          - build: aarch64-apple-darwin-macos-15
             os: macos-15
             target: aarch64-apple-darwin
             php-versions: '8.4'
             phpts: 'nts'
 
           # Macos x64 - PHP8.4 - TS
-          - build: x86_64-apple-darwin-macos-15-beta
+          - build: x86_64-apple-darwin-macos-15
             os: macos-15-large
             target: x86_64-apple-darwin
             php-versions: '8.4'
             phpts: 'ts'
             
-          - build: aarch64-apple-darwin-macos-15-beta
+          - build: aarch64-apple-darwin-macos-15
             os: macos-15
             target: aarch64-apple-darwin
             php-versions: '8.4'
             phpts: 'ts'
 
-          # -------------------------- End BETA MacOS 15 --------------------------
+          # -------------------------- End MacOS 15 --------------------------
           
           # Windows x64 - PHP8.1 - NTS
           - build: x86_64-pc-windows-msvc

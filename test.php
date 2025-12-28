@@ -7,59 +7,65 @@ if (!class_exists('LibSQL')) {
 
 $db = new LibSQL(":memory:");
 
+$db->cdc_url = "https://webhook.site/0a862816-1883-4dde-a776-46037747c304";
+
 if (!$db) {
     throw new Exception("Database Not Connected!");
 }
 
-$createUsers = <<<STMT
-CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT,
-    age INTEGER
-);
-INSERT INTO users (name, age) VALUES ('Bilal Ali Maftullah', 21);
-INSERT INTO users (name, age) VALUES ('Lisa Nur Amelia', 22);
-STMT;
+$version = $db->version();
+echo $version . PHP_EOL;
+$db->captureIt("event.type", "No Query", $version);
 
-$db->executeBatch($createUsers);
+// $createUsers = <<<STMT
+// CREATE TABLE IF NOT EXISTS users (
+//     id INTEGER PRIMARY KEY AUTOINCREMENT,
+//     name TEXT,
+//     age INTEGER
+// );
+// INSERT INTO users (name, age) VALUES ('Bilal Ali Maftullah', 21);
+// INSERT INTO users (name, age) VALUES ('Lisa Nur Amelia', 22);
+// STMT;
 
-echo $db->totalChanges() . PHP_EOL;
-echo $db->lastInsertedId() . PHP_EOL;
+// $db->executeBatch($createUsers);
 
-$users = $db->query("SELECT * FROM users")->fetchArray(LibSQL::LIBSQL_LAZY);
+// echo $db->totalChanges() . PHP_EOL;
+// echo $db->lastInsertedId() . PHP_EOL;
 
-do {
+// $users = $db->query("SELECT * FROM users")->fetchArray(LibSQL::LIBSQL_LAZY);
 
-    $user = $users->current();
+// do {
 
-    echo "Age: {$user['age']}, Name: {$user['name']}\n";
+//     $user = $users->current();
 
-    $users->next();
+//     echo "Age: {$user['age']}, Name: {$user['name']}\n";
 
-} while ($users->valid());
+//     $users->next();
 
-$stmt = $db->prepare("SELECT * FROM users WHERE age = ?1");
-$stmt->bindPositional([21]);
+// } while ($users->valid());
 
-var_dump($stmt->query()->fetchArray(LibSQL::LIBSQL_ASSOC));
+// $stmt = $db->prepare("SELECT * FROM users WHERE age = ?1");
+// $stmt->bindPositional([21]);
 
-$stmt = $db->prepare("DELETE FROM users WHERE age = :age");
-$stmt->bindNamed([':age' => 22]);
+// var_dump($stmt->query()->fetchArray(LibSQL::LIBSQL_ASSOC));
 
-var_dump($stmt->execute());
+// $stmt = $db->prepare("DELETE FROM users WHERE age = :age");
+// $stmt->bindNamed([':age' => 22]);
 
-$stmt = $db->prepare("SELECT * FROM users");
-$users = $stmt->query()->fetchArray(LibSQL::LIBSQL_LAZY);
+// var_dump($stmt->execute());
 
-do {
+// $stmt = $db->prepare("SELECT * FROM users");
+// $users = $stmt->query()->fetchArray(LibSQL::LIBSQL_LAZY);
 
-    $user = $users->current();
+// do {
 
-    echo "Age: {$user['age']}, Name: {$user['name']}\n";
+//     $user = $users->current();
 
-    $users->next();
+//     echo "Age: {$user['age']}, Name: {$user['name']}\n";
 
-} while ($users->valid());
+//     $users->next();
 
-$db->close();
+// } while ($users->valid());
+
+// $db->close();
 

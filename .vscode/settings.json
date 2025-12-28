@@ -27,5 +27,9 @@
     "search.exclude": {
         "**/target": true,
         "**/vendor": true
-    }
+    },
+
+    "editor.stickyScroll.enabled": false,
+    "terminal.integrated.stickyScroll.enabled": false,
+    "workbench.tree.enableStickyScroll": false
 }

@@ -286,6 +286,8 @@ namespace {
          */
         public $mode;
 
+        public $cdc_url;
+
         /**
          * Creates a new LibSQL instance.
          * 
@@ -726,6 +728,21 @@ namespace {
          * @return void
          */
         public function loadExtensions(array|string $extension_paths) {}
+
+        /**
+         * Captures an event.
+         * 
+         * # Example Usage
+         * ```
+         * $db->captureIt("event_type", "query", "message");
+         * ```
+         * 
+         * @param string $event_type The type of the event.
+         * @param string|null $query The query associated with the event.
+         * @param string|null $message The message associated with the event.
+         * @return bool
+         */
+        public function captureIt(string $event_type, ?string $query, ?string $message) {}
     }
 
     /**

@@ -14,6 +14,8 @@ use crate::result::FetchResult;
 use crate::result::LibSQLResult;
 use crate::statement::LibSQLStatement;
 use crate::transaction::LibSQLTransaction;
+use crate::utils::runtime::send_webhook_data;
+use crate::utils::runtime::WebhookPayload;
 use ext_php_rs::prelude::*;
 use ext_php_rs::types::Zval;
 use ext_php_rs::{php_class, php_impl, php_module};
@@ -56,6 +58,10 @@ struct LibSQL {
     /// Property representing the connection mode.
     #[prop]
     mode: String,
+
+    /// Property representing the webhook URL to capture events.
+    #[prop]
+    cdc_url: Option<String>,
 
     /// Property representing the connection ID.
     conn_id: String,
@@ -207,6 +213,7 @@ impl LibSQL {
 
             return Ok(Self {
                 mode: "offline_write".to_string(),
+                cdc_url: Some(String::new()),
                 conn_id,
                 db: None,
                 conn: None,
@@ -267,6 +274,7 @@ impl LibSQL {
 
         Ok(Self {
             mode,
+            cdc_url: Some(String::new()),
             conn_id,
             db,
             conn: Some(conn),
@@ -669,6 +677,16 @@ impl LibSQL {
         }
 
         Ok(())
+    }
+
+    pub fn capture_it(&self, event_type: String, query: Option<String>, message: Option<String>) -> Result<bool, PhpException> {
+        let payload = WebhookPayload {
+            event_type,
+            query: Some(query.unwrap_or("".to_string())),
+            message: Some(message.unwrap_or("".to_string())),
+        };
+
+        Ok(send_webhook_data(self.cdc_url.clone().expect("REASON").to_string(), &payload))
     }
 }
 

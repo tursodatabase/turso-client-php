@@ -17,3 +17,4 @@ notes/
 src/*.bak
 vendor/
 mergenation.php
+*.log

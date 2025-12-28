@@ -473,6 +473,88 @@ impl LibSQLResult {
         }
     }
 
+    pub fn column_type(&self, column_index: i32) -> Result<String, PhpException> {
+        if self.is_offline_mode {
+            let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().unwrap();
+            let offline_conn = offline_registry
+                .get(&self.conn_string)
+                .ok_or_else(|| PhpException::from("Offline connection not found"))?;
+
+            match offline_conn.query(self.sql.as_str(), self.query_params.clone(), self.force_remote.clone()) {
+                Ok(mut rows) => {
+                    runtime().block_on(async {
+                        if let Ok(Some(row)) = rows.next().await {
+                            let column_type = row.column_type(column_index).or_else(|_| {
+                                Err(PhpException::from(format!("Column index {} out of bounds", column_index)))
+                            })?;
+                            Ok(format!("{:?}", column_type))
+                        } else {
+                            Err(PhpException::from("No rows returned from query"))
+                        }
+                    })
+                }
+                Err(e) => Err(PhpException::from(e.to_string())),
+            }
+        } else {
+            let conn = self.conn.as_ref()
+                .ok_or_else(|| PhpException::from("Connection not available"))?;
+
+            runtime().block_on(async {
+                let mut rows = conn
+                    .query(self.sql.as_str(), self.parameters.clone())
+                    .await
+                    .map_err(|e| PhpException::from(e.to_string()))?;
+
+                if let Ok(Some(row)) = rows.next().await {
+                    let column_type = row.column_type(column_index).or_else(|_| {
+                        Err(PhpException::from(format!("Column index {} out of bounds", column_index)))
+                    })?;
+                    Ok(format!("{:?}", column_type))
+                } else {
+                    Err(PhpException::from("No rows returned from query"))
+                }
+            })
+        }
+    }
+
+    pub fn num_columns(&self) -> Result<i32, PhpException> {
+        if self.is_offline_mode {
+            let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().unwrap();
+            let offline_conn = offline_registry
+                .get(&self.conn_string)
+                .ok_or_else(|| PhpException::from("Offline connection not found"))?;
+
+            match offline_conn.query(self.sql.as_str(), self.query_params.clone(), self.force_remote.clone()) {
+                Ok(mut rows) => {
+                    runtime().block_on(async {
+                        if let Ok(Some(row)) = rows.next().await {
+                            Ok(row.column_count() as i32)
+                        } else {
+                            Err(PhpException::from("No rows returned from query"))
+                        }
+                    })
+                }
+                Err(e) => Err(PhpException::from(e.to_string())),
+            }
+        } else {
+            let conn = self.conn.as_ref()
+                .ok_or_else(|| PhpException::from("Connection not available"))?;
+
+            runtime().block_on(async {
+                let mut rows = conn
+                    .query(self.sql.as_str(), self.parameters.clone())
+                    .await
+                    .map_err(|e| PhpException::from(e.to_string()))?;
+
+                if let Ok(Some(row)) = rows.next().await {
+                    Ok(row.column_count() as i32)
+                } else {
+                    Err(PhpException::from("No rows returned from query"))
+                }
+            })
+        }
+    }
+
     pub fn reset(&self) -> Result<(), PhpException> {
         if self.is_offline_mode {
             let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().unwrap();

@@ -262,3 +262,29 @@ pub fn format_url(input_url: &str) -> Result<String, url::ParseError> {
 
     Ok(url.to_string())
 }
+
+#[derive(serde::Serialize)]
+pub struct WebhookPayload {
+    pub event_type: String,
+    pub query: Option<String>,
+    pub message: Option<String>,
+}
+
+pub fn send_webhook_data(url: String, payload: &impl serde::Serialize) -> bool {
+
+    if url.is_empty() {
+        return false;
+    }
+
+    let client = match reqwest::blocking::Client::builder()
+        .timeout(std::time::Duration::from_secs(20))
+        .build() {
+            Ok(client) => client,
+            Err(_) => return false,
+        };
+
+    match client.post(url).json(payload).send() {
+        Ok(_) => true,
+        _ => false,
+    }
+}

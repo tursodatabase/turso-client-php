@@ -58,10 +58,8 @@ jobs:
 
       - name: Update Gist File
         env:
-          GIST_ID: ${{ secrets.GIST_ID }}
-          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
+          STORAGE_ID: ${{ secrets.STORAGE_ID }}
         run: |
           python scripts/release_metadata.py \
-            --gist-id $GIST_ID \
-            --actor ${{ github.actor }} \
+            --storage-id $STORAGE_ID \
             --file-content "$(cat $GITHUB_WORKSPACE/release_metadata.json)"
