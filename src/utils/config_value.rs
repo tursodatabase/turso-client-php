@@ -1,7 +1,7 @@
 #[derive(Debug, Clone)]
 pub enum ConfigValue {
     String(String),
-    Array(std::collections::HashMap<String, ConfigValue>)
+    Array(std::collections::HashMap<String, ConfigValue>),
 }
 
 impl ConfigValue {

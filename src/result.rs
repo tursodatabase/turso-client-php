@@ -2,10 +2,10 @@
 #[cfg_attr(windows, feature(abi_vectorcall))]
 use ext_php_rs::convert::IntoZval;
 
-use ext_php_rs::types::Zval;
-use std::collections::HashMap;
 use ext_php_rs::prelude::*;
+use ext_php_rs::types::Zval;
 use ext_php_rs::{php_class, php_impl};
+use std::collections::HashMap;
 
 use crate::{
     generator::LibSQLIterator,
@@ -14,7 +14,8 @@ use crate::{
         query_params::QueryParameters,
         runtime::{convert_libsql_value_to_zval, runtime},
     },
-    CONNECTION_REGISTRY, OFFLINE_CONNECTION_REGISTRY, LIBSQL_ALL, LIBSQL_ASSOC, LIBSQL_LAZY, LIBSQL_NUM,
+    CONNECTION_REGISTRY, LIBSQL_ALL, LIBSQL_ASSOC, LIBSQL_LAZY, LIBSQL_NUM,
+    OFFLINE_CONNECTION_REGISTRY,
 };
 
 pub enum FetchResult {
@@ -23,14 +24,15 @@ pub enum FetchResult {
 }
 
 impl IntoZval for FetchResult {
+    const TYPE: ext_php_rs::flags::DataType = ext_php_rs::flags::DataType::Mixed;
+    const NULLABLE: bool = false;
+
     fn set_zval(self, zv: &mut ext_php_rs::types::Zval, _: bool) -> ext_php_rs::error::Result<()> {
         match self {
             FetchResult::Zval(zval) => zval.set_zval(zv, false),
             FetchResult::Iterator(iterator) => iterator.set_zval(zv, false),
         }
     }
-
-    const TYPE: ext_php_rs::flags::DataType = ext_php_rs::flags::DataType::Mixed;
 
     fn into_zval(self, persistent: bool) -> ext_php_rs::error::Result<ext_php_rs::types::Zval> {
         let mut zval = ext_php_rs::types::Zval::new();
@@ -88,7 +90,6 @@ impl LibSQLResult {
         parameters: Option<QueryParameters>,
         force_remote: Option<bool>,
     ) -> Result<Self, PhpException> {
-
         let params = if let Some(ref p) = parameters {
             let params = p.to_params();
             params
@@ -116,7 +117,9 @@ impl LibSQLResult {
         }
 
         if mode != LIBSQL_ALL {
-            let conn = self.conn.as_ref()
+            let conn = self
+                .conn
+                .as_ref()
                 .ok_or_else(|| PhpException::from("Connection not available"))?;
 
             let query_result = runtime().block_on(async {
@@ -169,7 +172,7 @@ impl LibSQLResult {
                             let zval_value = convert_libsql_value_to_zval(value);
                             match key.parse::<i64>() {
                                 Ok(_) => sub_arr.push(zval_value)?,
-                                Err(_) => sub_arr.insert(&key, zval_value)?,
+                                Err(_) => sub_arr.insert(key.as_str(), zval_value)?,
                             }
                         }
                         arr.push(sub_arr)?;
@@ -201,7 +204,11 @@ impl LibSQLResult {
             .get(&self.conn_string)
             .ok_or_else(|| PhpException::from("Offline connection not found"))?;
 
-        let query_result = match offline_conn.query(self.sql.as_str(), self.query_params.clone(), self.force_remote.clone()) {
+        let query_result = match offline_conn.query(
+            self.sql.as_str(),
+            self.query_params.clone(),
+            self.force_remote.clone(),
+        ) {
             Ok(mut rows) => {
                 let mut results: Vec<HashMap<String, libsql::Value>> = Vec::new();
 
@@ -247,7 +254,7 @@ impl LibSQLResult {
                         let zval_value = convert_libsql_value_to_zval(value);
                         match key.parse::<i64>() {
                             Ok(_) => sub_arr.push(zval_value)?,
-                            Err(_) => sub_arr.insert(&key, zval_value)?,
+                            Err(_) => sub_arr.insert(key.as_str(), zval_value)?,
                         }
                     }
                     arr.push(sub_arr)?;
@@ -273,7 +280,9 @@ impl LibSQLResult {
         }
 
         if mode != LIBSQL_ALL {
-            let conn = self.conn.as_ref()
+            let conn = self
+                .conn
+                .as_ref()
                 .ok_or_else(|| PhpException::from("Connection not available"))?;
 
             let query_result = runtime().block_on(async {
@@ -317,7 +326,7 @@ impl LibSQLResult {
                         let zval_value = convert_libsql_value_to_zval(value);
                         match key.parse::<usize>() {
                             Ok(_) => sub_arr.push(zval_value)?,
-                            Err(_) => sub_arr.insert(&key, zval_value)?,
+                            Err(_) => sub_arr.insert(key.as_str(), zval_value)?,
                         }
                     }
 
@@ -342,19 +351,17 @@ impl LibSQLResult {
                 .array()
                 .ok_or_else(|| PhpException::from("Result set is not an array"))?;
 
-            let rows = arr.get("rows")
+            let rows = arr
+                .get("rows")
                 .and_then(|zv| zv.array())
                 .ok_or_else(|| PhpException::from("Missing rows in result set"))?;
 
-            let first_row = rows.get_index(0)
+            let first_row = rows
+                .get_index(0)
                 .map(|zv| {
                     let z = Zval::new();
                     unsafe {
-                        std::ptr::copy_nonoverlapping(
-                            zv.value.counted,
-                            z.value.counted,
-                            1
-                        );
+                        std::ptr::copy_nonoverlapping(zv.value.counted, z.value.counted, 1);
                     }
                     z
                 })
@@ -371,7 +378,11 @@ impl LibSQLResult {
             .get(&self.conn_string)
             .ok_or_else(|| PhpException::from("Offline connection not found"))?;
 
-        let query_result = match offline_conn.query(self.sql.as_str(), self.query_params.clone(), self.force_remote.clone()) {
+        let query_result = match offline_conn.query(
+            self.sql.as_str(),
+            self.query_params.clone(),
+            self.force_remote.clone(),
+        ) {
             Ok(mut rows) => {
                 let mut result = HashMap::new();
 
@@ -381,7 +392,10 @@ impl LibSQLResult {
                             LIBSQL_ASSOC => {
                                 for idx in 0..rows.column_count() {
                                     let column_name = row.column_name(idx as i32).unwrap();
-                                    result.insert(column_name.to_string(), row.get_value(idx).unwrap());
+                                    result.insert(
+                                        column_name.to_string(),
+                                        row.get_value(idx).unwrap(),
+                                    );
                                 }
                             }
                             LIBSQL_NUM => {
@@ -413,7 +427,7 @@ impl LibSQLResult {
                     let zval_value = convert_libsql_value_to_zval(value);
                     match key.parse::<usize>() {
                         Ok(_) => sub_arr.push(zval_value)?,
-                        Err(_) => sub_arr.insert(&key, zval_value)?,
+                        Err(_) => sub_arr.insert(key.as_str(), zval_value)?,
                     }
                 }
 
@@ -436,23 +450,30 @@ impl LibSQLResult {
                 .get(&self.conn_string)
                 .ok_or_else(|| PhpException::from("Offline connection not found"))?;
 
-            match offline_conn.query(self.sql.as_str(), self.query_params.clone(), self.force_remote.clone()) {
-                Ok(mut rows) => {
-                    runtime().block_on(async {
-                        if let Ok(Some(row)) = rows.next().await {
-                            let column_name = row.column_name(column_index).ok_or_else(|| {
-                                PhpException::from(format!("Column index {} out of bounds", column_index))
-                            })?;
-                            Ok(column_name.to_string())
-                        } else {
-                            Err(PhpException::from("No rows returned from query"))
-                        }
-                    })
-                }
+            match offline_conn.query(
+                self.sql.as_str(),
+                self.query_params.clone(),
+                self.force_remote.clone(),
+            ) {
+                Ok(mut rows) => runtime().block_on(async {
+                    if let Ok(Some(row)) = rows.next().await {
+                        let column_name = row.column_name(column_index).ok_or_else(|| {
+                            PhpException::from(format!(
+                                "Column index {} out of bounds",
+                                column_index
+                            ))
+                        })?;
+                        Ok(column_name.to_string())
+                    } else {
+                        Err(PhpException::from("No rows returned from query"))
+                    }
+                }),
                 Err(e) => Err(PhpException::from(e.to_string())),
             }
         } else {
-            let conn = self.conn.as_ref()
+            let conn = self
+                .conn
+                .as_ref()
                 .ok_or_else(|| PhpException::from("Connection not available"))?;
 
             runtime().block_on(async {
@@ -483,7 +504,9 @@ impl LibSQLResult {
             runtime().block_on(async { offline_conn.reset().await });
             Ok(())
         } else {
-            let conn = self.conn.as_ref()
+            let conn = self
+                .conn
+                .as_ref()
                 .ok_or_else(|| PhpException::from("Connection not available"))?;
 
             runtime().block_on(async { conn.reset().await });

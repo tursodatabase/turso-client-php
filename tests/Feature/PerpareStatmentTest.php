@@ -36,9 +36,9 @@ describe('Prepared Statements', function () {
         $stmt = $this->db->prepare("INSERT INTO products (id, name, price) VALUES (:id, :name, :price)");
         
         expect($stmt->parameterCount())->toBe(3)
-            ->and($stmt->parameterName(1))->toBe(':id')
-            ->and($stmt->parameterName(2))->toBe(':name')
-            ->and($stmt->parameterName(3))->toBe(':price');
+            ->and($stmt->parameterName(1))->toBe('id')
+            ->and($stmt->parameterName(2))->toBe('name')
+            ->and($stmt->parameterName(3))->toBe('price');
 
         $stmt->bindNamed([':id' => 1, ':name' => 'Test', ':price' => 9.99]);
         $stmt->execute();

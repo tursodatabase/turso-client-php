@@ -45,12 +45,9 @@ pub fn create_local_connection(
             .encryption_config(encryption_config.unwrap())
             .build()
             .await
-            .map_err(|e| {
-                PhpException::default(format!("Database build failed: {}", e))
-            })?;
-            
-        db.connect().map_err(|e| {
-            PhpException::default(format!("Connection failed: {}", e))
-        })
+            .map_err(|e| PhpException::default(format!("Database build failed: {}", e)))?;
+
+        db.connect()
+            .map_err(|e| PhpException::default(format!("Connection failed: {}", e)))
     })
 }

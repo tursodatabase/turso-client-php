@@ -1,6 +1,6 @@
-use ext_php_rs::exception::PhpException;
 use crate::utils::log_error::log_error_to_tmp;
 use crate::{utils::runtime::runtime, CONNECTION_REGISTRY};
+use ext_php_rs::exception::PhpException;
 
 /// Retrieves the number of changes made by the last executed statement for the specified connection.
 ///
@@ -22,13 +22,11 @@ pub fn get_changes(conn_id: String) -> Result<u64, PhpException> {
         PhpException::default(err_msg)
     })?;
 
-    let conn = conn_registry
-        .get(&conn_id)
-        .ok_or_else(|| {
-            let err_msg = "Connection not found".to_string();
-            log_error_to_tmp(&err_msg);
-            PhpException::from(err_msg)
-        })?;
+    let conn = conn_registry.get(&conn_id).ok_or_else(|| {
+        let err_msg = "Connection not found".to_string();
+        log_error_to_tmp(&err_msg);
+        PhpException::from(err_msg)
+    })?;
 
     let affected_rows = runtime().block_on(async { conn.changes() });
     Ok(affected_rows)

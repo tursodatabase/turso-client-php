@@ -1,11 +1,9 @@
 {
-    "php.version": "8.4",
-    
+    "php.version": "8.5",
     // Only analyze the main crate
     "rust-analyzer.linkedProjects": [
         "./Cargo.toml"
     ],
-
     "rust-analyzer.files.exclude": [
         "./vendor",
         "./scripts",
@@ -18,11 +16,9 @@
         "./.vscode",
         "./libsql_php_extension,stubs.php"
     ],
-
     // Enable build scripts for better macro/ffi support
     "rust-analyzer.cargo.buildScripts.enable": true,
     "rust-analyzer.checkOnSave": false,
-
     // Optional: speed up by disabling indexing for large generated dirs
     "search.exclude": {
         "**/target": true,

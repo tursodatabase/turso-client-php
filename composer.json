@@ -5,7 +5,7 @@
         }
     },
     "require-dev": {
-        "pestphp/pest": "^3.7"
+        "pestphp/pest": "^4.3"
     },
     "config": {
         "allow-plugins": {

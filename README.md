@@ -52,6 +52,7 @@
 | 8.2           | TS / NTS        |
 | 8.3           | TS / NTS        |
 | 8.4           | TS / NTS        |
+| 8.5           | TS / NTS        |
 
 **Note**: TS (Thread Safe), NTS (Non Thread-Safe). **Support for:** Linux/ Mac/Darwin / Windows/WSL
 

@@ -1,6 +1,6 @@
-use ext_php_rs::exception::PhpException;
-use crate::{utils::runtime::runtime, CONNECTION_REGISTRY};
 use crate::utils::log_error::log_error_to_tmp;
+use crate::{utils::runtime::runtime, CONNECTION_REGISTRY};
+use ext_php_rs::exception::PhpException;
 
 /// Disconnects the specified connection.
 ///

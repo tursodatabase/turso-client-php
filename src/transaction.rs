@@ -4,7 +4,10 @@ extern crate ext_php_rs;
 use ext_php_rs::prelude::*;
 
 use crate::{
-    hooks, statement::LibSQLStatement, utils::{query_params::QueryParameters, runtime::runtime}, CONNECTION_REGISTRY, TRANSACTION_REGISTRY
+    hooks,
+    statement::LibSQLStatement,
+    utils::{query_params::QueryParameters, runtime::runtime},
+    CONNECTION_REGISTRY, TRANSACTION_REGISTRY,
 };
 
 /// Represents a LibSQLTransaction object for managing transactions.

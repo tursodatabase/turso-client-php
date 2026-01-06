@@ -6,7 +6,7 @@ use ext_php_rs::prelude::PhpException;
 #[derive(Debug, Clone)]
 pub enum ExtensionParams {
     String(String),
-    Array(Vec<String>)
+    Array(Vec<String>),
 }
 
 impl<'a> ext_php_rs::convert::FromZval<'a> for ExtensionParams {
@@ -48,7 +48,11 @@ pub fn enable_load_extension(conn_id: String, onoff: Option<bool>) -> Result<(),
     Ok(())
 }
 
-pub fn load_extension(conn_id: String, dylib_path: &Path, entry_point: Option<&str>) -> Result<(), PhpException> {
+pub fn load_extension(
+    conn_id: String,
+    dylib_path: &Path,
+    entry_point: Option<&str>,
+) -> Result<(), PhpException> {
     let conn_registry = CONNECTION_REGISTRY.lock().unwrap();
     let conn = conn_registry
         .get(&conn_id)

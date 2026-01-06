@@ -43,6 +43,13 @@ jobs:
             php-versions: '8.4'
             phpts: 'nts'
 
+          # Linux x64 - PHP8.5 - NTS
+          - build: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            php-versions: '8.5'
+            phpts: 'nts'
+
           # Linux x64 - PHP8.1 - TS
           - build: x86_64-unknown-linux-gnu
             os: ubuntu-latest
@@ -69,6 +76,13 @@ jobs:
             os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             php-versions: '8.4'
+            phpts: 'ts'
+
+          # Linux x64 - PHP8.5 - TS
+          - build: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            php-versions: '8.5'
             phpts: 'ts'
           
           # -------------------------- Start BETA MacOS 14 --------------------------
@@ -176,7 +190,33 @@ jobs:
             target: aarch64-apple-darwin
             php-versions: '8.4'
             phpts: 'ts'
-          
+
+          # Macos x64 - PHP8.5 - NTS
+          - build: x86_64-apple-darwin-macos-14
+            os: macos-latest-large
+            target: x86_64-apple-darwin
+            php-versions: '8.5'
+            phpts: 'nts'
+            
+          - build: aarch64-apple-darwin-macos-14
+            os: macos-latest
+            target: aarch64-apple-darwin
+            php-versions: '8.5'
+            phpts: 'nts'
+
+          # Macos x64 - PHP8.5 - TS
+          - build: x86_64-apple-darwin-macos-14
+            os: macos-latest-large
+            target: x86_64-apple-darwin
+            php-versions: '8.5'
+            phpts: 'ts'
+            
+          - build: aarch64-apple-darwin-macos-14
+            os: macos-latest
+            target: aarch64-apple-darwin
+            php-versions: '8.5'
+            phpts: 'ts'
+
           # -------------------------- End BETA MacOS 14 --------------------------
           
           # -------------------------- Start BETA MacOS 15 --------------------------
@@ -285,6 +325,32 @@ jobs:
             php-versions: '8.4'
             phpts: 'ts'
 
+          # Macos x64 - PHP8.5 - NTS
+          - build: x86_64-apple-darwin-macos-15-beta
+            os: macos-15-large
+            target: x86_64-apple-darwin
+            php-versions: '8.5'
+            phpts: 'nts'
+
+          - build: aarch64-apple-darwin-macos-15-beta
+            os: macos-15
+            target: aarch64-apple-darwin
+            php-versions: '8.5'
+            phpts: 'nts'
+            
+          # Macos x64 - PHP8.5 - TS
+          - build: x86_64-apple-darwin-macos-15-beta
+            os: macos-15-large
+            target: x86_64-apple-darwin
+            php-versions: '8.5'
+            phpts: 'ts'
+            
+          - build: aarch64-apple-darwin-macos-15-beta
+            os: macos-15
+            target: aarch64-apple-darwin
+            php-versions: '8.5'
+            phpts: 'ts'
+
           # -------------------------- End BETA MacOS 15 --------------------------
           
           # Windows x64 - PHP8.1 - NTS
@@ -343,9 +409,16 @@ jobs:
             php-versions: '8.4'
             phpts: 'ts'
           
+          # Windows x64 - PHP8.5 - TS
+          - build: x86_64-pc-windows-msvc
+            os: windows-2019
+            target: x86_64-pc-windows-msvc
+            php-versions: '8.5'
+            phpts: 'ts'
+          
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
 
       - name: Get the release version from the tag
         shell: bash
