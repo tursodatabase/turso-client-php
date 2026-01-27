@@ -28,7 +28,7 @@
         "**/target": true,
         "**/vendor": true
     },
-
+    "editor.fontSize": 14,
     "editor.stickyScroll.enabled": false,
     "terminal.integrated.stickyScroll.enabled": false,
     "workbench.tree.enableStickyScroll": false
