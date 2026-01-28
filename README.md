@@ -60,13 +60,7 @@
 
 ## Installation
 
-Installing the extension should be not complecated, it's easy and like using **Composer Package Installer**. Or, if you belive with this quotes:
-
-> If there is a hard way, why choose the easy way?
->
-> &mdash; Me
-
-So you need to go with the **Manual Installation**.
+Installing the extension should be not complecated, it's easy and like using **Composer Package Installer**.
 
 <details>
   <summary><b>Auto Installer</b></summary>

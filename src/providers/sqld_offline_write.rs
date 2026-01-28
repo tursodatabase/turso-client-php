@@ -102,7 +102,7 @@ impl OfflineWriteConnection {
         )?;
         let already_initialized: bool = runtime()
             .block_on(async {
-                let mut stmt = local_conn
+                let stmt = local_conn
                     .prepare("SELECT value FROM libsql_metadata WHERE key = 'schema_initialized'")
                     .await?;
                 let mut rows = stmt.query(libsql::params::Params::None).await?;
@@ -262,7 +262,7 @@ impl OfflineWriteConnection {
     pub fn initial_sync_if_needed(&self) -> Result<(), libsql::Error> {
         // Check if initial sync has already been done
         let sync_done: Result<bool, libsql::Error> = runtime().block_on(async {
-            let mut stmt = self
+            let stmt = self
                 .local_conn
                 .prepare("SELECT value FROM libsql_metadata WHERE key = 'initial_sync_done'")
                 .await?;
@@ -279,7 +279,7 @@ impl OfflineWriteConnection {
             return Ok(());
         }
         let schemas: Result<Vec<String>, libsql::Error> = runtime().block_on(async {
-            let mut stmt = self.remote_conn
+            let stmt = self.remote_conn
                 .prepare("SELECT sql FROM sqlite_master WHERE type IN ('table', 'index', 'view') AND name NOT LIKE 'libsql_%'")
                 .await?;
             let mut rows = stmt.query(libsql::params::Params::None).await?;
@@ -301,7 +301,7 @@ impl OfflineWriteConnection {
             })?;
         }
         let tables: Result<Vec<String>, libsql::Error> = runtime().block_on(async {
-            let mut stmt = self.remote_conn
+            let stmt = self.remote_conn
                 .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'libsql_%'")
                 .await?;
             let mut rows = stmt.query(libsql::params::Params::None).await?;
@@ -316,7 +316,7 @@ impl OfflineWriteConnection {
         let tables = tables?;
         for table in tables {
             let rows: Result<Vec<Vec<Value>>, libsql::Error> = runtime().block_on(async {
-                let mut stmt = self
+                let stmt = self
                     .remote_conn
                     .prepare(&format!("SELECT * FROM \"{}\"", table))
                     .await?;
@@ -337,7 +337,7 @@ impl OfflineWriteConnection {
             let rows = rows?;
             if !rows.is_empty() {
                 let columns: Result<Vec<String>, libsql::Error> = runtime().block_on(async {
-                    let mut stmt = self
+                    let stmt = self
                         .remote_conn
                         .prepare(&format!("PRAGMA table_info(\"{}\")", table))
                         .await?;
