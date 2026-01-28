@@ -31,13 +31,11 @@ pub fn exec(
         PhpException::default(err_msg)
     })?;
 
-    let conn = conn_registry
-        .get(&conn_id)
-        .ok_or_else(|| {
-            let err_msg = "Connection not found".to_string();
-            log_error_to_tmp(&err_msg);
-            PhpException::from(err_msg)
-        })?;
+    let conn = conn_registry.get(&conn_id).ok_or_else(|| {
+        let err_msg = "Connection not found".to_string();
+        log_error_to_tmp(&err_msg);
+        PhpException::from(err_msg)
+    })?;
 
     let params = if let Some(p) = parameters {
         p.to_params()

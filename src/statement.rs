@@ -1,7 +1,10 @@
+use ext_php_rs::convert::IntoZval;
 #[allow(non_snake_case, deprecated, unused_attributes)]
 #[cfg_attr(windows, feature(abi_vectorcall))]
-use std::{collections::HashMap, sync::{Arc, Mutex}};
-use ext_php_rs::convert::IntoZval;
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+};
 
 use crate::{result::LibSQLResult, utils::query_params::QueryValue};
 use ext_php_rs::prelude::*;
@@ -25,7 +28,6 @@ pub struct LibSQLStatement {
 
 #[php_impl]
 impl LibSQLStatement {
-
     /// Constructs a new `LibSQLStatement` object.
     ///
     /// # Arguments
@@ -51,7 +53,7 @@ impl LibSQLStatement {
             .unwrap()
             .insert(stmt_id.clone(), stmt);
 
-        Ok(Self { 
+        Ok(Self {
             conn_id,
             stmt_id,
             stmt: sql.to_string(),
@@ -70,17 +72,17 @@ impl LibSQLStatement {
     /// A `Result` containing a `()` if the binding was successful or a `PhpException` if an error occurs.
     pub fn bind_named(&self, parameters: QueryParameters) -> Result<(), PhpException> {
         let mut params = self.params.lock().expect("Failed to lock params mutex");
-    
+
         if let Some(named_params) = parameters.get_named() {
             for (key, value) in named_params {
                 let clean_key = key
-                .trim_start_matches(|c| c == '@' || c == '$' || c == '?' || c == ':')
-                .to_string();
-                
+                    .trim_start_matches(|c| c == '@' || c == '$' || c == '?' || c == ':')
+                    .to_string();
+
                 params.insert(clean_key, value.to_string());
             }
         }
-    
+
         Ok(())
     }
 
@@ -98,12 +100,12 @@ impl LibSQLStatement {
     /// A `Result` containing `()` if the binding was successful, or a `PhpException` if an error occurs.
     fn bind_positional(&self, parameters: QueryParameters) -> Result<(), PhpException> {
         let mut params = self.params.lock().expect("Failed to lock params mutex");
-    
+
         // Determine the placeholder style ($, ?, or @)
         let uses_dollar = self.stmt.contains("$1"); // Check for a typical `$1` pattern
         let uses_question_mark = self.stmt.contains("?"); // Check for `?` pattern
         let uses_at_symbol = self.stmt.contains("@1"); // Check for `@1` pattern
-    
+
         if let Some(positional_params) = parameters.get_positional() {
             for (index, value) in positional_params.iter().enumerate() {
                 let key = if uses_dollar {
@@ -119,13 +121,13 @@ impl LibSQLStatement {
                     // Default to `$`-based if no clear placeholder type is found
                     format!("${}", index + 1)
                 };
-    
+
                 params.insert(key, value.to_string());
             }
         }
-    
+
         Ok(())
-    }    
+    }
 
     /// Finalizes the statement.
     ///
@@ -154,25 +156,58 @@ impl LibSQLStatement {
     /// A `Result` containing the number of affected rows or a `PhpException` if an error occurs.
     pub fn execute(&self, parameters: Option<QueryParameters>) -> Result<usize, PhpException> {
         let mut stmt_registry = STATEMENT_REGISTRY.lock().unwrap();
-    
+
         let stmt = stmt_registry
             .get_mut(&self.stmt_id)
             .ok_or_else(|| PhpException::from("Statement not found"))?;
-    
+
         // Default parameters from `params` if none are provided
         let params = match parameters {
             Some(p) => p,
             None => {
                 let params = self.params.lock().unwrap();
-                QueryParameters {
-                    positional: Some(
-                        params.iter().map(|(_, value)| QueryValue::Text(value.clone())).collect()
-                    ),
-                    named: None,
+                let uses_named_params = params.keys().any(|key| {
+                    !key.starts_with('$')
+                        && !key.starts_with('?')
+                        && !key.starts_with('@')
+                        && !key.chars().all(|c| c.is_ascii_digit())
+                });
+
+                if uses_named_params {
+                    QueryParameters {
+                        named: Some(
+                            params
+                                .iter()
+                                .map(|(key, value)| {
+                                    let prefixed_key = if key.starts_with(':')
+                                        || key.starts_with('@')
+                                        || key.starts_with('$')
+                                    {
+                                        key.clone()
+                                    } else {
+                                        format!(":{}", key)
+                                    };
+                                    (prefixed_key, QueryValue::Text(value.clone()))
+                                })
+                                .collect(),
+                        ),
+                        positional: None,
+                    }
+                } else {
+                    // Use positional parameters
+                    QueryParameters {
+                        positional: Some(
+                            params
+                                .iter()
+                                .map(|(_, value)| QueryValue::Text(value.clone()))
+                                .collect(),
+                        ),
+                        named: None,
+                    }
                 }
             }
         };
-    
+
         // Here we can decide which parameter type is being passed and bind them accordingly
         if let Some(params) = params.get_named() {
             let query_params = QueryParameters {
@@ -181,7 +216,7 @@ impl LibSQLStatement {
             };
             self.bind_named(query_params)?;
         }
-    
+
         if let Some(params) = params.get_positional() {
             let query_params = QueryParameters {
                 positional: Some(params.clone()),
@@ -189,13 +224,13 @@ impl LibSQLStatement {
             };
             self.bind_positional(query_params)?;
         }
-    
+
         // Execute query asynchronously
         let result = runtime().block_on(async { stmt.execute(params.to_params()).await });
-    
+
         // Clear the params after execution
         self.params.lock().unwrap().clear();
-    
+
         match result {
             Ok(u_result) => Ok(u_result),
             Err(e) => Err(PhpException::from(e.to_string())),
@@ -211,10 +246,7 @@ impl LibSQLStatement {
     /// # Returns
     ///
     /// A `Result` containing the query result as a PHP value or a `PhpException` if an error occurs.
-    pub fn query(
-        &self,
-        parameters: Option<QueryParameters>,
-    ) -> Result<LibSQLResult, PhpException> {
+    pub fn query(&self, parameters: Option<QueryParameters>) -> Result<LibSQLResult, PhpException> {
         let params = match parameters {
             Some(p) => p,
             None => QueryParameters {
@@ -237,7 +269,7 @@ impl LibSQLStatement {
             };
             self.bind_named(query_params)?;
         }
-    
+
         if let Some(params) = params.get_positional() {
             let query_params = QueryParameters {
                 positional: Some(params.clone()),
@@ -246,7 +278,8 @@ impl LibSQLStatement {
             self.bind_positional(query_params)?;
         }
 
-        let result = LibSQLResult::__construct(self.conn_id.clone(), self.stmt.as_str(), Some(params))?;
+        let result =
+            LibSQLResult::__construct(self.conn_id.clone(), self.stmt.as_str(), Some(params))?;
 
         // Clear the params after execution
         self.params.lock().unwrap().clear();
@@ -261,11 +294,11 @@ impl LibSQLStatement {
     /// A `Result` indicating success or a `PhpException` if an error occurs.
     pub fn reset(&self) -> Result<(), PhpException> {
         let mut stmt_registry = STATEMENT_REGISTRY.lock().unwrap();
-        
+
         let stmt = stmt_registry
             .get_mut(&self.stmt_id)
             .ok_or_else(|| PhpException::from("Statement not found"))?;
-        
+
         stmt.reset();
         self.params.lock().unwrap().clear();
         Ok(())
@@ -299,18 +332,17 @@ impl LibSQLStatement {
     /// or a `PhpException` if an error occurs.
     pub fn parameter_name(&self, idx: i32) -> Result<Option<String>, PhpException> {
         let stmt_registry = STATEMENT_REGISTRY.lock().unwrap();
-    
+
         let stmt = stmt_registry
             .get(&self.stmt_id)
             .ok_or_else(|| PhpException::from("Statement not found"))?;
-    
-        let result = stmt.parameter_name(idx)
-            .map(|name| {
-                // Strip leading @, $, : or ? from parameter names
-                name.trim_start_matches(|c| c == '@' || c == '$' || c == '?' || c == ':')
-                    .to_string()
-            });
-        
+
+        let result = stmt.parameter_name(idx).map(|name| {
+            // Strip leading @, $, : or ? from parameter names
+            name.trim_start_matches(|c| c == '@' || c == '$' || c == '?' || c == ':')
+                .to_string()
+        });
+
         Ok(result)
     }
 

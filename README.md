@@ -37,12 +37,13 @@
 
 ## Supported Versions
 
-| PHP Version | Build Variants |
-|-------------|----------------|
-| 8.1         | TS / NTS       |
-| 8.2         | TS / NTS       |
-| 8.3         | TS / NTS       |
-| 8.4         | TS / NTS       |
+| PHP Versions  | Build Versions  |
+| ------------- | ----------------|
+| 8.1           | TS / NTS        |
+| 8.2           | TS / NTS        |
+| 8.3           | TS / NTS        |
+| 8.4           | TS / NTS        |
+| 8.5           | TS / NTS        |
 
 **TS** = Thread Safe, **NTS** = Non Thread Safe  
 ✅ Supported on Linux, macOS, Windows, WSL
@@ -77,7 +78,11 @@ foreach ($rows as $row) {
 
 ## Installation
 
-The easiest way to install is via the Composer installer:
+Installing the extension should be not complecated, it's easy and like using **Composer Package Installer**.
+
+<details>
+  <summary><b>Auto Installer</b></summary>
+  <code>turso-php-installer</code> is a Composer package capable of executing various commands related to libSQL, simplifying the development process, and making it easier to simulate in a local environment.
 
 ```bash
 composer global require darkterminal/turso-php-installer

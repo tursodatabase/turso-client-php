@@ -14,6 +14,7 @@ pub struct ResultSet {
 
 impl ext_php_rs::convert::IntoZval for ResultSet {
     const TYPE: ext_php_rs::flags::DataType = ext_php_rs::flags::DataType::Array;
+    const NULLABLE: bool = false;
 
     /// Sets the ResultSet into a Zval.
     ///

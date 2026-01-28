@@ -37,7 +37,7 @@ impl LibSQLIterator {
     pub fn current(&self) -> Option<Zval> {
         if let Some(hash_table) = self.data.array() {
             hash_table
-                .get_index(self.counter as u64)
+                .get_index(self.counter as i64)
                 .map(|zval| zval.shallow_clone())
         } else {
             None
@@ -70,7 +70,7 @@ impl LibSQLIterator {
     /// True if the iterator is valid, false otherwise.
     pub fn valid(&self) -> bool {
         if let Some(hash_table) = self.data.array() {
-            hash_table.get_index(self.counter as u64).is_some()
+            hash_table.get_index(self.counter as i64).is_some()
         } else {
             false
         }

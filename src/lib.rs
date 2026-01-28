@@ -8,24 +8,21 @@ pub mod result;
 pub mod statement;
 pub mod transaction;
 pub mod utils;
-use crate::generator::LibSQLIterator;
 use crate::providers::sqld_offline_write::OfflineWriteConnection;
-use crate::result::FetchResult;
 use crate::result::LibSQLResult;
 use crate::statement::LibSQLStatement;
 use crate::transaction::LibSQLTransaction;
 use crate::utils::runtime::send_webhook_data;
 use crate::utils::runtime::WebhookPayload;
 use ext_php_rs::prelude::*;
-use ext_php_rs::types::Zval;
 use ext_php_rs::{php_class, php_impl, php_module};
 use hooks::load_extensions::ExtensionParams;
 use std::{collections::HashMap, path::Path, sync::Mutex};
 use utils::{
     config_value::ConfigValue,
+    log_error::log_error_to_tmp,
     query_params::QueryParameters,
     runtime::{get_mode, parse_dsn},
-    log_error::log_error_to_tmp
 };
 
 lazy_static::lazy_static! {
@@ -54,9 +51,10 @@ pub const LIBSQL_LAZY: i32 = 5;
 
 /// Struct representing LibSQL PHP Class.
 #[php_class]
+#[derive(Default)]
 struct LibSQL {
     /// Property representing the connection mode.
-    #[prop]
+    #[php(prop)]
     mode: String,
 
     /// Property representing the webhook URL to capture events.
@@ -197,7 +195,8 @@ impl LibSQL {
                 sync_url.clone(),
                 Some(db_flags),
                 Some(encryption_key),
-            ).map_err(|e| {
+            )
+            .map_err(|e| {
                 log_error_to_tmp(&format!("Offline connection creation failed: {:?}", e));
                 e
             })?;
@@ -226,7 +225,8 @@ impl LibSQL {
                     url,
                     Some(db_flags),
                     Some(encryption_key),
-                ).map_err(|e| {
+                )
+                .map_err(|e| {
                     log_error_to_tmp(&format!("Local connection failed: {:?}", e));
                     e
                 })?;
@@ -417,7 +417,12 @@ impl LibSQL {
         if self.mode == "offline_write" {
             // For offline write mode, we still use the LibSQLResult but we need to handle it differently
             // We'll create a special result that works with offline connections
-            LibSQLResult::__construct_offline(self.conn_id.to_string(), stmt, parameters, force_remote)
+            LibSQLResult::__construct_offline(
+                self.conn_id.to_string(),
+                stmt,
+                parameters,
+                force_remote,
+            )
         } else {
             LibSQLResult::__construct(self.conn_id.to_string(), stmt, parameters)
         }
@@ -507,7 +512,6 @@ impl LibSQL {
         }
     }
 
-    
     /// Returns the number of pending operations (e.g. unsent queries)
     /// stored in the offline connection. This is only available in
     /// offline_write mode.
@@ -534,7 +538,6 @@ impl LibSQL {
         }
     }
 
-    
     /// Synchronizes the database for remote replica connections.
     ///
     /// This function attempts to synchronize the database if the connection mode is
@@ -595,7 +598,6 @@ impl LibSQL {
         }
     }
 
-    
     /// Checks the online status of the connection.
     ///
     /// This function returns a boolean indicating if the connection is online.
@@ -690,7 +692,6 @@ impl LibSQL {
     }
 }
 
-
 /// libsql_php_extension_info is the function called by PHP when the extension is loaded.
 /// This function prints the extension information to the PHP info page.
 ///
@@ -761,31 +762,36 @@ extern "C" fn libsql_php_shutdown(_type: i32, _module_number: i32) -> i32 {
     } else {
         log_error_to_tmp("Failed to lock CONNECTION_REGISTRY during shutdown");
     }
-    
+
     if let Ok(mut registry) = OFFLINE_CONNECTION_REGISTRY.lock() {
         registry.clear();
     } else {
         log_error_to_tmp("Failed to lock OFFLINE_CONNECTION_REGISTRY during shutdown");
     }
-    
+
     if let Ok(mut registry) = TRANSACTION_REGISTRY.lock() {
         registry.clear();
     } else {
         log_error_to_tmp("Failed to lock TRANSACTION_REGISTRY during shutdown");
     }
-    
+
     if let Ok(mut registry) = STATEMENT_REGISTRY.lock() {
         registry.clear();
     } else {
         log_error_to_tmp("Failed to lock STATEMENT_REGISTRY during shutdown");
     }
-    
+
     0
 }
 
 #[php_module]
 pub fn get_module(module: ModuleBuilder) -> ModuleBuilder {
     module
+        .class::<LibSQL>()
+        .class::<result::LibSQLResult>()
+        .class::<generator::LibSQLIterator>()
+        .class::<transaction::LibSQLTransaction>()
+        .class::<statement::LibSQLStatement>()
         .info_function(libsql_php_extension_info)
         .shutdown_function(libsql_php_shutdown)
 }

@@ -39,5 +39,11 @@ describe('Prepared Statements', function () {
             ->and($stmt->parameterName(1))->toBe('id')
             ->and($stmt->parameterName(2))->toBe('name')
             ->and($stmt->parameterName(3))->toBe('price');
+
+        $stmt->bindNamed([':id' => 1, ':name' => 'Test', ':price' => 9.99]);
+        $stmt->execute();
+
+        $result = $this->db->query("SELECT name FROM products WHERE id = 1");
+        expect($result->fetchSingle(LibSQL::LIBSQL_ASSOC)['name'])->toBe('Test');
     });
 })->group("PreparedStatementTest", "Feature");

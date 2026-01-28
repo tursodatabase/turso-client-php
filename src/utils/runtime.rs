@@ -1,5 +1,5 @@
-use std::{collections::HashMap};
-use url::{Url, Host};
+use std::collections::HashMap;
+use url::{Host, Url};
 
 use ext_php_rs::{
     exception::PhpException,
@@ -93,7 +93,7 @@ pub fn convert_vec_hashmap_to_php_array(
 
         for (key, column_data) in hashmap {
             let php_value = convert_libsql_value_to_zval(column_data).unwrap();
-            inner_array.insert(&key.as_str(), php_value)?;
+            inner_array.insert(key.as_str(), php_value)?;
         }
 
         let inner_array_zval = ext_php_rs::convert::IntoZval::into_zval(
@@ -223,7 +223,7 @@ pub fn is_reachable(url: &str) -> bool {
 
     let client = match reqwest::blocking::Client::builder()
         .timeout(std::time::Duration::from_secs(20))
-        .build() 
+        .build()
     {
         Ok(client) => client,
         Err(_) => return false,
@@ -242,7 +242,8 @@ pub fn format_url(input_url: &str) -> Result<String, url::ParseError> {
     if let Some(host) = url.host() {
         if let Host::Domain(domain) = host {
             let domain_lower = domain.to_ascii_lowercase();
-            let new_domain = if domain_lower.ends_with(".localhost") || domain_lower == "localhost" {
+            let new_domain = if domain_lower.ends_with(".localhost") || domain_lower == "localhost"
+            {
                 "localhost".to_string()
             } else {
                 let parts: Vec<&str> = domain.split('.').collect();

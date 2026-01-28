@@ -3,7 +3,7 @@ use crate::utils::runtime::runtime;
 /// Creates a new remote replica connection to a libSQL database.
 ///
 /// This function takes various configuration parameters, establishes an asynchronous connection
-/// to a remote replica database using the `libsql` crate, and returns a tuple containing the 
+/// to a remote replica database using the `libsql` crate, and returns a tuple containing the
 /// database and connection objects.
 ///
 /// # Parameters

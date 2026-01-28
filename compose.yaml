@@ -7,7 +7,7 @@ services:
     ports:
       - 6969:6969
     volumes:
-      - ./php-server/php.ini:/etc/php/8.4/cli/php.ini
+      - ./php-server/php.ini:/etc/php/8.5/cli/php.ini
       - ./:/app
     profiles: ["dev"]
 
@@ -19,6 +19,6 @@ services:
     ports:
       - 6969:6969
     volumes:
-      - ./php-server/php.ini:/etc/php/8.4/cli/php.ini
+      - ./php-server/php.ini:/etc/php/8.5/cli/php.ini
       - ./:/app
     profiles: ["arm64"]

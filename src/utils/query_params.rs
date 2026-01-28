@@ -1,6 +1,10 @@
-use std::fmt;
+use ext_php_rs::{
+    convert::FromZval,
+    flags::DataType,
+    types::{ArrayKey, Zval},
+};
 use std::collections::HashMap;
-use ext_php_rs::{convert::FromZval, flags::DataType, types::{ArrayKey, Zval}};
+use std::fmt;
 
 /// Represents a value used in query parameters.
 #[derive(Debug, Clone)]
@@ -20,7 +24,10 @@ impl fmt::Display for QueryValue {
             QueryValue::Text(text) => write!(f, "{}", text),
             QueryValue::Null => write!(f, "NULL"),
             QueryValue::Blob(blob) => {
-                let blob_str = blob.iter().map(|b| format!("{:02X}", b)).collect::<String>();
+                let blob_str = blob
+                    .iter()
+                    .map(|b| format!("{:02X}", b))
+                    .collect::<String>();
                 write!(f, "X'{}'", blob_str)
             }
         }
@@ -117,6 +124,23 @@ impl<'a> FromZval<'a> for QueryParameters {
                         positional[index as usize] = query_value;
                     }
                     ArrayKey::String(key) => {
+                        let query_value = if let Some(int_val) = value.long() {
+                            QueryValue::Integer(int_val)
+                        } else if let Some(float_val) = value.double() {
+                            QueryValue::Real(float_val)
+                        } else if let Some(text_val) = value.string() {
+                            QueryValue::Text(text_val.to_string())
+                        } else if let Some(text_val) = value.string() {
+                            QueryValue::Blob(text_val.as_bytes().to_vec())
+                        } else if value.is_null() {
+                            QueryValue::Null
+                        } else {
+                            continue;
+                        };
+
+                        named.insert(key.to_string(), query_value);
+                    }
+                    ArrayKey::Str(key) => {
                         let query_value = if let Some(int_val) = value.long() {
                             QueryValue::Integer(int_val)
                         } else if let Some(float_val) = value.double() {

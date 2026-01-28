@@ -1,4 +1,4 @@
-# Dockerfile to create an image with PHP 8.4, PHP 8.4-dev, and Rust
+# Dockerfile to create an image with PHP 8.5, PHP 8.5-dev, and Rust
 # for the linux/arm64 architecture.
 
 # --- Stage 1: Builder for Rust ---
@@ -67,12 +67,12 @@ RUN wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg
     && echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | tee /etc/apt/sources.list.d/php.list
 
 # Update package lists again to include the new PHP repository.
-# Install php8.4 and php8.4-dev.
-# php8.4-dev includes development files for PHP, useful for compiling extensions.
+# Install php8.5 and php8.5-dev.
+# php8.5-dev includes development files for PHP, useful for compiling extensions.
 # Clean up apt caches to reduce image size.
 RUN apt-get update && apt-get install -y \
-    php8.4 \
-    php8.4-dev \
+    php8.5 \
+    php8.5-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the Rust installation from the 'builder' stage to the final image.

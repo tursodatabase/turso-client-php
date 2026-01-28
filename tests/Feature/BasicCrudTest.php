@@ -47,7 +47,8 @@ describe('CRUD Operations', function () {
         );
 
         $result = $this->db->query("SELECT * FROM users");
-        expect($result->numColumns())->toBe(4);
+        $row = $result->fetchArray(LibSQL::LIBSQL_ASSOC);
+        expect(count(array_keys($row[0])))->toBe(4);
     });
 
     test('update and delete operations', function () {

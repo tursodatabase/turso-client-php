@@ -6,7 +6,13 @@ use crate::LIBSQL_PHP_VERSION;
 ///
 /// Returns a string representing the version of LibSQL.
 pub fn get_version() -> String {
-    let libsql_version =
-        "LibSQL Core Version ".to_string() + ": " + &libsql::version() + "-" + &libsql::version_number().to_string()  + " - " + "LibSQL PHP Extension Version: " + LIBSQL_PHP_VERSION;
-    libsql_version
+    let lisql_version = "LibSQL Core Version ".to_string()
+        + ": "
+        + &libsql::version()
+        + "-"
+        + &libsql::version_number().to_string()
+        + " - "
+        + "LibSQL PHP Extension Version: "
+        + LIBSQL_PHP_VERSION;
+    lisql_version
 }
