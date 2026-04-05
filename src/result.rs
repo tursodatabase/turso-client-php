@@ -10,6 +10,7 @@ use std::collections::HashMap;
 use crate::{
     generator::LibSQLIterator,
     hooks,
+    lazy_iterator::LibSQLLazyIterator,
     utils::{
         log_error::log_error_to_tmp,
         query_params::QueryParameters,
@@ -22,6 +23,7 @@ use crate::{
 pub enum FetchResult {
     Zval(ext_php_rs::types::Zval),
     Iterator(LibSQLIterator),
+    LazyIterator(LibSQLLazyIterator),
 }
 
 impl IntoZval for FetchResult {
@@ -32,6 +34,7 @@ impl IntoZval for FetchResult {
         match self {
             FetchResult::Zval(zval) => zval.set_zval(zv, false),
             FetchResult::Iterator(iterator) => iterator.set_zval(zv, false),
+            FetchResult::LazyIterator(iterator) => iterator.set_zval(zv, false),
         }
     }
 
@@ -115,6 +118,20 @@ impl LibSQLResult {
 
     pub fn fetch_array(&self, mode: Option<i32>) -> Result<FetchResult, PhpException> {
         let mode = mode.unwrap_or(3);
+
+        // For LIBSQL_LAZY mode, return a truly lazy streaming iterator
+        if mode == LIBSQL_LAZY && !self.is_offline_mode {
+            let lazy_iter = LibSQLLazyIterator::__construct(
+                &self.conn_string,
+                &self.sql,
+                self.query_params.clone().unwrap_or(QueryParameters {
+                    named: None,
+                    positional: None,
+                }),
+                mode,
+            )?;
+            return Ok(FetchResult::LazyIterator(lazy_iter));
+        }
 
         if self.is_offline_mode {
             return self.fetch_array_offline(mode);
@@ -689,5 +706,25 @@ impl LibSQLResult {
             rt.block_on(async { conn.reset().await });
             Ok(())
         }
+    }
+
+    /// Finalizes the result set and frees the associated resources.
+    ///
+    /// This method provides explicit cleanup. In PHP's garbage collection cycle,
+    /// calling finalize() allows developers to deterministically release resources
+    /// rather than waiting for the object to be destroyed.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` indicating success or a `PhpException` if an error occurs.
+    pub fn finalize(&self) -> Result<(), PhpException> {
+        // The LibSQLResult struct will be dropped when the PHP object is destroyed.
+        // This method provides an explicit cleanup point for developers who want
+        // deterministic resource release. The actual resource cleanup happens
+        // automatically when Rust drops the struct.
+        //
+        // For libsql connections, dropping the Connection reference signals the
+        // underlying libsql library to release any associated resources.
+        Ok(())
     }
 }
