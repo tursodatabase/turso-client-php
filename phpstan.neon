@@ -1,0 +1,33 @@
+parameters:
+    level: 5
+    paths:
+        - tests
+        - libsql_php_extension.stubs.php
+
+    # The stubs file defines classes that are provided by the native extension.
+    # PHPStan should treat them as already existing at runtime.
+    scanFiles:
+        - libsql_php_extension.stubs.php
+
+    # PHP version baseline
+    phpVersion: 80100
+
+    # Ignore errors that are expected for this project:
+    # 1. Stubs have bodyless methods (return statements missing) - implemented in Rust
+    # 2. Stubs have unused constructor parameters - implemented in Rust
+    # 3. Pest-specific patterns in test files
+    # 4. TestCase::$db property defined in our custom TestCase class
+    # 5. Test files intentionally call methods without using return values
+    ignoreErrors:
+        # Stub method bodyless errors (all extension classes)
+        - '#Method LibSQL(Agent|Statement|Transaction|Result|Iterator)?::\w+\(\) should return .* but return statement is missing\.#'
+
+        # Stub constructor unused parameters (all extension classes)
+        - '#Constructor of class LibSQL(Agent|Statement|Transaction|Result|Iterator)? has an unused parameter#'
+
+        # Test files call methods for side effects without using return values
+        - '#Call to method LibSQL(Agent|Statement|Transaction|Result|Iterator)?::execute\(\) on a separate line has no effect\.#'
+
+        # Pest test framework patterns
+        - '#Access to an undefined property PHPUnit\\Framework\\TestCase::\$db\.#'
+        - '#Call to an undefined method Pest\\#'

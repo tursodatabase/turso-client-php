@@ -5,7 +5,8 @@
         }
     },
     "require-dev": {
-        "pestphp/pest": "^4.3"
+        "pestphp/pest": "^4.3",
+        "phpstan/phpstan": "^2.1"
     },
     "config": {
         "allow-plugins": {
@@ -14,6 +15,11 @@
     },
     "scripts": {
         "test:feature": "php -dextension=./target/debug/liblibsql_php.so vendor/bin/pest --group=Feature",
-        "test": "php -dextension=./target/debug/liblibsql_php.so vendor/bin/pest"
+        "test": "php -dextension=./target/debug/liblibsql_php.so vendor/bin/pest",
+        "phpstan": "vendor/bin/phpstan analyse --no-progress",
+        "check": [
+            "@phpstan",
+            "@test"
+        ]
     }
 }
