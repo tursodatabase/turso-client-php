@@ -24,7 +24,8 @@ pub fn disconnect(conn_id: String) -> Result<(), PhpException> {
     })?;
 
     if let Some(conn) = registry.remove(&conn_id) {
-        runtime().block_on(async { conn.reset().await });
+        let rt = runtime()?;
+        rt.block_on(async { conn.reset().await });
         Ok(())
     } else {
         let err_msg = "Connection ID not found.".to_string();

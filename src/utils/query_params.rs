@@ -79,7 +79,7 @@ impl QueryParameters {
             param_named.as_ref().map(|p| p.is_empty()).unwrap_or(true),
         ) {
             (false, true) => libsql::params::Params::Positional(positional_params),
-            (true, false) => libsql::params::Params::Named(param_named.unwrap()),
+            (true, false) => libsql::params::Params::Named(param_named.expect("param_named should be Some")),
             _ => libsql::params::Params::None,
         }
     }

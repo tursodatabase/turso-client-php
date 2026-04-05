@@ -17,13 +17,16 @@ use crate::{utils::runtime::runtime, CONNECTION_REGISTRY};
 ///
 /// Returns a `PhpException` if the connection is not found or an error occurs during execution.
 pub fn exec_batch(conn_id: String, stmt: &str) -> Result<bool, PhpException> {
-    let conn_registry = CONNECTION_REGISTRY.lock().unwrap();
+    let conn_registry = CONNECTION_REGISTRY.lock().map_err(|e| {
+        PhpException::default(format!("Mutex lock error: {}", e))
+    })?;
 
     let conn = conn_registry
         .get(&conn_id)
         .ok_or_else(|| PhpException::from("Connection not found"))?;
 
-    let result = runtime().block_on(async { conn.execute_batch(stmt).await });
+    let rt = runtime()?;
+    let result = rt.block_on(async { conn.execute_batch(stmt).await });
     match result {
         Ok(_) => Ok(true),
         Err(e) => Err(PhpException::from(e.to_string())),

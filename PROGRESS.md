@@ -6,7 +6,7 @@
 
 | # | Enhancement | Priority | Status | Session |
 |---|---|---|---|---|
-| 1 | Remove `.unwrap()` usage — replace with `?` propagation and proper `PhpException` mapping | 🔴 Critical | pending | — |
+| 1 | Remove `.unwrap()` usage — replace with `?` propagation and proper `PhpException` mapping | 🔴 Critical | ✅ COMPLETED | 2026-04-05 |
 | 2 | Implement `LibSQLResult::finalize()` — declared in stubs but missing in `src/result.rs` | 🔴 High | pending | — |
 | 3 | Batch prepared statement execution — `executeBatch` on `LibSQLStatement` | 🟡 High | pending | — |
 | 4 | Expand test coverage for uncovered methods | 🟡 High | pending | — |
@@ -20,8 +20,16 @@
 
 ## Session Log
 
-### Session: 2026-04-05
-- **Completed**: `style: normalize line endings to lf across project` (87 files, CRLF→LF normalization + typo fix in test filename)
+### Session: 2026-04-05 (Critical: Remove .unwrap())
+- **Completed**: `crit: remove all .unwrap() calls — replace with proper error handling` (95 instances across 15+ files)
+  - Replaced all `.unwrap()` calls with `?` operator and `PhpException` mapping
+  - Changed `runtime()` function to return `Result<&'static Runtime, PhpException>` 
+  - Updated all 41 callers of `runtime()` to extract runtime before `block_on()`
+  - Mutex locks now use `.map_err()` to convert poison errors to `PhpException`
+  - Option types use `.ok_or_else()` for proper error propagation
+  - LibSQL operations use `.map_err()` for error mapping
+  - Files modified: `lib.rs`, `statement.rs`, `transaction.rs`, `result.rs`, all `providers/`, all `hooks/`, all `utils/`
+  - Build verification blocked by missing `php-config` (Herd PHP installation limitation)
 
 ---
 

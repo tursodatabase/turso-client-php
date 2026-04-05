@@ -57,8 +57,10 @@ fn libsql_value_to_json(value: &Value) -> JsonValue {
 fn json_to_libsql_value(json: &JsonValue) -> Value {
     match json {
         JsonValue::Null => Value::Null,
-        JsonValue::Number(n) if n.is_i64() => Value::Integer(n.as_i64().unwrap()),
-        JsonValue::Number(n) if n.is_f64() => Value::Real(n.as_f64().unwrap()),
+        JsonValue::Number(n) if n.is_i64() => Value::Integer(n.as_i64()
+            .ok_or_else(|| "Invalid i64 number".to_string()).unwrap_or(0)),
+        JsonValue::Number(n) if n.is_f64() => Value::Real(n.as_f64()
+            .ok_or_else(|| "Invalid f64 number".to_string()).unwrap_or(0.0)),
         JsonValue::String(s) => Value::Text(s.clone()),
         JsonValue::Array(arr) => Value::Blob(
             arr.iter()
@@ -100,7 +102,15 @@ impl OfflineWriteConnection {
             Some(flags.unwrap_or(6)),
             Some(encryption_key.unwrap_or_default()),
         )?;
-        let already_initialized: bool = runtime()
+        let rt = match runtime() {
+            Ok(rt) => rt,
+            Err(e) => {
+                let err_msg = format!("DB check failed: {:?}", e);
+                log_error_to_tmp(&err_msg);
+                return Err(PhpException::default(err_msg));
+            }
+        };
+        let already_initialized: bool = rt
             .block_on(async {
                 let stmt = local_conn
                     .prepare("SELECT value FROM libsql_metadata WHERE key = 'schema_initialized'")
@@ -114,12 +124,19 @@ impl OfflineWriteConnection {
                 }
             })
             .map_err(|err: libsql::Error| {
-                let err_msg = format!("DB check failed: {}", err);
+                let err_msg = format!("DB check failed: {:?}", err);
                 log_error_to_tmp(&err_msg);
                 PhpException::default(err_msg)
             })?;
         if !already_initialized {
-            if let Err(err) = runtime().block_on(async {
+            let rt = match runtime() {
+                Ok(rt) => rt,
+                Err(e) => {
+                    log_error_to_tmp(&format!("Failed to get runtime for init: {:?}", e));
+                    return Err(PhpException::default(format!("Failed to get runtime: {:?}", e)));
+                }
+            };
+            if let Err(err) = rt.block_on(async {
                 local_conn
                     .execute_batch(
                         "
@@ -140,18 +157,17 @@ impl OfflineWriteConnection {
                     )
                     .await
             }) {
-                log_error_to_tmp(&format!("Failed to initialize DB: {}", err));
+                log_error_to_tmp(&format!("Failed to initialize DB: {:?}", err));
             }
-            if let Err(err) = runtime()
-                .block_on(async {
-                    local_conn
-                        .execute(
-                            "INSERT OR REPLACE INTO libsql_metadata (key, value) VALUES ('schema_initialized', 'true')",
-                            libsql::params![],
-                        )
-                        .await
-                }) {
-                log_error_to_tmp(&format!("Failed to set schema_initialized: {}", err));
+            if let Err(err) = rt.block_on(async {
+                local_conn
+                    .execute(
+                        "INSERT OR REPLACE INTO libsql_metadata (key, value) VALUES ('schema_initialized', 'true')",
+                        libsql::params![],
+                    )
+                    .await
+            }) {
+                log_error_to_tmp(&format!("Failed to set schema_initialized: {:?}", err));
             }
         }
         let remote_conn = providers::remote::create_remote_connection(sync_url.clone(), auth_token)?;
@@ -188,7 +204,7 @@ impl OfflineWriteConnection {
         // Cache status for 5 seconds
         static LAST_CHECK: Mutex<Option<(Instant, bool)>> = Mutex::new(None);
 
-        let mut last_check = LAST_CHECK.lock().unwrap();
+        let mut last_check = LAST_CHECK.lock().unwrap_or_else(|e| e.into_inner());
         if let Some((time, status)) = *last_check {
             if time.elapsed() < Duration::from_secs(5) {
                 return status;
@@ -261,7 +277,12 @@ impl OfflineWriteConnection {
     /// there is an error.
     pub fn initial_sync_if_needed(&self) -> Result<(), libsql::Error> {
         // Check if initial sync has already been done
-        let sync_done: Result<bool, libsql::Error> = runtime().block_on(async {
+        let rt = runtime().unwrap_or_else(|e| {
+            let err_msg = format!("Runtime error: {:?}", e);
+            log_error_to_tmp(&err_msg);
+            panic!("{}", err_msg)
+        });
+        let sync_done: Result<bool, libsql::Error> = rt.block_on(async {
             let stmt = self
                 .local_conn
                 .prepare("SELECT value FROM libsql_metadata WHERE key = 'initial_sync_done'")
@@ -278,7 +299,12 @@ impl OfflineWriteConnection {
         if sync_done? {
             return Ok(());
         }
-        let schemas: Result<Vec<String>, libsql::Error> = runtime().block_on(async {
+        let rt = runtime().unwrap_or_else(|e| {
+            let err_msg = format!("Runtime error: {:?}", e);
+            log_error_to_tmp(&err_msg);
+            panic!("{}", err_msg)
+        });
+        let schemas: Result<Vec<String>, libsql::Error> = rt.block_on(async {
             let stmt = self.remote_conn
                 .prepare("SELECT sql FROM sqlite_master WHERE type IN ('table', 'index', 'view') AND name NOT LIKE 'libsql_%'")
                 .await?;
@@ -294,13 +320,13 @@ impl OfflineWriteConnection {
         });
         let schemas = schemas?;
         for sql in schemas {
-            runtime().block_on(async {
+            rt.block_on(async {
                 self.local_conn
                     .execute(&sql, libsql::params::Params::None)
                     .await
             })?;
         }
-        let tables: Result<Vec<String>, libsql::Error> = runtime().block_on(async {
+        let tables: Result<Vec<String>, libsql::Error> = rt.block_on(async {
             let stmt = self.remote_conn
                 .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'libsql_%'")
                 .await?;
@@ -315,7 +341,7 @@ impl OfflineWriteConnection {
         });
         let tables = tables?;
         for table in tables {
-            let rows: Result<Vec<Vec<Value>>, libsql::Error> = runtime().block_on(async {
+            let rows: Result<Vec<Vec<Value>>, libsql::Error> = rt.block_on(async {
                 let stmt = self
                     .remote_conn
                     .prepare(&format!("SELECT * FROM \"{}\"", table))
@@ -336,7 +362,7 @@ impl OfflineWriteConnection {
             });
             let rows = rows?;
             if !rows.is_empty() {
-                let columns: Result<Vec<String>, libsql::Error> = runtime().block_on(async {
+                let columns: Result<Vec<String>, libsql::Error> = rt.block_on(async {
                     let stmt = self
                         .remote_conn
                         .prepare(&format!("PRAGMA table_info(\"{}\")", table))
@@ -358,7 +384,7 @@ impl OfflineWriteConnection {
                     placeholders
                 );
                 for row_data in rows {
-                    runtime().block_on(async {
+                    rt.block_on(async {
                         self.local_conn
                             .execute(&sql, libsql::params_from_iter(row_data))
                             .await
@@ -368,7 +394,7 @@ impl OfflineWriteConnection {
         }
 
         // Mark initial sync as complete
-        runtime().block_on(async {
+        rt.block_on(async {
             self.local_conn.execute(
                 "INSERT OR REPLACE INTO libsql_metadata (key, value) VALUES ('initial_sync_done', 'true')",
                 libsql::params![],
@@ -385,20 +411,27 @@ impl OfflineWriteConnection {
     /// table in the order they were inserted, and they are added to the `pending_operations`
     /// field in the same order.
     fn load_pending_operations(&self) {
-        let mut ops = self.pending_operations.lock().unwrap();
+        let mut ops = self.pending_operations.lock().unwrap_or_else(|e| e.into_inner());
         ops.clear();
-        let query_result = runtime().block_on(async {
+        let rt = match runtime() {
+            Ok(rt) => rt,
+            Err(e) => {
+                log_error_to_tmp(&format!("Failed to get runtime: {:?}", e));
+                return;
+            }
+        };
+        let query_result = rt.block_on(async {
             self.local_conn
                 .query("SELECT id, sql, params_json, operation_type, timestamp FROM libsql_pending_ops", libsql::params![])
                 .await
         });
         if let Ok(mut rows) = query_result {
-            while let Ok(Some(row)) = runtime().block_on(rows.next()) {
-                let id: i64 = row.get(0).unwrap();
-                let sql: String = row.get(1).unwrap();
-                let params_json: String = row.get(2).unwrap();
-                let op_type: String = row.get(3).unwrap();
-                let timestamp: i64 = row.get(4).unwrap();
+            while let Ok(Some(row)) = rt.block_on(rows.next()) {
+                let id: i64 = row.get(0).ok().unwrap_or(0);
+                let sql: String = row.get(1).ok().unwrap_or_default();
+                let params_json: String = row.get(2).ok().unwrap_or_default();
+                let op_type: String = row.get(3).ok().unwrap_or_default();
+                let timestamp: i64 = row.get(4).ok().unwrap_or(0);
                 let json_value: JsonValue =
                     serde_json::from_str(&params_json).unwrap_or(JsonValue::Null);
                 let params = match json_value {
@@ -454,7 +487,9 @@ impl OfflineWriteConnection {
                 JsonValue::Object(json_map)
             }
         };
-        let params_str = serde_json::to_string(&params_json).unwrap();
+        let params_str = serde_json::to_string(&params_json)
+            .map_err(|e| log_error_to_tmp(&format!("Failed to serialize params: {}", e)))
+            .unwrap_or_default();
         let op_type = match op.operation_type {
             OperationType::Execute => "Execute",
             OperationType::ExecuteBatch => "ExecuteBatch",
@@ -462,9 +497,16 @@ impl OfflineWriteConnection {
         let timestamp = op
             .timestamp
             .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_secs() as i64;
-        let result = runtime().block_on(async {
+            .map(|d| d.as_secs() as i64)
+            .unwrap_or(0);
+        let rt = match runtime() {
+            Ok(rt) => rt,
+            Err(e) => {
+                log_error_to_tmp(&format!("Failed to get runtime: {:?}", e));
+                return -1;
+            }
+        };
+        let result = rt.block_on(async {
             self.local_conn
                 .execute(
                     "INSERT INTO libsql_pending_ops (sql, params_json, operation_type, timestamp) VALUES (?, ?, ?, ?)",
@@ -496,7 +538,14 @@ impl OfflineWriteConnection {
     ///
     /// This function does not return a value.
     fn remove_pending_operation(&self, id: i64) {
-        let _ = runtime()
+        let rt = match runtime() {
+            Ok(rt) => rt,
+            Err(e) => {
+                log_error_to_tmp(&format!("Failed to get runtime: {:?}", e));
+                return;
+            }
+        };
+        let _ = rt
             .block_on(async {
                 self.local_conn
                     .execute(
@@ -506,7 +555,7 @@ impl OfflineWriteConnection {
                     .await
             })
             .map_err(|err| {
-                log_error_to_tmp(&format!("Failed to remove pending operation: {}", err));
+                log_error_to_tmp(&format!("Failed to remove pending operation: {:?}", err));
             });
     }
 
@@ -520,7 +569,7 @@ impl OfflineWriteConnection {
     /// This function returns true if the remote connection is reachable, and false otherwise.
     pub fn check_connectivity(&self) -> bool {
         let is_reachable = crate::utils::runtime::is_reachable(&self.remote_url);
-        *self.is_online.lock().unwrap() = is_reachable;
+        *self.is_online.lock().unwrap_or_else(|e| e.into_inner()) = is_reachable;
         is_reachable
     }
 
@@ -547,7 +596,8 @@ impl OfflineWriteConnection {
     ) -> Result<u64, PhpException> {
         let params = parameters.map(|p| p.to_params());
 
-        let local_result = runtime()
+        let rt = runtime()?;
+        let local_result = rt
             .block_on(async {
                 self.local_conn
                     .execute(sql, params.clone().unwrap_or(libsql::params::Params::None))
@@ -575,10 +625,11 @@ impl OfflineWriteConnection {
     /// Returns `true` if the statement was successfully executed on the remote database,
     /// `false` otherwise.
     pub fn execute_batch(&self, sql: &str) -> Result<bool, PhpException> {
-        runtime()
+        let rt = runtime()?;
+        rt
             .block_on(async { self.local_conn.execute_batch(sql).await })
             .map_err(|e| {
-                log_error_to_tmp(&format!("Execute batch failed: {}", e));
+                log_error_to_tmp(&format!("Execute batch failed: {:?}", e));
                 PhpException::from(format!("{:?}", e))
             })?;
         self.queue_operation(sql, None, OperationType::ExecuteBatch)
@@ -601,7 +652,7 @@ impl OfflineWriteConnection {
             timestamp: std::time::SystemTime::now(),
         };
         pending_op.id = Some(self.save_pending_operation(&pending_op));
-        self.pending_operations.lock().unwrap().push(pending_op);
+        self.pending_operations.lock().unwrap_or_else(|e| e.into_inner()).push(pending_op);
 
         // Attempt async sync if online
         if self.is_online() {
@@ -634,12 +685,17 @@ impl OfflineWriteConnection {
             .unwrap_or(libsql::params::Params::None);
         let force_remote = force_remote.unwrap_or(false);
 
+        let rt = runtime().unwrap_or_else(|e| {
+            let err_msg = format!("Runtime error: {:?}", e);
+            log_error_to_tmp(&err_msg);
+            panic!("{}", err_msg)
+        });
         if force_remote && self.is_online() {
             // Use remote if forced and online
-            runtime().block_on(async { self.remote_conn.query(sql, params).await })
+            rt.block_on(async { self.remote_conn.query(sql, params).await })
         } else {
             // Default to local database
-            runtime().block_on(async { self.local_conn.query(sql, params).await })
+            rt.block_on(async { self.local_conn.query(sql, params).await })
         }
     }
 
@@ -658,18 +714,19 @@ impl OfflineWriteConnection {
             log_error_to_tmp("Cannot sync: no internet connection");
             return Err("Cannot sync: no internet connection".to_string());
         }
-        let mut pending_ops = self.pending_operations.lock().unwrap();
+        let mut pending_ops = self.pending_operations.lock().unwrap_or_else(|e| e.into_inner());
         let mut synced_count = 0;
         let mut failed_ops = Vec::new();
+        let rt = runtime().map_err(|e| format!("Runtime error: {:?}", e))?;
         for op in pending_ops.drain(..) {
             let sync_result = match op.operation_type {
-                OperationType::Execute => runtime().block_on(async {
+                OperationType::Execute => rt.block_on(async {
                     self.remote_conn
                         .execute(&op.sql, op.params.clone())
                         .await
                         .map(|_| ())
                 }),
-                OperationType::ExecuteBatch => runtime()
+                OperationType::ExecuteBatch => rt
                     .block_on(async { self.remote_conn.execute_batch(&op.sql).await.map(|_| ()) }),
             };
             match sync_result {
@@ -700,7 +757,7 @@ impl OfflineWriteConnection {
         let _ = self.initial_sync_if_needed();
         match self.sync_pending_operations() {
             Ok(count) => {
-                let remaining = self.pending_operations.lock().unwrap().len();
+                let remaining = self.pending_operations.lock().unwrap_or_else(|e| e.into_inner()).len();
                 Ok(format!(
                     "Synced {} operations, {} remaining",
                     count, remaining
@@ -720,7 +777,7 @@ impl OfflineWriteConnection {
     ///
     /// The number of pending operations as a `usize`.
     pub fn get_pending_operations_count(&self) -> usize {
-        self.pending_operations.lock().unwrap().len()
+        self.pending_operations.lock().unwrap_or_else(|e| e.into_inner()).len()
     }
 
     /// Retrieves the number of changes made by the last executed statement.

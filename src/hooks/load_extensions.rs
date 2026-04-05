@@ -34,15 +34,21 @@ impl<'a> ext_php_rs::convert::FromZval<'a> for ExtensionParams {
 }
 
 pub fn enable_load_extension(conn_id: String, onoff: Option<bool>) -> Result<(), PhpException> {
-    let conn_registry = CONNECTION_REGISTRY.lock().unwrap();
+    let conn_registry = CONNECTION_REGISTRY.lock().map_err(|e| {
+        PhpException::default(format!("Mutex lock error: {}", e))
+    })?;
     let conn = conn_registry
         .get(&conn_id)
         .ok_or_else(|| PhpException::from("Connection not found"))?;
 
-    if Some(onoff.unwrap_or(false)).is_some() {
-        conn.load_extension_enable().unwrap();
+    if onoff.unwrap_or(false) {
+        conn.load_extension_enable().map_err(|e| {
+            PhpException::default(format!("Failed to enable load extension: {}", e))
+        })?;
     } else {
-        conn.load_extension_disable().unwrap();
+        conn.load_extension_disable().map_err(|e| {
+            PhpException::default(format!("Failed to disable load extension: {}", e))
+        })?;
     }
 
     Ok(())
@@ -53,11 +59,15 @@ pub fn load_extension(
     dylib_path: &Path,
     entry_point: Option<&str>,
 ) -> Result<(), PhpException> {
-    let conn_registry = CONNECTION_REGISTRY.lock().unwrap();
+    let conn_registry = CONNECTION_REGISTRY.lock().map_err(|e| {
+        PhpException::default(format!("Mutex lock error: {}", e))
+    })?;
     let conn = conn_registry
         .get(&conn_id)
         .ok_or_else(|| PhpException::from("Connection not found"))?;
 
-    conn.load_extension(dylib_path, entry_point).unwrap();
+    conn.load_extension(dylib_path, entry_point).map_err(|e| {
+        PhpException::default(format!("Failed to load extension: {}", e))
+    })?;
     Ok(())
 }

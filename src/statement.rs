@@ -39,18 +39,29 @@ impl LibSQLStatement {
     ///
     /// A `Result` containing the constructed `LibSQLStatement` object or a `PhpException` if an error occurs.
     pub fn __construct(conn_id: String, sql: &str) -> Result<Self, PhpException> {
-        let conn_registry = CONNECTION_REGISTRY.lock().unwrap();
+        let conn_registry = CONNECTION_REGISTRY.lock().map_err(|e| {
+            let err_msg = format!("Failed to lock connection registry: {}", e);
+            PhpException::default(err_msg)
+        })?;
 
         let conn = conn_registry
             .get(&conn_id)
             .ok_or_else(|| PhpException::from("Connection not found"))?;
 
-        let stmt = runtime().block_on(async { conn.prepare(sql).await.unwrap() });
+        let rt = runtime()?;
+        let stmt = rt.block_on(async {
+            conn.prepare(sql).await.map_err(|e| {
+                PhpException::default(format!("Failed to prepare statement: {}", e))
+            })
+        })?;
 
         let stmt_id = uuid::Uuid::new_v4().to_string();
         STATEMENT_REGISTRY
             .lock()
-            .unwrap()
+            .map_err(|e| {
+                let err_msg = format!("Failed to lock statement registry: {}", e);
+                PhpException::default(err_msg)
+            })?
             .insert(stmt_id.clone(), stmt);
 
         Ok(Self {
@@ -135,7 +146,10 @@ impl LibSQLStatement {
     ///
     /// A `Result` indicating success or a `PhpException` if an error occurs.
     pub fn finalize(&self) -> Result<(), PhpException> {
-        let mut stmt_registry = STATEMENT_REGISTRY.lock().unwrap();
+        let mut stmt_registry = STATEMENT_REGISTRY.lock().map_err(|e| {
+            let err_msg = format!("Failed to lock statement registry: {}", e);
+            PhpException::default(err_msg)
+        })?;
 
         let mut stmt = stmt_registry
             .remove(&self.stmt_id)
@@ -155,7 +169,10 @@ impl LibSQLStatement {
     ///
     /// A `Result` containing the number of affected rows or a `PhpException` if an error occurs.
     pub fn execute(&self, parameters: Option<QueryParameters>) -> Result<usize, PhpException> {
-        let mut stmt_registry = STATEMENT_REGISTRY.lock().unwrap();
+        let mut stmt_registry = STATEMENT_REGISTRY.lock().map_err(|e| {
+            let err_msg = format!("Failed to lock statement registry: {}", e);
+            PhpException::default(err_msg)
+        })?;
 
         let stmt = stmt_registry
             .get_mut(&self.stmt_id)
@@ -165,7 +182,10 @@ impl LibSQLStatement {
         let params = match parameters {
             Some(p) => p,
             None => {
-                let params = self.params.lock().unwrap();
+                let params = self.params.lock().map_err(|e| {
+                    let err_msg = format!("Failed to lock params mutex: {}", e);
+                    PhpException::default(err_msg)
+                })?;
                 let uses_named_params = params.keys().any(|key| {
                     !key.starts_with('$')
                         && !key.starts_with('?')
@@ -226,10 +246,14 @@ impl LibSQLStatement {
         }
 
         // Execute query asynchronously
-        let result = runtime().block_on(async { stmt.execute(params.to_params()).await });
+        let rt = runtime()?;
+        let result = rt.block_on(async { stmt.execute(params.to_params()).await });
 
         // Clear the params after execution
-        self.params.lock().unwrap().clear();
+        self.params.lock().map_err(|e| {
+            let err_msg = format!("Failed to lock params mutex: {}", e);
+            PhpException::default(err_msg)
+        })?.clear();
 
         match result {
             Ok(u_result) => Ok(u_result),
@@ -253,7 +277,10 @@ impl LibSQLStatement {
                 named: Some(
                     self.params
                         .lock()
-                        .expect("Failed to lock params mutex")
+                        .map_err(|e| {
+                            let err_msg = format!("Failed to lock params mutex: {}", e);
+                            PhpException::default(err_msg)
+                        })?
                         .iter()
                         .map(|(key, value)| (key.clone(), QueryValue::Text(value.clone())))
                         .collect::<HashMap<String, QueryValue>>(),
@@ -282,7 +309,10 @@ impl LibSQLStatement {
             LibSQLResult::__construct(self.conn_id.clone(), self.stmt.as_str(), Some(params))?;
 
         // Clear the params after execution
-        self.params.lock().unwrap().clear();
+        self.params.lock().map_err(|e| {
+            let err_msg = format!("Failed to lock params mutex: {}", e);
+            PhpException::default(err_msg)
+        })?.clear();
 
         Ok(result)
     }
@@ -293,14 +323,20 @@ impl LibSQLStatement {
     ///
     /// A `Result` indicating success or a `PhpException` if an error occurs.
     pub fn reset(&self) -> Result<(), PhpException> {
-        let mut stmt_registry = STATEMENT_REGISTRY.lock().unwrap();
+        let mut stmt_registry = STATEMENT_REGISTRY.lock().map_err(|e| {
+            let err_msg = format!("Failed to lock statement registry: {}", e);
+            PhpException::default(err_msg)
+        })?;
 
         let stmt = stmt_registry
             .get_mut(&self.stmt_id)
             .ok_or_else(|| PhpException::from("Statement not found"))?;
 
         stmt.reset();
-        self.params.lock().unwrap().clear();
+        self.params.lock().map_err(|e| {
+            let err_msg = format!("Failed to lock params mutex: {}", e);
+            PhpException::default(err_msg)
+        })?.clear();
         Ok(())
     }
 
@@ -310,7 +346,10 @@ impl LibSQLStatement {
     ///
     /// A `Result` containing the number of parameters or a `PhpException` if an error occurs.
     pub fn parameter_count(&self) -> Result<usize, PhpException> {
-        let mut stmt_registry = STATEMENT_REGISTRY.lock().unwrap();
+        let mut stmt_registry = STATEMENT_REGISTRY.lock().map_err(|e| {
+            let err_msg = format!("Failed to lock statement registry: {}", e);
+            PhpException::default(err_msg)
+        })?;
 
         let stmt = stmt_registry
             .get_mut(&self.stmt_id)
@@ -331,7 +370,10 @@ impl LibSQLStatement {
     /// A `Result` containing the parameter name or `None` if the parameter is not found,
     /// or a `PhpException` if an error occurs.
     pub fn parameter_name(&self, idx: i32) -> Result<Option<String>, PhpException> {
-        let stmt_registry = STATEMENT_REGISTRY.lock().unwrap();
+        let stmt_registry = STATEMENT_REGISTRY.lock().map_err(|e| {
+            let err_msg = format!("Failed to lock statement registry: {}", e);
+            PhpException::default(err_msg)
+        })?;
 
         let stmt = stmt_registry
             .get(&self.stmt_id)
@@ -352,7 +394,10 @@ impl LibSQLStatement {
     ///
     /// A `Result` containing an array of column information or a `PhpException` if an error occurs.
     pub fn columns(&self) -> Result<Vec<ext_php_rs::types::Zval>, PhpException> {
-        let stmt_registry = STATEMENT_REGISTRY.lock().unwrap();
+        let stmt_registry = STATEMENT_REGISTRY.lock().map_err(|e| {
+            let err_msg = format!("Failed to lock statement registry: {}", e);
+            PhpException::default(err_msg)
+        })?;
 
         let stmt = stmt_registry
             .get(&self.stmt_id)

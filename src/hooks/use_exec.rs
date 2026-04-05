@@ -43,7 +43,8 @@ pub fn exec(
         libsql::params::Params::None
     };
 
-    let result = runtime().block_on(async { conn.execute(stmt, params).await });
+    let rt = runtime()?;
+    let result = rt.block_on(async { conn.execute(stmt, params).await });
     match result {
         Ok(eresult) => Ok(eresult),
         Err(e) => {

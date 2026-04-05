@@ -1,3 +1,4 @@
+use ext_php_rs::exception::PhpException;
 use crate::utils::runtime::runtime;
 
 /// Creates a new remote replica connection to a libSQL database.
@@ -46,27 +47,29 @@ pub fn create_remote_replica_connection(
     sync_interval: std::time::Duration,
     read_your_writes: bool,
     encryption_key: Option<String>,
-) -> (libsql::Database, libsql::Connection) {
-    let (db, conn) = runtime().block_on(async {
-        let encryption_config = if let Some(key) = encryption_key {
-            Some(libsql::EncryptionConfig::new(
+) -> Result<(libsql::Database, libsql::Connection), PhpException> {
+    let rt = runtime()?;
+    let (db, conn) = rt.block_on(async {
+        let mut builder = libsql::Builder::new_remote_replica(url, sync_url, auth_token)
+            .read_your_writes(read_your_writes)
+            .sync_interval(sync_interval);
+        
+        if let Some(key) = encryption_key {
+            let encryption_config = libsql::EncryptionConfig::new(
                 libsql::Cipher::Aes256Cbc,
                 key.as_bytes().to_vec().into(),
-            ))
-        } else {
-            None
-        };
+            );
+            builder = builder.encryption_config(encryption_config);
+        }
 
-        let db = libsql::Builder::new_remote_replica(url, sync_url, auth_token)
-            .encryption_config(encryption_config.unwrap())
-            .read_your_writes(read_your_writes)
-            .sync_interval(sync_interval)
+        let db = builder
             .build()
             .await
-            .unwrap();
-        let conn = db.connect().unwrap();
-        (db, conn)
-    });
+            .map_err(|e| PhpException::default(format!("Remote replica build failed: {}", e)))?;
+        let conn = db.connect()
+            .map_err(|e| PhpException::default(format!("Remote replica connection failed: {}", e)))?;
+        Ok::<_, PhpException>((db, conn))
+    })?;
 
-    (db, conn)
+    Ok((db, conn))
 }

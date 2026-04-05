@@ -28,6 +28,7 @@ pub fn get_changes(conn_id: String) -> Result<u64, PhpException> {
         PhpException::from(err_msg)
     })?;
 
-    let affected_rows = runtime().block_on(async { conn.changes() });
+    let rt = runtime()?;
+    let affected_rows = rt.block_on(async { conn.changes() });
     Ok(affected_rows)
 }

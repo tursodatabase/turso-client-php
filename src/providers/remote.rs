@@ -16,7 +16,8 @@ pub fn create_remote_connection(
     url: String,
     auth_token: String,
 ) -> Result<libsql::Connection, PhpException> {
-    runtime().block_on(async {
+    let rt = runtime()?;
+    rt.block_on(async {
         let db = libsql::Builder::new_remote(url, auth_token)
             .build()
             .await

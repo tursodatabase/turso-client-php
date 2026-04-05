@@ -58,7 +58,7 @@ struct LibSQL {
     mode: String,
 
     /// Property representing the webhook URL to capture events.
-    #[prop]
+    #[php(prop)]
     cdc_url: Option<String>,
 
     /// Property representing the connection ID.
@@ -175,7 +175,9 @@ impl LibSQL {
         }
 
         let cleared_url = if url.starts_with("file:") {
-            url.strip_prefix("file:").unwrap().to_string()
+            url.strip_prefix("file:")
+                .ok_or_else(|| PhpException::default("Invalid file: prefix in DSN".into()))?
+                .to_string()
         } else {
             url.clone()
         };
@@ -238,7 +240,9 @@ impl LibSQL {
             }
             "remote_replica" => {
                 let cleared_url = if url.starts_with("file:") {
-                    url.strip_prefix("file:").unwrap().to_string()
+                    url.strip_prefix("file:")
+                        .ok_or_else(|| PhpException::default("Invalid file: prefix in DSN".into()))?
+                        .to_string()
                 } else {
                     url.clone()
                 };
@@ -251,12 +255,12 @@ impl LibSQL {
                         sync_interval.clone(),
                         read_your_writes.clone(),
                         Some(encryption_key),
-                    ),
+                    )?,
                     true => providers::offline_write::create_offline_write_connection(
                         cleared_url.clone(),
                         auth_token,
                         sync_url,
-                    ),
+                    )?,
                 };
                 (conn, Some(db))
             }
@@ -297,7 +301,11 @@ impl LibSQL {
     /// Returns the number of changes made as a result of the last executed statement.
     pub fn changes(&self) -> Result<u64, PhpException> {
         if self.mode == "offline_write" {
-            let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().unwrap();
+            let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().map_err(|e| {
+                let err_msg = format!("Mutex lock error: {}", e);
+                log_error_to_tmp(&err_msg);
+                PhpException::default(err_msg)
+            })?;
             let offline_conn = offline_registry
                 .get(&self.conn_id)
                 .ok_or_else(|| PhpException::from("Offline connection not found"))?;
@@ -357,7 +365,11 @@ impl LibSQL {
         parameters: Option<QueryParameters>,
     ) -> Result<u64, PhpException> {
         if self.mode == "offline_write" {
-            let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().unwrap();
+            let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().map_err(|e| {
+                let err_msg = format!("Mutex lock error: {}", e);
+                log_error_to_tmp(&err_msg);
+                PhpException::default(err_msg)
+            })?;
             let offline_conn = offline_registry
                 .get(&self.conn_id)
                 .ok_or_else(|| PhpException::from("Offline connection not found"))?;
@@ -383,7 +395,11 @@ impl LibSQL {
     /// Returns `true` if the execution is successful, otherwise `false`.
     pub fn execute_batch(&self, stmt: &str) -> Result<bool, PhpException> {
         if self.mode == "offline_write" {
-            let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().unwrap();
+            let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().map_err(|e| {
+                let err_msg = format!("Mutex lock error: {}", e);
+                log_error_to_tmp(&err_msg);
+                PhpException::default(err_msg)
+            })?;
             let offline_conn = offline_registry
                 .get(&self.conn_id)
                 .ok_or_else(|| PhpException::from("Offline connection not found"))?;
@@ -466,7 +482,11 @@ impl LibSQL {
     /// Returns `Ok(())` if the connection is closed successfully, otherwise returns a `PhpException`.
     pub fn close(&self) -> Result<(), PhpException> {
         if self.mode == "offline_write" {
-            let mut offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().unwrap();
+            let mut offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().map_err(|e| {
+                let err_msg = format!("Mutex lock error: {}", e);
+                log_error_to_tmp(&err_msg);
+                PhpException::default(err_msg)
+            })?;
             offline_registry.remove(&self.conn_id);
             Ok(())
         } else {
@@ -499,7 +519,11 @@ impl LibSQL {
     /// Check connectivity status for offline write mode
     pub fn check_connectivity(&self) -> Result<bool, PhpException> {
         if self.mode == "offline_write" {
-            let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().unwrap();
+            let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().map_err(|e| {
+                let err_msg = format!("Mutex lock error: {}", e);
+                log_error_to_tmp(&err_msg);
+                PhpException::default(err_msg)
+            })?;
             let offline_conn = offline_registry
                 .get(&self.conn_id)
                 .ok_or_else(|| PhpException::from("Offline connection not found"))?;
@@ -525,7 +549,11 @@ impl LibSQL {
     /// A `PhpException` is returned if the mode is not `offline_write`.
     pub fn get_pending_operations_count(&self) -> Result<usize, PhpException> {
         if self.mode == "offline_write" {
-            let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().unwrap();
+            let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().map_err(|e| {
+                let err_msg = format!("Mutex lock error: {}", e);
+                log_error_to_tmp(&err_msg);
+                PhpException::default(err_msg)
+            })?;
             let offline_conn = offline_registry
                 .get(&self.conn_id)
                 .ok_or_else(|| PhpException::from("Offline connection not found"))?;
@@ -565,18 +593,25 @@ impl LibSQL {
 
         if self.mode == "remote_replica" {
             match &self.db {
-                Some(db) => utils::runtime::runtime().block_on(async {
-                    db.sync()
-                        .await
-                        .map_err(|e| PhpException::default(format!("Sync failed: {}", e)))?;
-                    Ok(())
-                }),
+                Some(db) => {
+                    let rt = utils::runtime::runtime()?;
+                    rt.block_on(async {
+                        db.sync()
+                            .await
+                            .map_err(|e| PhpException::default(format!("Sync failed: {}", e)))?;
+                        Ok(())
+                    })
+                }
                 None => Err(PhpException::default(
                     "Database connection is not available for sync".to_string(),
                 )),
             }
         } else if self.mode == "offline_write" {
-            let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().unwrap();
+            let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().map_err(|e| {
+                let err_msg = format!("Mutex lock error: {}", e);
+                log_error_to_tmp(&err_msg);
+                PhpException::default(err_msg)
+            })?;
             let offline_conn = offline_registry
                 .get(&self.conn_id)
                 .ok_or_else(|| PhpException::from("Offline connection not found"))?;
@@ -614,7 +649,11 @@ impl LibSQL {
     /// This function will not panic.
     pub fn is_online(&self) -> Result<bool, PhpException> {
         if self.mode == "offline_write" {
-            let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().unwrap();
+            let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().map_err(|e| {
+                let err_msg = format!("Mutex lock error: {}", e);
+                log_error_to_tmp(&err_msg);
+                PhpException::default(err_msg)
+            })?;
             let offline_conn = offline_registry
                 .get(&self.conn_id)
                 .ok_or_else(|| PhpException::from("Offline connection not found"))?;
@@ -659,8 +698,7 @@ impl LibSQL {
                     self.conn_id.to_string(),
                     Path::new(&extension),
                     entry_point,
-                )
-                .unwrap();
+                )?;
             }
             Some(ExtensionParams::Array(extensions)) => {
                 for extension in extensions {
@@ -668,14 +706,14 @@ impl LibSQL {
                         self.conn_id.to_string(),
                         Path::new(&extension),
                         entry_point,
-                    )
-                    .unwrap();
+                    )?;
                 }
             }
-            None => Err(PhpException::default(
-                "No extension paths provided".to_string(),
-            ))
-            .unwrap(),
+            None => {
+                return Err(PhpException::default(
+                    "No extension paths provided".to_string(),
+                ));
+            }
         }
 
         Ok(())
@@ -684,11 +722,12 @@ impl LibSQL {
     pub fn capture_it(&self, event_type: String, query: Option<String>, message: Option<String>) -> Result<bool, PhpException> {
         let payload = WebhookPayload {
             event_type,
-            query: Some(query.unwrap_or("".to_string())),
-            message: Some(message.unwrap_or("".to_string())),
+            query: Some(query.unwrap_or_default()),
+            message: Some(message.unwrap_or_default()),
         };
 
-        Ok(send_webhook_data(self.cdc_url.clone().expect("REASON").to_string(), &payload))
+        let url = self.cdc_url.clone().ok_or_else(|| PhpException::default("CDC URL not set".into()))?;
+        Ok(send_webhook_data(url, &payload))
     }
 }
 

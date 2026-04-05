@@ -36,8 +36,8 @@ impl ext_php_rs::convert::IntoZval for ResultSet {
         let columns_array: Vec<ext_php_rs::types::Zval> = self
             .columns
             .into_iter()
-            .map(|col| col.into_zval(false).unwrap())
-            .collect();
+            .map(|col| col.into_zval(false))
+            .collect::<Result<Vec<_>, _>>()?;
         array.insert("columns", columns_array)?;
 
         let rows_array = convert_vec_hashmap_to_php_array(self.rows);

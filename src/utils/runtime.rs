@@ -92,7 +92,7 @@ pub fn convert_vec_hashmap_to_php_array(
         let mut inner_array = ZendHashTable::new();
 
         for (key, column_data) in hashmap {
-            let php_value = convert_libsql_value_to_zval(column_data).unwrap();
+            let php_value = convert_libsql_value_to_zval(column_data)?;
             inner_array.insert(key.as_str(), php_value)?;
         }
 
@@ -111,10 +111,16 @@ pub fn convert_vec_hashmap_to_php_array(
 /// # Returns
 ///
 /// A reference to the global runtime instance.
-pub fn runtime() -> &'static Runtime {
+///
+/// # Errors
+///
+/// Returns a `PhpException` if the runtime cannot be created.
+pub fn runtime() -> Result<&'static Runtime, PhpException> {
     static RUNTIME: OnceCell<Runtime> = OnceCell::new();
 
-    RUNTIME.get_or_try_init(Runtime::new).unwrap()
+    RUNTIME
+        .get_or_try_init(|| Runtime::new().map_err(|e| PhpException::default(format!("Runtime error: {:?}", e))))
+        .map_err(|e| PhpException::default(format!("Runtime error: {:?}", e)))
 }
 
 /// Determines the mode based on the provided URL, authentication token, and sync URL.

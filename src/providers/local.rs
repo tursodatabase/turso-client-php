@@ -20,7 +20,8 @@ pub fn create_local_connection(
     flags: Option<i32>,
     encryption_key: Option<String>,
 ) -> Result<libsql::Connection, PhpException> {
-    runtime().block_on(async {
+    let rt = runtime()?;
+    rt.block_on(async {
         let db_flags = match flags {
             Some(LIBSQL_OPEN_READONLY) => libsql::OpenFlags::SQLITE_OPEN_READ_ONLY,
             Some(LIBSQL_OPEN_READWRITE) => libsql::OpenFlags::SQLITE_OPEN_READ_WRITE,
@@ -40,9 +41,14 @@ pub fn create_local_connection(
             None
         };
 
-        let db = libsql::Builder::new_local(url)
-            .flags(db_flags)
-            .encryption_config(encryption_config.unwrap())
+        let mut builder = libsql::Builder::new_local(url)
+            .flags(db_flags);
+
+        if let Some(encryption_config) = encryption_config {
+            builder = builder.encryption_config(encryption_config);
+        }
+
+        let db = builder
             .build()
             .await
             .map_err(|e| PhpException::default(format!("Database build failed: {}", e)))?;

@@ -36,7 +36,10 @@ impl LibSQLTransaction {
     ///
     /// A `Result` containing the constructed `LibSQLTransaction` object or a `PhpException` if an error occurs.
     pub fn __construct(conn_id: String, trx_mode: String) -> Result<Self, PhpException> {
-        let conn_registry = CONNECTION_REGISTRY.lock().unwrap();
+        let conn_registry = CONNECTION_REGISTRY.lock().map_err(|e| {
+            let err_msg = format!("Failed to lock connection registry: {}", e);
+            PhpException::default(err_msg)
+        })?;
 
         let conn = conn_registry
             .get(&conn_id)
@@ -48,15 +51,20 @@ impl LibSQLTransaction {
             _ => libsql::TransactionBehavior::Deferred,
         };
 
-        let trx = runtime().block_on(async {
-            let transaction = conn.transaction_with_behavior(trx_behavior).await;
-            transaction.unwrap()
-        });
+        let rt = runtime()?;
+        let trx = rt.block_on(async {
+            conn.transaction_with_behavior(trx_behavior).await.map_err(|e| {
+                PhpException::default(format!("Failed to create transaction: {}", e))
+            })
+        })?;
 
         let trx_id = uuid::Uuid::new_v4().to_string();
         TRANSACTION_REGISTRY
             .lock()
-            .unwrap()
+            .map_err(|e| {
+                let err_msg = format!("Failed to lock transaction registry: {}", e);
+                PhpException::default(err_msg)
+            })?
             .insert(trx_id.clone(), trx);
 
         Ok(Self {
@@ -139,13 +147,17 @@ impl LibSQLTransaction {
     ///
     /// A `Result` indicating success or a `PhpException` if an error occurs.
     pub fn commit(&self) -> Result<(), PhpException> {
-        let mut trx_registry = TRANSACTION_REGISTRY.lock().unwrap();
+        let mut trx_registry = TRANSACTION_REGISTRY.lock().map_err(|e| {
+            let err_msg = format!("Failed to lock transaction registry: {}", e);
+            PhpException::default(err_msg)
+        })?;
 
         let trx = trx_registry
             .remove(&self.trx_id)
             .ok_or_else(|| PhpException::from("Transaction not found"))?;
 
-        let commit_result = runtime().block_on(async { trx.commit().await });
+        let rt = runtime()?;
+        let commit_result = rt.block_on(async { trx.commit().await });
 
         match commit_result {
             Ok(_) => Ok(()),
@@ -159,13 +171,17 @@ impl LibSQLTransaction {
     ///
     /// A `Result` indicating success or a `PhpException` if an error occurs.
     pub fn rollback(&self) -> Result<(), PhpException> {
-        let mut trx_registry = TRANSACTION_REGISTRY.lock().unwrap();
+        let mut trx_registry = TRANSACTION_REGISTRY.lock().map_err(|e| {
+            let err_msg = format!("Failed to lock transaction registry: {}", e);
+            PhpException::default(err_msg)
+        })?;
 
         let trx = trx_registry
             .remove(&self.trx_id)
             .ok_or_else(|| PhpException::from("Transaction not found"))?;
 
-        let rollback_result = runtime().block_on(async { trx.rollback().await });
+        let rt = runtime()?;
+        let rollback_result = rt.block_on(async { trx.rollback().await });
 
         match rollback_result {
             Ok(_) => Ok(()),

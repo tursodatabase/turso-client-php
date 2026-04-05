@@ -11,8 +11,9 @@ use crate::{
     generator::LibSQLIterator,
     hooks,
     utils::{
+        log_error::log_error_to_tmp,
         query_params::QueryParameters,
-        runtime::{convert_libsql_value_to_zval, runtime},
+        runtime::convert_libsql_value_to_zval,
     },
     CONNECTION_REGISTRY, LIBSQL_ALL, LIBSQL_ASSOC, LIBSQL_LAZY, LIBSQL_NUM,
     OFFLINE_CONNECTION_REGISTRY,
@@ -60,7 +61,10 @@ impl LibSQLResult {
         sql: &str,
         parameters: Option<QueryParameters>,
     ) -> Result<Self, PhpException> {
-        let conn_registry = CONNECTION_REGISTRY.lock().unwrap();
+        let conn_registry = CONNECTION_REGISTRY.lock().map_err(|e| {
+            let err_msg = format!("Failed to lock connection registry: {}", e);
+            PhpException::default(err_msg)
+        })?;
         let conn = conn_registry
             .get(&conn_id.clone())
             .ok_or_else(|| PhpException::from("Connection not found"))?;
@@ -122,7 +126,8 @@ impl LibSQLResult {
                 .as_ref()
                 .ok_or_else(|| PhpException::from("Connection not available"))?;
 
-            let query_result = runtime().block_on(async {
+            let rt = crate::utils::runtime::runtime()?;
+            let query_result = rt.block_on(async {
                 let mut rows = conn
                     .query(self.sql.as_str(), self.parameters.clone())
                     .await
@@ -134,23 +139,33 @@ impl LibSQLResult {
 
                     if mode == LIBSQL_ASSOC {
                         for idx in 0..rows.column_count() {
-                            let column_name = row.column_name(idx as i32).unwrap();
-                            let value = row.get_value(idx).unwrap();
+                            let column_name = row.column_name(idx as i32).ok_or_else(|| {
+                                PhpException::from(format!("Column index {} out of bounds", idx))
+                            })?;
+                            let value = row.get_value(idx).map_err(|e| {
+                                PhpException::from(format!("Failed to get column value: {}", e))
+                            })?;
 
                             result.insert(column_name.to_string(), value);
                         }
                         results.push(result);
                     } else if mode == LIBSQL_NUM {
                         for idx in 0..rows.column_count() {
-                            let value = row.get_value(idx).unwrap();
+                            let value = row.get_value(idx).map_err(|e| {
+                                PhpException::from(format!("Failed to get column value: {}", e))
+                            })?;
 
                             result.insert(idx.to_string(), value);
                         }
                         results.push(result);
                     } else {
                         for idx in 0..rows.column_count() {
-                            let column_name = row.column_name(idx as i32).unwrap();
-                            let value = row.get_value(idx).unwrap();
+                            let column_name = row.column_name(idx as i32).ok_or_else(|| {
+                                PhpException::from(format!("Column index {} out of bounds", idx))
+                            })?;
+                            let value = row.get_value(idx).map_err(|e| {
+                                PhpException::from(format!("Failed to get column value: {}", e))
+                            })?;
 
                             result.insert(column_name.to_string(), value.clone());
                             result.insert(idx.to_string(), value);
@@ -179,10 +194,10 @@ impl LibSQLResult {
                     }
 
                     let zval_arr = if mode == LIBSQL_LAZY {
-                        let data = arr.into_zval(false).unwrap();
+                        let data = arr.into_zval(false)?;
                         FetchResult::Iterator(LibSQLIterator::__construct(&data))
                     } else {
-                        FetchResult::Zval(arr.into_zval(false).unwrap())
+                        FetchResult::Zval(arr.into_zval(false)?)
                     };
                     Ok(zval_arr)
                 }
@@ -199,12 +214,16 @@ impl LibSQLResult {
 
     /// Fetch array method for offline mode
     fn fetch_array_offline(&self, mode: i32) -> Result<FetchResult, PhpException> {
-        let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().unwrap();
+        let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().map_err(|e| {
+            let err_msg = format!("Failed to lock offline connection registry: {}", e);
+            log_error_to_tmp(&err_msg);
+            PhpException::default(err_msg)
+        })?;
         let offline_conn = offline_registry
             .get(&self.conn_string)
             .ok_or_else(|| PhpException::from("Offline connection not found"))?;
 
-        let query_result = match offline_conn.query(
+        let query_result: Result<Vec<HashMap<String, libsql::Value>>, PhpException> = match offline_conn.query(
             self.sql.as_str(),
             self.query_params.clone(),
             self.force_remote.clone(),
@@ -212,34 +231,44 @@ impl LibSQLResult {
             Ok(mut rows) => {
                 let mut results: Vec<HashMap<String, libsql::Value>> = Vec::new();
 
-                runtime().block_on(async {
+                let rt = crate::utils::runtime::runtime()?;
+                rt.block_on(async {
                     while let Ok(Some(row)) = rows.next().await {
                         let mut result = HashMap::new();
 
                         if mode == LIBSQL_ASSOC {
                             for idx in 0..rows.column_count() {
-                                let column_name = row.column_name(idx as i32).unwrap();
-                                let value = row.get_value(idx).unwrap();
+                                let column_name = row.column_name(idx as i32).ok_or_else(|| {
+                                    PhpException::from(format!("Column index {} out of bounds", idx))
+                                })?;
+                                let value = row.get_value(idx).map_err(|e| {
+                                    PhpException::from(format!("Failed to get column value: {}", e))
+                                })?;
                                 result.insert(column_name.to_string(), value);
                             }
                         } else if mode == LIBSQL_NUM {
                             for idx in 0..rows.column_count() {
-                                let value = row.get_value(idx).unwrap();
+                                let value = row.get_value(idx).map_err(|e| {
+                                    PhpException::from(format!("Failed to get column value: {}", e))
+                                })?;
                                 result.insert(idx.to_string(), value);
                             }
                         } else {
                             for idx in 0..rows.column_count() {
-                                let column_name = row.column_name(idx as i32).unwrap();
-                                let value = row.get_value(idx).unwrap();
+                                let column_name = row.column_name(idx as i32).ok_or_else(|| {
+                                    PhpException::from(format!("Column index {} out of bounds", idx))
+                                })?;
+                                let value = row.get_value(idx).map_err(|e| {
+                                    PhpException::from(format!("Failed to get column value: {}", e))
+                                })?;
                                 result.insert(column_name.to_string(), value.clone());
                                 result.insert(idx.to_string(), value);
                             }
                         }
                         results.push(result);
                     }
-                });
-
-                Ok(results)
+                    Ok::<_, PhpException>(results)
+                })
             }
             Err(e) => Err(PhpException::from(e.to_string())),
         };
@@ -250,8 +279,8 @@ impl LibSQLResult {
 
                 for result in results {
                     let mut sub_arr = ext_php_rs::types::ZendHashTable::new();
-                    for (key, value) in result {
-                        let zval_value = convert_libsql_value_to_zval(value);
+                    for (key, value) in result.iter() {
+                        let zval_value = convert_libsql_value_to_zval(value.clone());
                         match key.parse::<i64>() {
                             Ok(_) => sub_arr.push(zval_value)?,
                             Err(_) => sub_arr.insert(key.as_str(), zval_value)?,
@@ -261,10 +290,10 @@ impl LibSQLResult {
                 }
 
                 let zval_arr = if mode == LIBSQL_LAZY {
-                    let data = arr.into_zval(false).unwrap();
+                    let data = arr.into_zval(false)?;
                     FetchResult::Iterator(LibSQLIterator::__construct(&data))
                 } else {
-                    FetchResult::Zval(arr.into_zval(false).unwrap())
+                    FetchResult::Zval(arr.into_zval(false)?)
                 };
                 Ok(zval_arr)
             }
@@ -285,7 +314,8 @@ impl LibSQLResult {
                 .as_ref()
                 .ok_or_else(|| PhpException::from("Connection not available"))?;
 
-            let query_result = runtime().block_on(async {
+            let rt = crate::utils::runtime::runtime()?;
+            let query_result = rt.block_on(async {
                 let mut rows = conn
                     .query(self.sql.as_str(), self.parameters.clone())
                     .await
@@ -296,19 +326,35 @@ impl LibSQLResult {
                     match mode {
                         LIBSQL_ASSOC => {
                             for idx in 0..rows.column_count() {
-                                let column_name = row.column_name(idx as i32).unwrap();
-                                result.insert(column_name.to_string(), row.get_value(idx).unwrap());
+                                let column_name = row.column_name(idx as i32).ok_or_else(|| {
+                                    PhpException::from(format!("Column index {} out of bounds", idx))
+                                })?;
+                                result.insert(
+                                    column_name.to_string(),
+                                    row.get_value(idx).map_err(|e| {
+                                        PhpException::from(format!("Failed to get column value: {}", e))
+                                    })?,
+                                );
                             }
                         }
                         LIBSQL_NUM => {
                             for idx in 0..rows.column_count() {
-                                result.insert(idx.to_string(), row.get_value(idx).unwrap());
+                                result.insert(
+                                    idx.to_string(),
+                                    row.get_value(idx).map_err(|e| {
+                                        PhpException::from(format!("Failed to get column value: {}", e))
+                                    })?,
+                                );
                             }
                         }
                         _ => {
                             for idx in 0..rows.column_count() {
-                                let column_name = row.column_name(idx as i32).unwrap();
-                                let value = row.get_value(idx).unwrap();
+                                let column_name = row.column_name(idx as i32).ok_or_else(|| {
+                                    PhpException::from(format!("Column index {} out of bounds", idx))
+                                })?;
+                                let value = row.get_value(idx).map_err(|e| {
+                                    PhpException::from(format!("Failed to get column value: {}", e))
+                                })?;
                                 result.insert(column_name.to_string(), value.clone());
                                 result.insert(idx.to_string(), value);
                             }
@@ -373,7 +419,11 @@ impl LibSQLResult {
 
     /// Fetch single method for offline mode
     fn fetch_single_offline(&self, mode: i32) -> Result<FetchResult, PhpException> {
-        let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().unwrap();
+        let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().map_err(|e| {
+            let err_msg = format!("Failed to lock offline connection registry: {}", e);
+            log_error_to_tmp(&err_msg);
+            PhpException::default(err_msg)
+        })?;
         let offline_conn = offline_registry
             .get(&self.conn_string)
             .ok_or_else(|| PhpException::from("Offline connection not found"))?;
@@ -386,34 +436,53 @@ impl LibSQLResult {
             Ok(mut rows) => {
                 let mut result = HashMap::new();
 
-                runtime().block_on(async {
+                let rt = crate::utils::runtime::runtime()?;
+                rt.block_on(async {
                     if let Ok(Some(row)) = rows.next().await {
                         match mode {
                             LIBSQL_ASSOC => {
                                 for idx in 0..rows.column_count() {
-                                    let column_name = row.column_name(idx as i32).unwrap();
+                                    let column_name = row.column_name(idx as i32).ok_or_else(|| {
+                                        PhpException::from(format!("Column index {} out of bounds", idx))
+                                    })?;
                                     result.insert(
                                         column_name.to_string(),
-                                        row.get_value(idx).unwrap(),
+                                        row.get_value(idx).map_err(|e| {
+                                            PhpException::from(format!("Failed to get column value: {}", e))
+                                        })?,
                                     );
                                 }
+                                Ok::<_, PhpException>(())
                             }
                             LIBSQL_NUM => {
                                 for idx in 0..rows.column_count() {
-                                    result.insert(idx.to_string(), row.get_value(idx).unwrap());
+                                    result.insert(
+                                        idx.to_string(),
+                                        row.get_value(idx).map_err(|e| {
+                                            PhpException::from(format!("Failed to get column value: {}", e))
+                                        })?,
+                                    );
                                 }
+                                Ok::<_, PhpException>(())
                             }
                             _ => {
                                 for idx in 0..rows.column_count() {
-                                    let column_name = row.column_name(idx as i32).unwrap();
-                                    let value = row.get_value(idx).unwrap();
+                                    let column_name = row.column_name(idx as i32).ok_or_else(|| {
+                                        PhpException::from(format!("Column index {} out of bounds", idx))
+                                    })?;
+                                    let value = row.get_value(idx).map_err(|e| {
+                                        PhpException::from(format!("Failed to get column value: {}", e))
+                                    })?;
                                     result.insert(column_name.to_string(), value.clone());
                                     result.insert(idx.to_string(), value);
                                 }
+                                Ok::<_, PhpException>(())
                             }
                         }
+                    } else {
+                        Ok::<_, PhpException>(())
                     }
-                });
+                })?;
 
                 Ok(result)
             }
@@ -445,7 +514,11 @@ impl LibSQLResult {
 
     pub fn column_name(&self, column_index: i32) -> Result<String, PhpException> {
         if self.is_offline_mode {
-            let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().unwrap();
+            let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().map_err(|e| {
+                let err_msg = format!("Failed to lock offline connection registry: {}", e);
+                log_error_to_tmp(&err_msg);
+                PhpException::default(err_msg)
+            })?;
             let offline_conn = offline_registry
                 .get(&self.conn_string)
                 .ok_or_else(|| PhpException::from("Offline connection not found"))?;
@@ -455,19 +528,22 @@ impl LibSQLResult {
                 self.query_params.clone(),
                 self.force_remote.clone(),
             ) {
-                Ok(mut rows) => runtime().block_on(async {
-                    if let Ok(Some(row)) = rows.next().await {
-                        let column_name = row.column_name(column_index).ok_or_else(|| {
-                            PhpException::from(format!(
-                                "Column index {} out of bounds",
-                                column_index
-                            ))
-                        })?;
-                        Ok(column_name.to_string())
-                    } else {
-                        Err(PhpException::from("No rows returned from query"))
-                    }
-                }),
+                Ok(mut rows) => {
+                    let rt = crate::utils::runtime::runtime()?;
+                    rt.block_on(async {
+                        if let Ok(Some(row)) = rows.next().await {
+                            let column_name = row.column_name(column_index).ok_or_else(|| {
+                                PhpException::from(format!(
+                                    "Column index {} out of bounds",
+                                    column_index
+                                ))
+                            })?;
+                            Ok(column_name.to_string())
+                        } else {
+                            Err(PhpException::from("No rows returned from query"))
+                        }
+                    })
+                }
                 Err(e) => Err(PhpException::from(e.to_string())),
             }
         } else {
@@ -476,7 +552,8 @@ impl LibSQLResult {
                 .as_ref()
                 .ok_or_else(|| PhpException::from("Connection not available"))?;
 
-            runtime().block_on(async {
+            let rt = crate::utils::runtime::runtime()?;
+            rt.block_on(async {
                 let mut rows = conn
                     .query(self.sql.as_str(), self.parameters.clone())
                     .await
@@ -496,14 +573,19 @@ impl LibSQLResult {
 
     pub fn column_type(&self, column_index: i32) -> Result<String, PhpException> {
         if self.is_offline_mode {
-            let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().unwrap();
+            let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().map_err(|e| {
+                let err_msg = format!("Failed to lock offline connection registry: {}", e);
+                log_error_to_tmp(&err_msg);
+                PhpException::default(err_msg)
+            })?;
             let offline_conn = offline_registry
                 .get(&self.conn_string)
                 .ok_or_else(|| PhpException::from("Offline connection not found"))?;
 
             match offline_conn.query(self.sql.as_str(), self.query_params.clone(), self.force_remote.clone()) {
                 Ok(mut rows) => {
-                    runtime().block_on(async {
+                    let rt = crate::utils::runtime::runtime()?;
+                    rt.block_on(async {
                         if let Ok(Some(row)) = rows.next().await {
                             let column_type = row.column_type(column_index).or_else(|_| {
                                 Err(PhpException::from(format!("Column index {} out of bounds", column_index)))
@@ -520,7 +602,8 @@ impl LibSQLResult {
             let conn = self.conn.as_ref()
                 .ok_or_else(|| PhpException::from("Connection not available"))?;
 
-            runtime().block_on(async {
+            let rt = crate::utils::runtime::runtime()?;
+            rt.block_on(async {
                 let mut rows = conn
                     .query(self.sql.as_str(), self.parameters.clone())
                     .await
@@ -540,14 +623,19 @@ impl LibSQLResult {
 
     pub fn num_columns(&self) -> Result<i32, PhpException> {
         if self.is_offline_mode {
-            let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().unwrap();
+            let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().map_err(|e| {
+                let err_msg = format!("Failed to lock offline connection registry: {}", e);
+                log_error_to_tmp(&err_msg);
+                PhpException::default(err_msg)
+            })?;
             let offline_conn = offline_registry
                 .get(&self.conn_string)
                 .ok_or_else(|| PhpException::from("Offline connection not found"))?;
 
             match offline_conn.query(self.sql.as_str(), self.query_params.clone(), self.force_remote.clone()) {
                 Ok(mut rows) => {
-                    runtime().block_on(async {
+                    let rt = crate::utils::runtime::runtime()?;
+                    rt.block_on(async {
                         if let Ok(Some(row)) = rows.next().await {
                             Ok(row.column_count() as i32)
                         } else {
@@ -561,7 +649,8 @@ impl LibSQLResult {
             let conn = self.conn.as_ref()
                 .ok_or_else(|| PhpException::from("Connection not available"))?;
 
-            runtime().block_on(async {
+            let rt = crate::utils::runtime::runtime()?;
+            rt.block_on(async {
                 let mut rows = conn
                     .query(self.sql.as_str(), self.parameters.clone())
                     .await
@@ -578,12 +667,17 @@ impl LibSQLResult {
 
     pub fn reset(&self) -> Result<(), PhpException> {
         if self.is_offline_mode {
-            let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().unwrap();
+            let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().map_err(|e| {
+                let err_msg = format!("Failed to lock offline connection registry: {}", e);
+                log_error_to_tmp(&err_msg);
+                PhpException::default(err_msg)
+            })?;
             let offline_conn = offline_registry
                 .get(&self.conn_string)
                 .ok_or_else(|| PhpException::from("Offline connection not found"))?;
 
-            runtime().block_on(async { offline_conn.reset().await });
+            let rt = crate::utils::runtime::runtime()?;
+            rt.block_on(async { offline_conn.reset().await });
             Ok(())
         } else {
             let conn = self
@@ -591,7 +685,8 @@ impl LibSQLResult {
                 .as_ref()
                 .ok_or_else(|| PhpException::from("Connection not available"))?;
 
-            runtime().block_on(async { conn.reset().await });
+            let rt = crate::utils::runtime::runtime()?;
+            rt.block_on(async { conn.reset().await });
             Ok(())
         }
     }

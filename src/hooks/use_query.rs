@@ -50,7 +50,8 @@ pub fn query(
         libsql::params::Params::None
     };
 
-    let query_result = runtime().block_on(async {
+    let rt = runtime()?;
+    let query_result = rt.block_on(async {
         let mut rows = conn
             .query(stmt, params)
             .await
