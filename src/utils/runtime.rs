@@ -176,6 +176,9 @@ pub fn get_mode(
 pub struct Dsn {
     pub dbname: String,
     pub auth_token: String,
+    pub sync_url: String,
+    pub sync_interval: Option<u64>,
+    pub read_your_writes: Option<bool>,
 }
 
 pub fn parse_dsn(dsn: &str) -> Option<Dsn> {
@@ -183,7 +186,10 @@ pub fn parse_dsn(dsn: &str) -> Option<Dsn> {
     if dsn.is_empty() {
         return Some(Dsn {
             dbname: dsn.to_string(),
-            auth_token: "".to_string(),
+            auth_token: String::new(),
+            sync_url: String::new(),
+            sync_interval: None,
+            read_your_writes: None,
         });
     }
 
@@ -192,7 +198,10 @@ pub fn parse_dsn(dsn: &str) -> Option<Dsn> {
         // Treat it as a filename
         return Some(Dsn {
             dbname: dsn.to_string(),
-            auth_token: "".to_string(),
+            auth_token: String::new(),
+            sync_url: String::new(),
+            sync_interval: None,
+            read_your_writes: None,
         });
     }
 
@@ -201,7 +210,10 @@ pub fn parse_dsn(dsn: &str) -> Option<Dsn> {
 
     let mut parsed_dsn = Dsn {
         dbname: String::new(),
-        auth_token: "".to_string(),
+        auth_token: String::new(),
+        sync_url: String::new(),
+        sync_interval: None,
+        read_your_writes: None,
     };
 
     for param in dsn.split(';') {
@@ -212,6 +224,19 @@ pub fn parse_dsn(dsn: &str) -> Option<Dsn> {
         match key {
             "dbname" => parsed_dsn.dbname = value.to_string(),
             "authToken" => parsed_dsn.auth_token = value.to_string(),
+            "syncUrl" => parsed_dsn.sync_url = value.to_string(),
+            "syncInterval" => {
+                if let Ok(interval) = value.parse::<u64>() {
+                    parsed_dsn.sync_interval = Some(interval);
+                }
+            }
+            "read_your_writes" => {
+                parsed_dsn.read_your_writes = match value.to_lowercase().as_str() {
+                    "true" | "1" | "yes" => Some(true),
+                    "false" | "0" | "no" => Some(false),
+                    _ => None,
+                };
+            }
             _ => {}
         }
     }

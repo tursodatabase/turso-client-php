@@ -1,13 +1,17 @@
 #![feature(abi_vectorcall)]
 #[allow(non_snake_case, deprecated, unused_attributes)]
 #[cfg_attr(windows, feature(abi_vectorcall))]
+pub mod connection_pool;
 pub mod generator;
 pub mod hooks;
+pub mod lazy_iterator;
 pub mod providers;
 pub mod result;
 pub mod statement;
 pub mod transaction;
 pub mod utils;
+use crate::connection_pool::LibSQLPool;
+use crate::lazy_iterator::LibSQLLazyIterator;
 use crate::providers::sqld_offline_write::OfflineWriteConnection;
 use crate::result::LibSQLResult;
 use crate::statement::LibSQLStatement;
@@ -120,24 +124,25 @@ impl LibSQL {
         ) = match config {
             ConfigValue::String(dsn) => {
                 let dsn_parsed = match parse_dsn(&dsn) {
-                    Some(dsn) => match (dsn.dbname.is_empty(), dsn.auth_token.is_empty()) {
-                        (false, true) => Some((
-                            dsn.dbname,
-                            "".to_string(),
-                            "".to_string(),
-                            std::time::Duration::from_secs(5),
-                            true,
-                        )),
-                        (false, false) => Some((
-                            dsn.dbname,
-                            dsn.auth_token,
-                            "".to_string(),
-                            std::time::Duration::from_secs(5),
-                            true,
-                        )),
-                        (true, true) => None,
-                        (true, false) => None,
-                    },
+                    Some(dsn) => {
+                        if dsn.dbname.is_empty() {
+                            None
+                        } else {
+                            let sync_interval = dsn
+                                .sync_interval
+                                .map(std::time::Duration::from_secs)
+                                .unwrap_or_else(|| std::time::Duration::from_secs(5));
+                            let read_your_writes = dsn.read_your_writes.unwrap_or(true);
+
+                            Some((
+                                dsn.dbname,
+                                dsn.auth_token,
+                                dsn.sync_url,
+                                sync_interval,
+                                read_your_writes,
+                            ))
+                        }
+                    }
                     None => None,
                 };
 
@@ -729,6 +734,87 @@ impl LibSQL {
         let url = self.cdc_url.clone().ok_or_else(|| PhpException::default("CDC URL not set".into()))?;
         Ok(send_webhook_data(url, &payload))
     }
+
+    /// Backs up the database to a file.
+    ///
+    /// For local connections, this creates a copy of the database file at the specified path.
+    /// For remote replica connections, this backs up the local replica.
+    /// For in-memory databases, this creates a new file with the current database state.
+    ///
+    /// # Arguments
+    ///
+    /// * `destination` - The file path where the backup should be stored.
+    ///
+    /// # Returns
+    ///
+    /// Returns `true` if the backup was successful, otherwise returns a `PhpException`.
+    ///
+    /// # Errors
+    ///
+    /// This function returns a `PhpException` if:
+    /// - The destination path is invalid or not writable.
+    /// - The backup operation fails.
+    /// - The connection mode does not support backup (e.g., pure remote without local replica).
+    pub fn backup_to_file(&self, destination: &str) -> Result<bool, PhpException> {
+        if destination.is_empty() {
+            return Err(PhpException::default(
+                "Destination path cannot be empty".to_string(),
+            ));
+        }
+
+        // For offline_write mode, backup the local database
+        if self.mode == "offline_write" {
+            let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().map_err(|e| {
+                let err_msg = format!("Failed to lock offline connection registry: {}", e);
+                log_error_to_tmp(&err_msg);
+                PhpException::default(err_msg)
+            })?;
+            let offline_conn = offline_registry
+                .get(&self.conn_id)
+                .ok_or_else(|| PhpException::from("Offline connection not found"))?;
+
+            // Use VACUUM INTO through the local connection
+            let rt = utils::runtime::runtime()?;
+            let local_conn = offline_conn.local_conn.clone();
+            let dest = destination.to_string();
+            rt.block_on(async {
+                let vacuum_sql = format!("VACUUM INTO '{}'", dest.replace('\'', "''"));
+                let params: libsql::params::Params = libsql::params::Params::None;
+                local_conn.execute(&vacuum_sql, params)
+                    .await
+                    .map_err(|e| {
+                        PhpException::default(format!("Backup failed: {}", e))
+                    })?;
+                Ok::<(), PhpException>(())
+            })?;
+
+            return Ok(true);
+        }
+
+        // For local, remote_replica, and in-memory modes, use VACUUM INTO
+        // This works for any connection that has a local SQLite backing
+        match &self.conn {
+            Some(conn) => {
+                let rt = utils::runtime::runtime()?;
+                let dest = destination.to_string();
+                rt.block_on(async {
+                    // VACUUM INTO creates a fresh copy of the database
+                    let vacuum_sql = format!("VACUUM INTO '{}'", dest.replace('\'', "''"));
+                    let params: libsql::params::Params = libsql::params::Params::None;
+                    conn.execute(&vacuum_sql, params)
+                        .await
+                        .map_err(|e| {
+                            PhpException::default(format!("Backup failed: {}", e))
+                        })?;
+                    Ok::<(), PhpException>(())
+                })?;
+                Ok(true)
+            }
+            None => Err(PhpException::default(
+                "Database connection is not available for backup".to_string(),
+            )),
+        }
+    }
 }
 
 /// libsql_php_extension_info is the function called by PHP when the extension is loaded.
@@ -829,6 +915,8 @@ pub fn get_module(module: ModuleBuilder) -> ModuleBuilder {
         .class::<LibSQL>()
         .class::<result::LibSQLResult>()
         .class::<generator::LibSQLIterator>()
+        .class::<lazy_iterator::LibSQLLazyIterator>()
+        .class::<connection_pool::LibSQLPool>()
         .class::<transaction::LibSQLTransaction>()
         .class::<statement::LibSQLStatement>()
         .info_function(libsql_php_extension_info)
