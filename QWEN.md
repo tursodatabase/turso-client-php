@@ -159,6 +159,22 @@ Additional documentation is available in the `docs/` directory:
 - `docs/offline-writes-turso-connection.md` — Offline writes for Turso Cloud
 - `docs/LibSQL-class.md` — API reference
 
+## Development Session Workflow
+
+**Before starting any work, always check the progress tracker:**
+
+```bash
+# Show current progress and pending tasks
+scripts/check-progress.sh
+```
+
+The enhancement roadmap is tracked in `PROGRESS.md`. Rules:
+1. Read `PROGRESS.md` to understand current status and what's next
+2. Mark the task you're starting as `in_progress`
+3. Mark completed tasks as `completed` with a brief note
+4. Commit changes after each atomic unit of work
+5. Update `PROGRESS.md` to reflect the completed work
+
 ## Quick Usage Example
 
 ```php
