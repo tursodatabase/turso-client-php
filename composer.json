@@ -13,7 +13,7 @@
         }
     },
     "scripts": {
-        "test:feature": "vendor/bin/pest --group=Feature",
-        "test": "vendor/bin/pest"
+        "test:feature": "php -dextension=./target/debug/liblibsql_php.so vendor/bin/pest --group=Feature",
+        "test": "php -dextension=./target/debug/liblibsql_php.so vendor/bin/pest"
     }
 }
