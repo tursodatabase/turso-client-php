@@ -430,4 +430,44 @@ impl LibSQLStatement {
 
         Ok(zval_columns)
     }
+
+    /// Executes the statement multiple times with different parameter sets.
+    ///
+    /// This method allows batch execution of the same prepared statement with
+    /// different parameter values, which is more efficient than executing the
+    /// statement individually for each parameter set.
+    ///
+    /// # Arguments
+    ///
+    /// * `parameter_sets` - An array of parameter sets to execute. Each element
+    ///   should be a QueryParameters containing either named or positional parameters.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing the total number of affected rows across all executions
+    /// or a `PhpException` if an error occurs.
+    pub fn execute_batch(&self, parameter_sets: Vec<QueryParameters>) -> Result<usize, PhpException> {
+        let stmt_registry = STATEMENT_REGISTRY.lock().map_err(|e| {
+            let err_msg = format!("Failed to lock statement registry: {}", e);
+            PhpException::default(err_msg)
+        })?;
+
+        let stmt = stmt_registry
+            .get(&self.stmt_id)
+            .ok_or_else(|| PhpException::from("Statement not found"))?;
+
+        let rt = runtime()?;
+        let mut total_rows = 0;
+
+        for parameters in parameter_sets {
+            let result = rt.block_on(async { stmt.execute(parameters.to_params()).await });
+
+            match result {
+                Ok(rows) => total_rows += rows,
+                Err(e) => return Err(PhpException::from(e.to_string())),
+            }
+        }
+
+        Ok(total_rows)
+    }
 }

@@ -89,6 +89,16 @@ namespace {
          * @return array The column names.
          */
         public function columns() {}
+
+        /**
+         * Executes the prepared statement multiple times with different parameter sets.
+         *
+         * @param array $parameter_sets An array of parameter sets. Each element should
+         *                              be an array of parameters for one execution.
+         *
+         * @return int The total number of affected rows across all executions.
+         */
+        public function executeBatch(array $parameter_sets) {}
     }
 
     /**
@@ -743,6 +753,177 @@ namespace {
          * @return bool
          */
         public function captureIt(string $event_type, ?string $query, ?string $message) {}
+
+        /**
+         * Backs up the database to a file.
+         *
+         * For local connections, this creates a copy of the database file.
+         * For remote replica connections, this backs up the local replica.
+         * For in-memory databases, this creates a new file with the current state.
+         *
+         * @param string $destination The file path where the backup should be stored.
+         * @return bool True if the backup was successful.
+         */
+        public function backupToFile(string $destination) {}
+    }
+
+    /**
+     * Connection pool manager for LibSQL.
+     *
+     * Provides connection pooling for PHP-FPM environments where connections
+     * should be reused across requests handled by the same worker process.
+     *
+     * Example usage:
+     * ```php
+     * $pool = new LibSQLPool("my_app_pool", 10, 300);
+     * // LibSQL instances created with persistent=true will be tracked here
+     * $db = new LibSQL("file:db.db", persistent: true, pool: "my_app_pool");
+     *
+     * // Check pool status
+     * echo "Connections: " . $pool->getConnectionCount() . PHP_EOL;
+     *
+     * // Cleanup expired connections
+     * $cleaned = $pool->cleanup();
+     *
+     * // Close all connections (e.g., on shutdown)
+     * $pool->closeAll();
+     * ```
+     */
+    class LibSQLPool
+    {
+        /**
+         * Creates a new connection pool manager.
+         *
+         * @param string $name Unique name for this pool
+         * @param int $max_connections Maximum connections in the pool (default: 10)
+         * @param int $idle_timeout Seconds before idle connection is closed (default: 300)
+         */
+        public function __construct(string $name, int $max_connections = 10, int $idle_timeout = 300) {}
+
+        /**
+         * Gets the pool name.
+         *
+         * @return string The pool name.
+         */
+        public function getName() {}
+
+        /**
+         * Gets the maximum number of connections allowed in the pool.
+         *
+         * @return int Maximum connections.
+         */
+        public function getMaxConnections() {}
+
+        /**
+         * Gets the idle timeout in seconds.
+         *
+         * @return int Idle timeout in seconds.
+         */
+        public function getIdleTimeout() {}
+
+        /**
+         * Returns the number of connections currently tracked by this pool.
+         *
+         * @return int Connection count.
+         */
+        public function getConnectionCount() {}
+
+        /**
+         * Cleans up expired idle connections from the pool.
+         *
+         * @return int The number of connections that were cleaned up.
+         */
+        public function cleanup() {}
+
+        /**
+         * Registers a connection with this pool.
+         *
+         * @param string $conn_id The connection ID to register.
+         * @return void
+         */
+        public function registerConnection(string $conn_id) {}
+
+        /**
+         * Updates the last-used timestamp for a connection (heartbeat).
+         *
+         * @param string $conn_id The connection ID to update.
+         * @return void
+         */
+        public function heartbeat(string $conn_id) {}
+
+        /**
+         * Closes all connections managed by this pool.
+         *
+         * @return void
+         */
+        public function closeAll() {}
+
+        /**
+         * Static method to get the global list of pool names.
+         *
+         * @return array An array of pool names.
+         */
+        public static function listPools() {}
+    }
+
+    /**
+     * Class LibSQLLazyIterator
+     *
+     * A truly lazy streaming iterator that fetches rows one at a time from the database.
+     * Unlike LibSQLIterator, this does NOT load all rows into memory upfront.
+     * Instead, it fetches each row on-demand when iterating, providing O(1) memory
+     * usage regardless of result set size.
+     *
+     * Returned by fetchArray() when called with LibSQL::LIBSQL_LAZY mode.
+     */
+    class LibSQLLazyIterator
+    {
+        /**
+         * Constructor for LibSQLLazyIterator.
+         *
+         * @param string $conn_id The connection ID.
+         * @param string $sql The SQL query string.
+         * @param array $parameters Query parameters.
+         * @param int $mode Fetch mode (LIBSQL_ASSOC, LIBSQL_NUM, LIBSQL_BOTH).
+         */
+        public function __construct(string $conn_id, string $sql, array $parameters, int $mode) {}
+
+        /**
+         * Returns the current row in the iteration.
+         *
+         * @return array|null The current row as an array, or null if not valid.
+         */
+        public function current() {}
+
+        /**
+         * Returns the key (row index) of the current element.
+         *
+         * @return int The current row index.
+         */
+        public function key() {}
+
+        /**
+         * Moves the iterator to the next row, fetching it from the database on demand.
+         *
+         * @return void
+         */
+        public function next() {}
+
+        /**
+         * Rewinds the iterator to the first element.
+         *
+         * Note: For database iterators, this resets the state and will re-execute the query.
+         *
+         * @return void
+         */
+        public function rewind() {}
+
+        /**
+         * Checks if the iterator is valid (i.e., if there is a current row).
+         *
+         * @return bool True if there is a current row, false otherwise.
+         */
+        public function valid() {}
     }
 
     /**
