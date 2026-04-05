@@ -233,7 +233,7 @@ impl LibSQL {
                 (conn, None)
             }
             "remote" => {
-                let conn = providers::remote::create_remote_connection(url, auth_token);
+                let conn = providers::remote::create_remote_connection(url, auth_token)?;
                 (conn, None)
             }
             "remote_replica" => {

@@ -1,4 +1,5 @@
 use crate::utils::runtime::runtime;
+use ext_php_rs::prelude::PhpException;
 
 /// Creates a connection to a remote database.
 ///
@@ -9,16 +10,19 @@ use crate::utils::runtime::runtime;
 ///
 /// # Returns
 ///
-/// Returns a `libsql::Connection` representing the connection to the remote database.
-pub fn create_remote_connection(url: String, auth_token: String) -> libsql::Connection {
-    let conn = runtime().block_on(async {
+/// Returns a `Result` containing either the `libsql::Connection` or a `PhpException`
+/// if the connection fails.
+pub fn create_remote_connection(
+    url: String,
+    auth_token: String,
+) -> Result<libsql::Connection, PhpException> {
+    runtime().block_on(async {
         let db = libsql::Builder::new_remote(url, auth_token)
             .build()
             .await
-            .unwrap();
-        let conn = db.connect().unwrap();
-        conn
-    });
+            .map_err(|e| PhpException::default(format!("Remote database build failed: {}", e)))?;
 
-    conn
+        db.connect()
+            .map_err(|e| PhpException::default(format!("Remote connection failed: {}", e)))
+    })
 }

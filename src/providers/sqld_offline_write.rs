@@ -154,7 +154,7 @@ impl OfflineWriteConnection {
                 log_error_to_tmp(&format!("Failed to set schema_initialized: {}", err));
             }
         }
-        let remote_conn = providers::remote::create_remote_connection(sync_url.clone(), auth_token);
+        let remote_conn = providers::remote::create_remote_connection(sync_url.clone(), auth_token)?;
         let initial_online_status = crate::utils::runtime::is_reachable(&sync_url);
         let connection = Self {
             local_conn,

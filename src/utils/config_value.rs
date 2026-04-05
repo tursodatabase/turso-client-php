@@ -13,11 +13,21 @@ impl ConfigValue {
     }
 
     pub fn to_long(&self) -> Option<u64> {
-        None
+        match self {
+            ConfigValue::String(s) => s.parse::<u64>().ok(),
+            _ => None,
+        }
     }
 
     pub fn to_bool(&self) -> Option<bool> {
-        None
+        match self {
+            ConfigValue::String(s) => match s.to_lowercase().as_str() {
+                "true" | "1" | "yes" | "on" => Some(true),
+                "false" | "0" | "no" | "off" => Some(false),
+                _ => None,
+            },
+            _ => None,
+        }
     }
 }
 
