@@ -10,8 +10,6 @@ pub mod result;
 pub mod statement;
 pub mod transaction;
 pub mod utils;
-use crate::connection_pool::LibSQLPool;
-use crate::lazy_iterator::LibSQLLazyIterator;
 use crate::providers::sqld_offline_write::OfflineWriteConnection;
 use crate::result::LibSQLResult;
 use crate::statement::LibSQLStatement;
