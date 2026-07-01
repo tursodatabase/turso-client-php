@@ -22,7 +22,7 @@ libsql = { version = "0.9.19", features = [
     "encryption",
 ] }
 once_cell = "1.21.3"
-reqwest = { version = "0.12.22", features = ["blocking"] }
+reqwest = { version = "0.12.22", features = ["blocking", "json"] }
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.142"
 tokio = "1.47.1"
