@@ -2,10 +2,10 @@
 #[cfg_attr(windows, feature(abi_vectorcall))]
 use ext_php_rs::convert::IntoZval;
 
+use ext_php_rs::boxed::ZBox;
 use ext_php_rs::prelude::*;
 use ext_php_rs::types::Zval;
 use ext_php_rs::{php_class, php_impl};
-use std::collections::HashMap;
 
 use crate::{
     generator::LibSQLIterator,
@@ -21,6 +21,54 @@ use crate::{
 pub enum FetchResult {
     Zval(ext_php_rs::types::Zval),
     Iterator(LibSQLIterator),
+}
+
+enum RowEntry {
+    Indexed(libsql::Value),
+    Named(String, libsql::Value),
+}
+
+fn build_row_entries(row: &libsql::Row, column_count: i32, mode: i32) -> Vec<RowEntry> {
+    let mut entries = Vec::with_capacity(match mode {
+        LIBSQL_ASSOC | LIBSQL_NUM => column_count as usize,
+        _ => (column_count as usize) * 2,
+    });
+
+    for idx in 0..column_count {
+        let value = row.get_value(idx).unwrap();
+
+        match mode {
+            LIBSQL_ASSOC => {
+                let column_name = row.column_name(idx as i32).unwrap();
+                entries.push(RowEntry::Named(column_name.to_string(), value));
+            }
+            LIBSQL_NUM => entries.push(RowEntry::Indexed(value)),
+            _ => {
+                let column_name = row.column_name(idx as i32).unwrap();
+                entries.push(RowEntry::Named(column_name.to_string(), value.clone()));
+                entries.push(RowEntry::Indexed(value));
+            }
+        }
+    }
+
+    entries
+}
+
+fn row_entries_to_zend_array(
+    entries: Vec<RowEntry>,
+) -> Result<ZBox<ext_php_rs::types::ZendHashTable>, PhpException> {
+    let mut row = ext_php_rs::types::ZendHashTable::new();
+
+    for entry in entries {
+        match entry {
+            RowEntry::Indexed(value) => row.push(convert_libsql_value_to_zval(value))?,
+            RowEntry::Named(key, value) => {
+                row.insert(key.as_str(), convert_libsql_value_to_zval(value))?
+            }
+        }
+    }
+
+    Ok(row)
 }
 
 impl IntoZval for FetchResult {
@@ -127,36 +175,10 @@ impl LibSQLResult {
                     .query(self.sql.as_str(), self.parameters.clone())
                     .await
                     .map_err(|e| PhpException::from(e.to_string()))?;
-                let mut results: Vec<HashMap<String, libsql::Value>> = Vec::new();
+                let mut results: Vec<Vec<RowEntry>> = Vec::new();
 
                 while let Ok(Some(row)) = rows.next().await {
-                    let mut result = HashMap::new();
-
-                    if mode == LIBSQL_ASSOC {
-                        for idx in 0..rows.column_count() {
-                            let column_name = row.column_name(idx as i32).unwrap();
-                            let value = row.get_value(idx).unwrap();
-
-                            result.insert(column_name.to_string(), value);
-                        }
-                        results.push(result);
-                    } else if mode == LIBSQL_NUM {
-                        for idx in 0..rows.column_count() {
-                            let value = row.get_value(idx).unwrap();
-
-                            result.insert(idx.to_string(), value);
-                        }
-                        results.push(result);
-                    } else {
-                        for idx in 0..rows.column_count() {
-                            let column_name = row.column_name(idx as i32).unwrap();
-                            let value = row.get_value(idx).unwrap();
-
-                            result.insert(column_name.to_string(), value.clone());
-                            result.insert(idx.to_string(), value);
-                        }
-                        results.push(result);
-                    }
+                    results.push(build_row_entries(&row, rows.column_count(), mode));
                 }
 
                 Ok(results)
@@ -167,15 +189,7 @@ impl LibSQLResult {
                     let mut arr = ext_php_rs::types::ZendHashTable::new();
 
                     for result in results {
-                        let mut sub_arr = ext_php_rs::types::ZendHashTable::new();
-                        for (key, value) in result {
-                            let zval_value = convert_libsql_value_to_zval(value);
-                            match key.parse::<i64>() {
-                                Ok(_) => sub_arr.push(zval_value)?,
-                                Err(_) => sub_arr.insert(key.as_str(), zval_value)?,
-                            }
-                        }
-                        arr.push(sub_arr)?;
+                        arr.push(row_entries_to_zend_array(result)?)?;
                     }
 
                     let zval_arr = if mode == LIBSQL_LAZY {
@@ -210,32 +224,11 @@ impl LibSQLResult {
             self.force_remote.clone(),
         ) {
             Ok(mut rows) => {
-                let mut results: Vec<HashMap<String, libsql::Value>> = Vec::new();
+                let mut results: Vec<Vec<RowEntry>> = Vec::new();
 
                 runtime().block_on(async {
                     while let Ok(Some(row)) = rows.next().await {
-                        let mut result = HashMap::new();
-
-                        if mode == LIBSQL_ASSOC {
-                            for idx in 0..rows.column_count() {
-                                let column_name = row.column_name(idx as i32).unwrap();
-                                let value = row.get_value(idx).unwrap();
-                                result.insert(column_name.to_string(), value);
-                            }
-                        } else if mode == LIBSQL_NUM {
-                            for idx in 0..rows.column_count() {
-                                let value = row.get_value(idx).unwrap();
-                                result.insert(idx.to_string(), value);
-                            }
-                        } else {
-                            for idx in 0..rows.column_count() {
-                                let column_name = row.column_name(idx as i32).unwrap();
-                                let value = row.get_value(idx).unwrap();
-                                result.insert(column_name.to_string(), value.clone());
-                                result.insert(idx.to_string(), value);
-                            }
-                        }
-                        results.push(result);
+                        results.push(build_row_entries(&row, rows.column_count(), mode));
                     }
                 });
 
@@ -249,15 +242,7 @@ impl LibSQLResult {
                 let mut arr = ext_php_rs::types::ZendHashTable::new();
 
                 for result in results {
-                    let mut sub_arr = ext_php_rs::types::ZendHashTable::new();
-                    for (key, value) in result {
-                        let zval_value = convert_libsql_value_to_zval(value);
-                        match key.parse::<i64>() {
-                            Ok(_) => sub_arr.push(zval_value)?,
-                            Err(_) => sub_arr.insert(key.as_str(), zval_value)?,
-                        }
-                    }
-                    arr.push(sub_arr)?;
+                    arr.push(row_entries_to_zend_array(result)?)?;
                 }
 
                 let zval_arr = if mode == LIBSQL_LAZY {
@@ -290,30 +275,10 @@ impl LibSQLResult {
                     .query(self.sql.as_str(), self.parameters.clone())
                     .await
                     .map_err(|e| PhpException::from(e.to_string()))?;
-                let mut result = HashMap::new();
+                let mut result = Vec::new();
 
                 if let Ok(Some(row)) = rows.next().await {
-                    match mode {
-                        LIBSQL_ASSOC => {
-                            for idx in 0..rows.column_count() {
-                                let column_name = row.column_name(idx as i32).unwrap();
-                                result.insert(column_name.to_string(), row.get_value(idx).unwrap());
-                            }
-                        }
-                        LIBSQL_NUM => {
-                            for idx in 0..rows.column_count() {
-                                result.insert(idx.to_string(), row.get_value(idx).unwrap());
-                            }
-                        }
-                        _ => {
-                            for idx in 0..rows.column_count() {
-                                let column_name = row.column_name(idx as i32).unwrap();
-                                let value = row.get_value(idx).unwrap();
-                                result.insert(column_name.to_string(), value.clone());
-                                result.insert(idx.to_string(), value);
-                            }
-                        }
-                    }
+                    result = build_row_entries(&row, rows.column_count(), mode);
                 }
 
                 Ok(result)
@@ -321,14 +286,7 @@ impl LibSQLResult {
 
             match query_result {
                 Ok(result) => {
-                    let mut sub_arr = ext_php_rs::types::ZendHashTable::new();
-                    for (key, value) in result {
-                        let zval_value = convert_libsql_value_to_zval(value);
-                        match key.parse::<usize>() {
-                            Ok(_) => sub_arr.push(zval_value)?,
-                            Err(_) => sub_arr.insert(key.as_str(), zval_value)?,
-                        }
-                    }
+                    let sub_arr = row_entries_to_zend_array(result)?;
 
                     let fetch_result = if mode == LIBSQL_LAZY {
                         let data = sub_arr.into_zval(false)?;
@@ -384,34 +342,11 @@ impl LibSQLResult {
             self.force_remote.clone(),
         ) {
             Ok(mut rows) => {
-                let mut result = HashMap::new();
+                let mut result = Vec::new();
 
                 runtime().block_on(async {
                     if let Ok(Some(row)) = rows.next().await {
-                        match mode {
-                            LIBSQL_ASSOC => {
-                                for idx in 0..rows.column_count() {
-                                    let column_name = row.column_name(idx as i32).unwrap();
-                                    result.insert(
-                                        column_name.to_string(),
-                                        row.get_value(idx).unwrap(),
-                                    );
-                                }
-                            }
-                            LIBSQL_NUM => {
-                                for idx in 0..rows.column_count() {
-                                    result.insert(idx.to_string(), row.get_value(idx).unwrap());
-                                }
-                            }
-                            _ => {
-                                for idx in 0..rows.column_count() {
-                                    let column_name = row.column_name(idx as i32).unwrap();
-                                    let value = row.get_value(idx).unwrap();
-                                    result.insert(column_name.to_string(), value.clone());
-                                    result.insert(idx.to_string(), value);
-                                }
-                            }
-                        }
+                        result = build_row_entries(&row, rows.column_count(), mode);
                     }
                 });
 
@@ -422,14 +357,7 @@ impl LibSQLResult {
 
         match query_result {
             Ok(result) => {
-                let mut sub_arr = ext_php_rs::types::ZendHashTable::new();
-                for (key, value) in result {
-                    let zval_value = convert_libsql_value_to_zval(value);
-                    match key.parse::<usize>() {
-                        Ok(_) => sub_arr.push(zval_value)?,
-                        Err(_) => sub_arr.insert(key.as_str(), zval_value)?,
-                    }
-                }
+                let sub_arr = row_entries_to_zend_array(result)?;
 
                 let fetch_result = if mode == LIBSQL_LAZY {
                     let data = sub_arr.into_zval(false)?;
@@ -501,23 +429,30 @@ impl LibSQLResult {
                 .get(&self.conn_string)
                 .ok_or_else(|| PhpException::from("Offline connection not found"))?;
 
-            match offline_conn.query(self.sql.as_str(), self.query_params.clone(), self.force_remote.clone()) {
-                Ok(mut rows) => {
-                    runtime().block_on(async {
-                        if let Ok(Some(row)) = rows.next().await {
-                            let column_type = row.column_type(column_index).or_else(|_| {
-                                Err(PhpException::from(format!("Column index {} out of bounds", column_index)))
-                            })?;
-                            Ok(format!("{:?}", column_type))
-                        } else {
-                            Err(PhpException::from("No rows returned from query"))
-                        }
-                    })
-                }
+            match offline_conn.query(
+                self.sql.as_str(),
+                self.query_params.clone(),
+                self.force_remote.clone(),
+            ) {
+                Ok(mut rows) => runtime().block_on(async {
+                    if let Ok(Some(row)) = rows.next().await {
+                        let column_type = row.column_type(column_index).or_else(|_| {
+                            Err(PhpException::from(format!(
+                                "Column index {} out of bounds",
+                                column_index
+                            )))
+                        })?;
+                        Ok(format!("{:?}", column_type))
+                    } else {
+                        Err(PhpException::from("No rows returned from query"))
+                    }
+                }),
                 Err(e) => Err(PhpException::from(e.to_string())),
             }
         } else {
-            let conn = self.conn.as_ref()
+            let conn = self
+                .conn
+                .as_ref()
                 .ok_or_else(|| PhpException::from("Connection not available"))?;
 
             runtime().block_on(async {
@@ -528,7 +463,10 @@ impl LibSQLResult {
 
                 if let Ok(Some(row)) = rows.next().await {
                     let column_type = row.column_type(column_index).or_else(|_| {
-                        Err(PhpException::from(format!("Column index {} out of bounds", column_index)))
+                        Err(PhpException::from(format!(
+                            "Column index {} out of bounds",
+                            column_index
+                        )))
                     })?;
                     Ok(format!("{:?}", column_type))
                 } else {
@@ -545,20 +483,24 @@ impl LibSQLResult {
                 .get(&self.conn_string)
                 .ok_or_else(|| PhpException::from("Offline connection not found"))?;
 
-            match offline_conn.query(self.sql.as_str(), self.query_params.clone(), self.force_remote.clone()) {
-                Ok(mut rows) => {
-                    runtime().block_on(async {
-                        if let Ok(Some(row)) = rows.next().await {
-                            Ok(row.column_count() as i32)
-                        } else {
-                            Err(PhpException::from("No rows returned from query"))
-                        }
-                    })
-                }
+            match offline_conn.query(
+                self.sql.as_str(),
+                self.query_params.clone(),
+                self.force_remote.clone(),
+            ) {
+                Ok(mut rows) => runtime().block_on(async {
+                    if let Ok(Some(row)) = rows.next().await {
+                        Ok(row.column_count() as i32)
+                    } else {
+                        Err(PhpException::from("No rows returned from query"))
+                    }
+                }),
                 Err(e) => Err(PhpException::from(e.to_string())),
             }
         } else {
-            let conn = self.conn.as_ref()
+            let conn = self
+                .conn
+                .as_ref()
                 .ok_or_else(|| PhpException::from("Connection not available"))?;
 
             runtime().block_on(async {

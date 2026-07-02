@@ -58,7 +58,7 @@ struct LibSQL {
     mode: String,
 
     /// Property representing the webhook URL to capture events.
-    #[prop]
+    #[php(prop)]
     cdc_url: Option<String>,
 
     /// Property representing the connection ID.

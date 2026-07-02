@@ -46,4 +46,9 @@ describe('Prepared Statements', function () {
         $result = $this->db->query("SELECT name FROM products WHERE id = 1");
         expect($result->fetchSingle(LibSQL::LIBSQL_ASSOC)['name'])->toBe('Test');
     });
+
+    test('prepare returns an exception for invalid schema access', function () {
+        expect(fn() => $this->db->prepare("SELECT * FROM users"))
+            ->toThrow(Exception::class);
+    });
 })->group("PreparedStatementTest", "Feature");
