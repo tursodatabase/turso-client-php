@@ -11,7 +11,7 @@ use ext_php_rs::prelude::*;
 use ext_php_rs::{php_class, php_impl};
 
 use crate::{
-    utils::{query_params::QueryParameters, runtime::runtime},
+    utils::{log_error::log_error_to_tmp, query_params::QueryParameters, runtime::runtime},
     CONNECTION_REGISTRY, STATEMENT_REGISTRY,
 };
 
@@ -45,7 +45,11 @@ impl LibSQLStatement {
             .get(&conn_id)
             .ok_or_else(|| PhpException::from("Connection not found"))?;
 
-        let stmt = runtime().block_on(async { conn.prepare(sql).await.unwrap() });
+        let stmt = runtime().block_on(async { conn.prepare(sql).await }).map_err(|e| {
+            let err_msg = format!("Statement preparation failed: {}", e);
+            log_error_to_tmp(&err_msg);
+            PhpException::from(err_msg)
+        })?;
 
         let stmt_id = uuid::Uuid::new_v4().to_string();
         STATEMENT_REGISTRY

@@ -6,7 +6,7 @@ use ext_php_rs::prelude::*;
 use crate::{
     hooks,
     statement::LibSQLStatement,
-    utils::{query_params::QueryParameters, runtime::runtime},
+    utils::{log_error::log_error_to_tmp, query_params::QueryParameters, runtime::runtime},
     CONNECTION_REGISTRY, TRANSACTION_REGISTRY,
 };
 
@@ -48,10 +48,13 @@ impl LibSQLTransaction {
             _ => libsql::TransactionBehavior::Deferred,
         };
 
-        let trx = runtime().block_on(async {
-            let transaction = conn.transaction_with_behavior(trx_behavior).await;
-            transaction.unwrap()
-        });
+        let trx = runtime()
+            .block_on(async { conn.transaction_with_behavior(trx_behavior).await })
+            .map_err(|e| {
+                let err_msg = format!("Failed to start transaction: {}", e);
+                log_error_to_tmp(&err_msg);
+                PhpException::from(err_msg)
+            })?;
 
         let trx_id = uuid::Uuid::new_v4().to_string();
         TRANSACTION_REGISTRY
