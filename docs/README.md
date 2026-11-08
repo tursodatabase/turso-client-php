@@ -34,9 +34,9 @@
 ## Development Guide
 
 * [Building from Source](../README.md#development)
-* Running Tests (`phpunit` / Pest)
+* [Contributing Guidelines](../CONTRIBUTING.md)
+* Running Tests (Pest — see the Contributing Guidelines)
 * Docker-based Development (`compose.yaml`)
-* Contribution Guidelines (Contributing.md if you add one)
 
 ---
 

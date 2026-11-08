@@ -134,10 +134,34 @@ $db->close();
 * Store the local replica (`sqld-offline-write.db`) in persistent storage (volume if inside Docker).
 * Use **JWTs with proper expiry & refresh** for secure long-running apps.
 
+## Offline-Write Mode API Notes
+
+A few methods behave differently while the connection is in offline-write mode
+(`sqld_offline_mode: true` + `offline_writes: true`). Writes flow through the
+**local write journal** and are replayed to the remote on the next `sync()`,
+so anything that would talk to the underlying connection directly is gated:
+
+* ❌ `prepare()` — throws. A prepared statement executes straight on the
+  underlying connection and bypasses the write journal, so its writes would
+  never reach the remote database. Use `execute()` / `query()` with bound
+  parameters instead — that is the journaled path.
+* ❌ `transaction()` — throws for the same reason: `BEGIN`/`COMMIT` are not
+  captured as pending operations. Group writes with bound `execute()` calls.
+* ✅ `totalChanges()`, `lastInsertedId()`, `isAutocommit()` — read the local
+  replica, which is exactly where offline writes land.
+* ✅ `getPendingOperationsCount()`, `sync()`, `checkConnectivity()` — all work.
+* 📁 The first run against a **database file that does not exist yet**
+  initializes the metadata automatically; you do not need to create anything
+  by hand.
+
+`checkConnectivity()` probes the exact host of the connection's URL — no
+hostname rewriting is applied.
+
 ---
 
 ## Next Steps
 
 * 👉 [Core API](LibSQL-class.md) — learn all available methods
-* 👉 [Transactions](transaction.md) — ensure atomic writes
-* 👉 [Sync](sync.md) — understand synchronization in detail
+* 👉 [Transactions API](LibSQL-class.md#initiates-a-new-database-transaction) — explicit transactions work in every connection mode except journaled offline-write mode (`sqld_offline_mode: true`), where `execute()` with bound parameters is the supported path
+* 👉 [Sync API](LibSQL-class.md#sync-the-database) — understand synchronization in detail
+

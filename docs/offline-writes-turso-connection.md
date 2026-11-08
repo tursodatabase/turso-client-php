@@ -22,10 +22,15 @@ $config = [
 ];
 
 // Open connection in offline mode
+//
+// PHP note: extension functions with unknown default values can't have
+// named-argument slots skipped, so every parameter before the last one you
+// pass must be passed explicitly or the constructor rejects the call.
 $db = new LibSQL(
     config: $config,
+    sqld_offline_mode: false, // Turso Cloud flavor (see API notes below)
     flags: LibSQL::OPEN_READWRITE | LibSQL::OPEN_CREATE,
-    encryption_key:"",
+    encryption_key: "",
     offline_writes: true
 );
 
@@ -123,12 +128,24 @@ readNotes();
 * Keep local replica files (`database.db`) in a persistent storage volume.
 * For multi-device sync, always rely on the remote Turso DB as the **source of truth**.
 
+## Offline-Write Mode API Notes
+
+The Turso Cloud flavor uses libSQL's built-in **synced database**: writes are
+persisted locally and pushed to the remote in the background.
+
+* Creating the connection needs the `syncUrl` to be reachable **once** at
+  construction time; after that, writes are buffered locally when offline.
+* `prepare()` and `transaction()` **work** in this flavor — it is the
+  journaled `sqld_offline_mode: true` flavor where they throw (see the
+  [sqld offline writes](offline-writes-sqld-connection.md) docs).
+* `getPendingOperationsCount()` / `isOnline()` only apply to the sqld flavor;
+  here the local sync status is managed by libSQL itself.
+
 ---
 
 ## Next Steps
 
-* 👉 [Offline Writes (Turso) Connection](offline-writes-turso-connection.md) — Connect libSQL with Offline Writes abillity from (with Turso)
-* 👉 [Offline Writes (libSQL Server/sqld) Connection](offline-writes-sqld-connection.md) — Connect libSQL with Offline Writes abillity from (with libSQL Server - self-host)
+* 👉 [Offline Writes (libSQL Server/sqld) Connection](offline-writes-sqld-connection.md) — the journaled offline-write flavor
 * 👉 [Core API](LibSQL-class.md) — learn all available methods
-* 👉 [Transactions](transaction.md) — ensure atomic writes
-* 👉 [Sync](sync.md) — understand synchronization in detail
+* 👉 [Transactions API](LibSQL-class.md#initiates-a-new-database-transaction) — ensure atomic writes
+* 👉 [Sync API](LibSQL-class.md#sync-the-database) — understand synchronization in detail

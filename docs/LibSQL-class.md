@@ -380,6 +380,11 @@ $db->checkConnectivity();
 
 _NOTE: Offline Writes (sqld/libsql-server) Only_
 
+The probe goes to the exact host the connection was configured with
+(`libsql://`, `ws://` and `wss://` URLs normalize to plain `https://`) —
+the hostname is never rewritten, so an unresolvable database host reports
+offline even when the platform it lives on is up.
+
 ### Returns the number of pending operations
 
 ```php
@@ -387,6 +392,13 @@ $db->getPendingOperationsCount();
 ```
 
 _NOTE: Offline Writes (sqld/libsql-server) Only_
+
+In offline-write mode (`sqld_offline_mode: true`) `prepare()` and
+`transaction()` are unavailable: both would bypass the local write journal
+that `sync()` replays to the remote database. Use `execute()` / `query()`
+with bound parameters — those are captured as pending operations, counted
+here, and pushed on the next sync.
+
 
 ### Checks if the database connection is online
 
