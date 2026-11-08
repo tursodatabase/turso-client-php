@@ -28,6 +28,9 @@
 ## Core API
 
 * [LibSQL Class](LibSQL-class.md)
+* [LibSQLStatement Class](LibSQLStatement-class.md)
+* [LibSQLTransaction Class](LibSQLTransaction-class.md)
+* [LibSQLResult Class](LibSQLResult-class.md)
 
 ---
 
