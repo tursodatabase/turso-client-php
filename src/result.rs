@@ -5,7 +5,6 @@ use ext_php_rs::convert::IntoZval;
 use ext_php_rs::prelude::*;
 use ext_php_rs::types::Zval;
 use ext_php_rs::{php_class, php_impl};
-use std::collections::HashMap;
 
 use crate::{
     generator::LibSQLIterator,
@@ -21,6 +20,49 @@ use crate::{
 pub enum FetchResult {
     Zval(ext_php_rs::types::Zval),
     Iterator(LibSQLIterator),
+}
+
+/// Collects one result row into an ordered column/value list according to the
+/// fetch mode, preserving the exact per-mode shapes of the previous manual
+/// conversions. The list is built in column-index order so that numeric-keyed
+/// rows (LIBSQL_NUM / LIBSQL_BOTH) materialize in the correct order — a
+/// HashMap would iterate keys in arbitrary order and scramble the columns.
+/// Errors propagate instead of being silently swallowed.
+fn collect_row_map(
+    rows: &libsql::Rows,
+    row: &libsql::Row,
+    mode: i32,
+) -> Result<Vec<(String, libsql::Value)>, PhpException> {
+    let mut result = Vec::new();
+
+    for idx in 0..rows.column_count() {
+        let idx = idx as i32;
+        let value = row
+            .get_value(idx)
+            .map_err(|e| PhpException::from(format!("Failed to read column value: {}", e)))?;
+
+        match mode {
+            LIBSQL_ASSOC => {
+                let column_name = row.column_name(idx).ok_or_else(|| {
+                    PhpException::from(format!("Column index {} out of bounds", idx))
+                })?;
+                result.push((column_name.to_string(), value));
+            }
+            LIBSQL_NUM => {
+                result.push((idx.to_string(), value));
+            }
+            // LIBSQL_BOTH (and fallback): string key plus numeric key.
+            _ => {
+                let column_name = row.column_name(idx).ok_or_else(|| {
+                    PhpException::from(format!("Column index {} out of bounds", idx))
+                })?;
+                result.push((column_name.to_string(), value.clone()));
+                result.push((idx.to_string(), value));
+            }
+        }
+    }
+
+    Ok(result)
 }
 
 impl IntoZval for FetchResult {
@@ -122,72 +164,54 @@ impl LibSQLResult {
                 .as_ref()
                 .ok_or_else(|| PhpException::from("Connection not available"))?;
 
+            // LIBSQL_LAZY hands the raw row set to a streaming iterator so
+            // rows are pulled one by one instead of being materialized up
+            // front.
+            if mode == LIBSQL_LAZY {
+                let rows = runtime().block_on(async {
+                    conn.query(self.sql.as_str(), self.parameters.clone())
+                        .await
+                        .map_err(|e| PhpException::from(e.to_string()))
+                })?;
+                return Ok(FetchResult::Iterator(LibSQLIterator::from_rows(rows)));
+            }
+
             let query_result = runtime().block_on(async {
                 let mut rows = conn
                     .query(self.sql.as_str(), self.parameters.clone())
                     .await
                     .map_err(|e| PhpException::from(e.to_string()))?;
-                let mut results: Vec<HashMap<String, libsql::Value>> = Vec::new();
 
-                while let Ok(Some(row)) = rows.next().await {
-                    let mut result = HashMap::new();
-
-                    if mode == LIBSQL_ASSOC {
-                        for idx in 0..rows.column_count() {
-                            let column_name = row.column_name(idx as i32).unwrap();
-                            let value = row.get_value(idx).unwrap();
-
-                            result.insert(column_name.to_string(), value);
+                let mut results: Vec<Vec<(String, libsql::Value)>> = Vec::new();
+                loop {
+                    match rows.next().await {
+                        Ok(Some(row)) => results.push(collect_row_map(&rows, &row, mode)?),
+                        Ok(None) => break,
+                        Err(e) => {
+                            return Err(PhpException::from(format!("Failed to fetch row: {}", e)))
                         }
-                        results.push(result);
-                    } else if mode == LIBSQL_NUM {
-                        for idx in 0..rows.column_count() {
-                            let value = row.get_value(idx).unwrap();
-
-                            result.insert(idx.to_string(), value);
-                        }
-                        results.push(result);
-                    } else {
-                        for idx in 0..rows.column_count() {
-                            let column_name = row.column_name(idx as i32).unwrap();
-                            let value = row.get_value(idx).unwrap();
-
-                            result.insert(column_name.to_string(), value.clone());
-                            result.insert(idx.to_string(), value);
-                        }
-                        results.push(result);
                     }
                 }
 
                 Ok(results)
             });
 
-            match query_result {
-                Ok(results) => {
-                    let mut arr = ext_php_rs::types::ZendHashTable::new();
+            let results = query_result?;
+            let mut arr = ext_php_rs::types::ZendHashTable::new();
 
-                    for result in results {
-                        let mut sub_arr = ext_php_rs::types::ZendHashTable::new();
-                        for (key, value) in result {
-                            let zval_value = convert_libsql_value_to_zval(value);
-                            match key.parse::<i64>() {
-                                Ok(_) => sub_arr.push(zval_value)?,
-                                Err(_) => sub_arr.insert(key.as_str(), zval_value)?,
-                            }
-                        }
-                        arr.push(sub_arr)?;
+            for result in results {
+                let mut sub_arr = ext_php_rs::types::ZendHashTable::new();
+                for (key, value) in result {
+                    let zval_value = convert_libsql_value_to_zval(value)?;
+                    match key.parse::<i64>() {
+                        Ok(_) => sub_arr.push(zval_value)?,
+                        Err(_) => sub_arr.insert(key.as_str(), zval_value)?,
                     }
-
-                    let zval_arr = if mode == LIBSQL_LAZY {
-                        let data = arr.into_zval(false).unwrap();
-                        FetchResult::Iterator(LibSQLIterator::__construct(&data))
-                    } else {
-                        FetchResult::Zval(arr.into_zval(false).unwrap())
-                    };
-                    Ok(zval_arr)
                 }
-                Err(e) => Err(e),
+                arr.push(sub_arr)?;
             }
+
+            Ok(FetchResult::Zval(arr.into_zval(false)?))
         } else {
             Ok(FetchResult::Zval(hooks::use_query::query(
                 self.conn_string.clone(),
@@ -204,72 +228,64 @@ impl LibSQLResult {
             .get(&self.conn_string)
             .ok_or_else(|| PhpException::from("Offline connection not found"))?;
 
+        // LIBSQL_LAZY hands the raw row set to a streaming iterator so rows
+        // are pulled one by one instead of being materialized up front.
+        if mode == LIBSQL_LAZY {
+            let rows = offline_conn
+                .query(
+                    self.sql.as_str(),
+                    self.query_params.clone(),
+                    self.force_remote.clone(),
+                )
+                .map_err(|e| PhpException::from(e.to_string()))?;
+            return Ok(FetchResult::Iterator(LibSQLIterator::from_rows(rows)));
+        }
+
         let query_result = match offline_conn.query(
             self.sql.as_str(),
             self.query_params.clone(),
             self.force_remote.clone(),
         ) {
             Ok(mut rows) => {
-                let mut results: Vec<HashMap<String, libsql::Value>> = Vec::new();
+                let mut results: Vec<Vec<(String, libsql::Value)>> = Vec::new();
 
                 runtime().block_on(async {
-                    while let Ok(Some(row)) = rows.next().await {
-                        let mut result = HashMap::new();
-
-                        if mode == LIBSQL_ASSOC {
-                            for idx in 0..rows.column_count() {
-                                let column_name = row.column_name(idx as i32).unwrap();
-                                let value = row.get_value(idx).unwrap();
-                                result.insert(column_name.to_string(), value);
-                            }
-                        } else if mode == LIBSQL_NUM {
-                            for idx in 0..rows.column_count() {
-                                let value = row.get_value(idx).unwrap();
-                                result.insert(idx.to_string(), value);
-                            }
-                        } else {
-                            for idx in 0..rows.column_count() {
-                                let column_name = row.column_name(idx as i32).unwrap();
-                                let value = row.get_value(idx).unwrap();
-                                result.insert(column_name.to_string(), value.clone());
-                                result.insert(idx.to_string(), value);
+                    loop {
+                        match rows.next().await {
+                            Ok(Some(row)) => results.push(collect_row_map(&rows, &row, mode)?),
+                            Ok(None) => break,
+                            Err(e) => {
+                                return Err(PhpException::from(format!(
+                                    "Failed to fetch row: {}",
+                                    e
+                                )))
                             }
                         }
-                        results.push(result);
                     }
-                });
+                    Ok(())
+                })?;
 
                 Ok(results)
             }
             Err(e) => Err(PhpException::from(e.to_string())),
         };
 
-        match query_result {
-            Ok(results) => {
-                let mut arr = ext_php_rs::types::ZendHashTable::new();
+        let results = query_result?;
+        let mut arr = ext_php_rs::types::ZendHashTable::new();
 
-                for result in results {
-                    let mut sub_arr = ext_php_rs::types::ZendHashTable::new();
-                    for (key, value) in result {
-                        let zval_value = convert_libsql_value_to_zval(value);
-                        match key.parse::<i64>() {
-                            Ok(_) => sub_arr.push(zval_value)?,
-                            Err(_) => sub_arr.insert(key.as_str(), zval_value)?,
-                        }
-                    }
-                    arr.push(sub_arr)?;
+        for result in results {
+            let mut sub_arr = ext_php_rs::types::ZendHashTable::new();
+            for (key, value) in result {
+                let zval_value = convert_libsql_value_to_zval(value)?;
+                match key.parse::<i64>() {
+                    Ok(_) => sub_arr.push(zval_value)?,
+                    Err(_) => sub_arr.insert(key.as_str(), zval_value)?,
                 }
-
-                let zval_arr = if mode == LIBSQL_LAZY {
-                    let data = arr.into_zval(false).unwrap();
-                    FetchResult::Iterator(LibSQLIterator::__construct(&data))
-                } else {
-                    FetchResult::Zval(arr.into_zval(false).unwrap())
-                };
-                Ok(zval_arr)
             }
-            Err(e) => Err(e),
+            arr.push(sub_arr)?;
         }
+
+        Ok(FetchResult::Zval(arr.into_zval(false)?))
     }
 
     pub fn fetch_single(&self, mode: Option<i32>) -> Result<FetchResult, PhpException> {
@@ -290,29 +306,15 @@ impl LibSQLResult {
                     .query(self.sql.as_str(), self.parameters.clone())
                     .await
                     .map_err(|e| PhpException::from(e.to_string()))?;
-                let mut result = HashMap::new();
+                let mut result: Vec<(String, libsql::Value)> = Vec::new();
 
-                if let Ok(Some(row)) = rows.next().await {
-                    match mode {
-                        LIBSQL_ASSOC => {
-                            for idx in 0..rows.column_count() {
-                                let column_name = row.column_name(idx as i32).unwrap();
-                                result.insert(column_name.to_string(), row.get_value(idx).unwrap());
-                            }
-                        }
-                        LIBSQL_NUM => {
-                            for idx in 0..rows.column_count() {
-                                result.insert(idx.to_string(), row.get_value(idx).unwrap());
-                            }
-                        }
-                        _ => {
-                            for idx in 0..rows.column_count() {
-                                let column_name = row.column_name(idx as i32).unwrap();
-                                let value = row.get_value(idx).unwrap();
-                                result.insert(column_name.to_string(), value.clone());
-                                result.insert(idx.to_string(), value);
-                            }
-                        }
+                match rows.next().await {
+                    Ok(Some(row)) => {
+                        result = collect_row_map(&rows, &row, mode)?;
+                    }
+                    Ok(None) => {}
+                    Err(e) => {
+                        return Err(PhpException::from(format!("Failed to fetch row: {}", e)))
                     }
                 }
 
@@ -382,63 +384,44 @@ impl LibSQLResult {
             self.force_remote.clone(),
         ) {
             Ok(mut rows) => {
-                let mut result = HashMap::new();
+                let mut result: Vec<(String, libsql::Value)> = Vec::new();
 
                 runtime().block_on(async {
-                    if let Ok(Some(row)) = rows.next().await {
-                        match mode {
-                            LIBSQL_ASSOC => {
-                                for idx in 0..rows.column_count() {
-                                    let column_name = row.column_name(idx as i32).unwrap();
-                                    result.insert(
-                                        column_name.to_string(),
-                                        row.get_value(idx).unwrap(),
-                                    );
-                                }
-                            }
-                            LIBSQL_NUM => {
-                                for idx in 0..rows.column_count() {
-                                    result.insert(idx.to_string(), row.get_value(idx).unwrap());
-                                }
-                            }
-                            _ => {
-                                for idx in 0..rows.column_count() {
-                                    let column_name = row.column_name(idx as i32).unwrap();
-                                    let value = row.get_value(idx).unwrap();
-                                    result.insert(column_name.to_string(), value.clone());
-                                    result.insert(idx.to_string(), value);
-                                }
-                            }
+                    match rows.next().await {
+                        Ok(Some(row)) => {
+                            result = collect_row_map(&rows, &row, mode)?;
+                        }
+                        Ok(None) => {}
+                        Err(e) => {
+                            return Err(PhpException::from(format!("Failed to fetch row: {}", e)))
                         }
                     }
-                });
+                    Ok(())
+                })?;
 
                 Ok(result)
             }
             Err(e) => Err(PhpException::from(e.to_string())),
         };
 
-        match query_result {
-            Ok(result) => {
-                let mut sub_arr = ext_php_rs::types::ZendHashTable::new();
-                for (key, value) in result {
-                    let zval_value = convert_libsql_value_to_zval(value);
-                    match key.parse::<usize>() {
-                        Ok(_) => sub_arr.push(zval_value)?,
-                        Err(_) => sub_arr.insert(key.as_str(), zval_value)?,
-                    }
-                }
+        let result = query_result?;
 
-                let fetch_result = if mode == LIBSQL_LAZY {
-                    let data = sub_arr.into_zval(false)?;
-                    FetchResult::Iterator(LibSQLIterator::__construct(&data))
-                } else {
-                    FetchResult::Zval(sub_arr.into_zval(false)?)
-                };
-                Ok(fetch_result)
+        let mut sub_arr = ext_php_rs::types::ZendHashTable::new();
+        for (key, value) in result {
+            let zval_value = convert_libsql_value_to_zval(value)?;
+            match key.parse::<usize>() {
+                Ok(_) => sub_arr.push(zval_value)?,
+                Err(_) => sub_arr.insert(key.as_str(), zval_value)?,
             }
-            Err(e) => Err(e),
         }
+
+        let fetch_result = if mode == LIBSQL_LAZY {
+            let data = sub_arr.into_zval(false)?;
+            FetchResult::Iterator(LibSQLIterator::__construct(&data))
+        } else {
+            FetchResult::Zval(sub_arr.into_zval(false)?)
+        };
+        Ok(fetch_result)
     }
 
     pub fn column_name(&self, column_index: i32) -> Result<String, PhpException> {
@@ -453,19 +436,14 @@ impl LibSQLResult {
                 self.query_params.clone(),
                 self.force_remote.clone(),
             ) {
-                Ok(mut rows) => runtime().block_on(async {
-                    if let Ok(Some(row)) = rows.next().await {
-                        let column_name = row.column_name(column_index).ok_or_else(|| {
-                            PhpException::from(format!(
-                                "Column index {} out of bounds",
-                                column_index
-                            ))
-                        })?;
-                        Ok(column_name.to_string())
-                    } else {
-                        Err(PhpException::from("No rows returned from query"))
-                    }
-                }),
+                // Column metadata is available from the row set itself — no
+                // row needs to be fetched, so zero-row queries work too.
+                Ok(rows) => rows
+                    .column_name(column_index)
+                    .map(|name| name.to_string())
+                    .ok_or_else(|| {
+                        PhpException::from(format!("Column index {} out of bounds", column_index))
+                    }),
                 Err(e) => Err(PhpException::from(e.to_string())),
             }
         } else {
@@ -475,19 +453,16 @@ impl LibSQLResult {
                 .ok_or_else(|| PhpException::from("Connection not available"))?;
 
             runtime().block_on(async {
-                let mut rows = conn
+                let rows = conn
                     .query(self.sql.as_str(), self.parameters.clone())
                     .await
                     .map_err(|e| PhpException::from(e.to_string()))?;
 
-                if let Ok(Some(row)) = rows.next().await {
-                    let column_name = row.column_name(column_index).ok_or_else(|| {
+                rows.column_name(column_index)
+                    .map(|name| name.to_string())
+                    .ok_or_else(|| {
                         PhpException::from(format!("Column index {} out of bounds", column_index))
-                    })?;
-                    Ok(column_name.to_string())
-                } else {
-                    Err(PhpException::from("No rows returned from query"))
-                }
+                    })
             })
         }
     }
@@ -558,13 +533,9 @@ impl LibSQLResult {
                 self.query_params.clone(),
                 self.force_remote.clone(),
             ) {
-                Ok(mut rows) => runtime().block_on(async {
-                    if let Ok(Some(row)) = rows.next().await {
-                        Ok(row.column_count() as i32)
-                    } else {
-                        Err(PhpException::from("No rows returned from query"))
-                    }
-                }),
+                // The column count is available from the row set itself — no
+                // row needs to be fetched, so zero-row queries work too.
+                Ok(rows) => Ok(rows.column_count()),
                 Err(e) => Err(PhpException::from(e.to_string())),
             }
         } else {
@@ -574,16 +545,12 @@ impl LibSQLResult {
                 .ok_or_else(|| PhpException::from("Connection not available"))?;
 
             runtime().block_on(async {
-                let mut rows = conn
+                let rows = conn
                     .query(self.sql.as_str(), self.parameters.clone())
                     .await
                     .map_err(|e| PhpException::from(e.to_string()))?;
 
-                if let Ok(Some(row)) = rows.next().await {
-                    Ok(row.column_count() as i32)
-                } else {
-                    Err(PhpException::from("No rows returned from query"))
-                }
+                Ok(rows.column_count())
             })
         }
     }

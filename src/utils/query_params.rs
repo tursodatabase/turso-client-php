@@ -104,58 +104,22 @@ impl<'a> FromZval<'a> for QueryParameters {
             for (key, value) in array.iter() {
                 match key {
                     ArrayKey::Long(index) => {
-                        let query_value = if let Some(int_val) = value.long() {
-                            QueryValue::Integer(int_val)
-                        } else if let Some(float_val) = value.double() {
-                            QueryValue::Real(float_val)
-                        } else if let Some(text_val) = value.string() {
-                            QueryValue::Text(text_val.to_string())
-                        } else if let Some(text_val) = value.string() {
-                            QueryValue::Blob(text_val.as_bytes().to_vec())
-                        } else if value.is_null() {
-                            QueryValue::Null
-                        } else {
-                            continue;
-                        };
-
-                        if index >= positional.len() as i64 {
-                            positional.resize((index + 1) as usize, QueryValue::Null);
+                        if let Some(query_value) = query_value_from_zval(value) {
+                            if index >= positional.len() as i64 {
+                                positional.resize((index + 1) as usize, QueryValue::Null);
+                            }
+                            positional[index as usize] = query_value;
                         }
-                        positional[index as usize] = query_value;
                     }
                     ArrayKey::String(key) => {
-                        let query_value = if let Some(int_val) = value.long() {
-                            QueryValue::Integer(int_val)
-                        } else if let Some(float_val) = value.double() {
-                            QueryValue::Real(float_val)
-                        } else if let Some(text_val) = value.string() {
-                            QueryValue::Text(text_val.to_string())
-                        } else if let Some(text_val) = value.string() {
-                            QueryValue::Blob(text_val.as_bytes().to_vec())
-                        } else if value.is_null() {
-                            QueryValue::Null
-                        } else {
-                            continue;
-                        };
-
-                        named.insert(key.to_string(), query_value);
+                        if let Some(query_value) = query_value_from_zval(value) {
+                            named.insert(key.to_string(), query_value);
+                        }
                     }
                     ArrayKey::Str(key) => {
-                        let query_value = if let Some(int_val) = value.long() {
-                            QueryValue::Integer(int_val)
-                        } else if let Some(float_val) = value.double() {
-                            QueryValue::Real(float_val)
-                        } else if let Some(text_val) = value.string() {
-                            QueryValue::Text(text_val.to_string())
-                        } else if let Some(text_val) = value.string() {
-                            QueryValue::Blob(text_val.as_bytes().to_vec())
-                        } else if value.is_null() {
-                            QueryValue::Null
-                        } else {
-                            continue;
-                        };
-
-                        named.insert(key.to_string(), query_value);
+                        if let Some(query_value) = query_value_from_zval(value) {
+                            named.insert(key.to_string(), query_value);
+                        }
                     }
                 }
             }
@@ -171,5 +135,44 @@ impl<'a> FromZval<'a> for QueryParameters {
         } else {
             None
         }
+    }
+}
+
+/// Converts a single PHP value into a [`QueryValue`], preserving the native
+/// type where possible.
+///
+/// blob-by-convention: an array whose elements are all integers in the
+/// `0..=255` byte range is interpreted as a BLOB (mirroring the JSON
+/// convention the sqld offline-write journal uses to round-trip blob
+/// parameters). Other array shapes were previously skipped (unsupported), so
+/// this is additive. Bools bind as `1`/`0`, since SQLite has no boolean type.
+fn query_value_from_zval(value: &Zval) -> Option<QueryValue> {
+    if let Some(array) = value.array() {
+        if array.is_empty() {
+            return None;
+        }
+        let mut bytes = Vec::with_capacity(array.len());
+        for (_, element) in array.iter() {
+            let int_val = element.long()?;
+            if !(0..=255).contains(&int_val) {
+                return None;
+            }
+            bytes.push(int_val as u8);
+        }
+        return Some(QueryValue::Blob(bytes));
+    }
+
+    if let Some(int_val) = value.long() {
+        Some(QueryValue::Integer(int_val))
+    } else if let Some(float_val) = value.double() {
+        Some(QueryValue::Real(float_val))
+    } else if let Some(text_val) = value.string() {
+        Some(QueryValue::Text(text_val))
+    } else if let Some(bool_val) = value.bool() {
+        Some(QueryValue::Integer(if bool_val { 1 } else { 0 }))
+    } else if value.is_null() {
+        Some(QueryValue::Null)
+    } else {
+        None
     }
 }

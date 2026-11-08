@@ -163,7 +163,8 @@ impl LibSQL {
                 let sync_interval = config
                     .get("syncInterval")
                     .and_then(|s| s.to_long())
-                    .map(std::time::Duration::from_secs)
+                    .filter(|&secs| secs >= 0)
+                    .map(|secs| std::time::Duration::from_secs(secs as u64))
                     .unwrap_or_else(|| std::time::Duration::from_secs(5));
                 let read_your_writes = config
                     .get("read_your_writes")
@@ -171,6 +172,14 @@ impl LibSQL {
                     .unwrap_or(true);
 
                 (url, auth_token, sync_url, sync_interval, read_your_writes)
+            }
+            ConfigValue::Long(_)
+            | ConfigValue::Double(_)
+            | ConfigValue::Bool(_)
+            | ConfigValue::Null => {
+                return Err(PhpException::default(
+                    "Invalid configuration: expected a DSN string or a config array".to_string(),
+                ))
             }
         };
 

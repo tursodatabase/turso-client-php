@@ -15,6 +15,11 @@ pub struct OfflineWriteConnection {
     pub remote_url: String,
     pub is_online: Arc<Mutex<bool>>,
     pub pending_operations: Arc<Mutex<Vec<PendingOperation>>>,
+    /// Per-connection cache for the online-status check: `(checked_at, status)`.
+    /// Instance-scoped so connections to different hosts are checked
+    /// independently (the previous implementation shared one process-global
+    /// cache keyed to nothing).
+    pub online_cache: Arc<Mutex<Option<(Instant, bool)>>>,
 }
 #[derive(Debug, Clone)]
 pub struct PendingOperation {
@@ -163,6 +168,7 @@ impl OfflineWriteConnection {
             remote_url: sync_url.clone(),
             is_online: Arc::new(Mutex::new(initial_online_status)),
             pending_operations: Arc::new(Mutex::new(Vec::new())),
+            online_cache: Arc::new(Mutex::new(None)),
         };
         if initial_online_status {
             let _ = connection.initial_sync_if_needed();
@@ -175,21 +181,23 @@ impl OfflineWriteConnection {
     ///
     /// # Caching
     ///
-    /// The result of this function is cached for 5 seconds. If the function is called
-    /// multiple times within that time frame, the cached value is returned. This is
-    /// done to avoid frequent HTTP requests to check the online status of the
-    /// remote database.
+    /// The result of this function is cached for 5 seconds per connection. If
+    /// the function is called multiple times within that time frame, the
+    /// cached value is returned. This is done to avoid frequent HTTP requests
+    /// to check the online status of the remote database. The cache lives on
+    /// the connection instance, so two offline-write connections pointed at
+    /// different hosts never pollute each other's status.
     ///
     /// # Note
     ///
-    /// This function does not check if the remote connection is currently available
-    /// or if the last synchronization attempt was successful. It only checks if the
-    /// remote URL is reachable.
+    /// This function does not check if the remote connection is currently
+    /// available or if the last synchronization attempt was successful. It
+    /// only checks if the remote URL is reachable.
     pub fn is_online(&self) -> bool {
-        // Cache status for 5 seconds
-        static LAST_CHECK: Mutex<Option<(Instant, bool)>> = Mutex::new(None);
-
-        let mut last_check = LAST_CHECK.lock().unwrap();
+        let mut last_check = self
+            .online_cache
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
         if let Some((time, status)) = *last_check {
             if time.elapsed() < Duration::from_secs(5) {
                 return status;
