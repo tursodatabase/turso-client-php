@@ -23,6 +23,24 @@ pub struct LibSQLTransaction {
     pub conn_id: String,
 }
 
+/// Registry cleanup on garbage collection: rolls back an abandoned
+/// transaction and removes it from the transaction registry when the PHP
+/// object is destroyed, so open "BEGIN" blocks don't leak native
+/// transactions and hold locks for the life of the process. A transaction
+/// completed via commit()/rollback() removed its own entry already, which
+/// makes this a no-op in that case.
+impl Drop for LibSQLTransaction {
+    fn drop(&mut self) {
+        if let Ok(mut registry) = TRANSACTION_REGISTRY.lock() {
+            if let Some(tx) = registry.remove(&self.trx_id) {
+                // Best effort: if the rollback itself fails there's nothing
+                // left to report to PHP at destruction time.
+                let _ = runtime().block_on(async { tx.rollback().await });
+            }
+        }
+    }
+}
+
 #[php_impl]
 impl LibSQLTransaction {
     /// Constructs a new `LibSQLTransaction` object.

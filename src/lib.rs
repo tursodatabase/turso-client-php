@@ -73,11 +73,27 @@ struct LibSQL {
     conn: Option<libsql::Connection>,
 }
 
+/// Registry cleanup on garbage collection: removes this connection from its
+/// registry when the PHP object is destroyed, so long-running process
+/// handlers (daemons, web servers with many requests) don't accumulate dead
+/// connections forever. Explicit `close()` removes the same entry first,
+/// which makes this a no-op in that case.
+impl Drop for LibSQL {
+    fn drop(&mut self) {
+        if self.mode == "offline_write" {
+            if let Ok(mut registry) = OFFLINE_CONNECTION_REGISTRY.lock() {
+                registry.remove(&self.conn_id);
+            }
+        } else if let Ok(mut registry) = CONNECTION_REGISTRY.lock() {
+            registry.remove(&self.conn_id);
+        }
+    }
+}
+
 #[php_impl]
 impl LibSQL {
     /// Represents the flag for opening a database in read-only mode.
     const OPEN_READONLY: i32 = 1;
-
     /// Represents the flag for opening a database in read-write mode.
     const OPEN_READWRITE: i32 = 2;
 
@@ -339,6 +355,15 @@ impl LibSQL {
     ///
     /// Returns `true` if autocommit mode is enabled, otherwise `false`.
     pub fn is_autocommit(&self) -> Result<bool, PhpException> {
+        if self.mode == "offline_write" {
+            let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().unwrap();
+            let offline_conn = offline_registry
+                .get(&self.conn_id)
+                .ok_or_else(|| PhpException::from("Offline connection not found"))?;
+
+            return Ok(offline_conn.local_conn.is_autocommit());
+        }
+
         hooks::is_autocommit::get_is_autocommit(self.conn_id.to_string())
     }
 
@@ -348,6 +373,17 @@ impl LibSQL {
     ///
     /// Returns the total number of changes made by the connection.
     pub fn total_changes(&self) -> Result<u64, PhpException> {
+        if self.mode == "offline_write" {
+            // The embedded-replica local connection tracks the applied
+            // writes, so the metadata stays available in offline mode too.
+            let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().unwrap();
+            let offline_conn = offline_registry
+                .get(&self.conn_id)
+                .ok_or_else(|| PhpException::from("Offline connection not found"))?;
+
+            return Ok(offline_conn.local_conn.total_changes());
+        }
+
         match &self.conn {
             Some(conn) => Ok(conn.total_changes()),
             None => Err(PhpException::from("Connection not available")),
@@ -360,6 +396,17 @@ impl LibSQL {
     ///
     /// Returns the rowid of the last inserted row.
     pub fn last_inserted_id(&self) -> Result<i64, PhpException> {
+        if self.mode == "offline_write" {
+            // Writes land on the local embedded replica first, so the
+            // rowid of the last inserted row is available offline too.
+            let offline_registry = OFFLINE_CONNECTION_REGISTRY.lock().unwrap();
+            let offline_conn = offline_registry
+                .get(&self.conn_id)
+                .ok_or_else(|| PhpException::from("Offline connection not found"))?;
+
+            return Ok(offline_conn.local_conn.last_insert_rowid());
+        }
+
         match &self.conn {
             Some(conn) => Ok(conn.last_insert_rowid()),
             None => Err(PhpException::from("Connection not available")),
@@ -463,6 +510,18 @@ impl LibSQL {
     ///
     /// Returns a `LibSQLTransaction` instance representing the transaction.
     pub fn transaction(&self, behavior: Option<String>) -> Result<LibSQLTransaction, PhpException> {
+        if self.mode == "offline_write" {
+            // Transactions bypass the offline write journal (BEGIN/COMMIT on
+            // the local connection are not captured as pending operations),
+            // so explicit transactions would silently lose their writes on
+            // sync. Error out clearly instead.
+            return Err(PhpException::from(
+                "transaction() is not supported in offline_write mode: transactions \
+                 would bypass the offline write journal; use execute() with bound \
+                 parameters instead",
+            ));
+        }
+
         let tx_behavior = behavior
             .as_deref()
             .map(|s| s.to_uppercase())
@@ -481,6 +540,18 @@ impl LibSQL {
     ///
     /// Returns a `LibSQLStatement` instance representing the prepared statement.
     pub fn prepare(&self, sql: &str) -> Result<LibSQLStatement, PhpException> {
+        if self.mode == "offline_write" {
+            // Prepared statements execute directly on the underlying
+            // connection and bypass the offline write journal, so writes
+            // prepared this way would never be replayed to the remote
+            // database on sync. Error out clearly instead.
+            return Err(PhpException::from(
+                "prepare() is not supported in offline_write mode: prepared statements \
+                 would bypass the offline write journal; use execute() or query() with \
+                 bound parameters instead",
+            ));
+        }
+
         LibSQLStatement::__construct(self.conn_id.clone(), sql)
     }
 

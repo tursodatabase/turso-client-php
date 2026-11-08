@@ -15,6 +15,22 @@ use crate::{
     CONNECTION_REGISTRY, STATEMENT_REGISTRY,
 };
 
+/// Registry cleanup on garbage collection: finalizes the underlying
+/// statement and removes it from the statement registry when the PHP object
+/// is destroyed, so un-finalized statements don't leak native prepared
+/// statements (each one holds SQLite cursors and memory) for the life of the
+/// process. Explicit `finalize()` removes the same entry first, which makes
+/// this a no-op in that case.
+impl Drop for LibSQLStatement {
+    fn drop(&mut self) {
+        if let Ok(mut registry) = STATEMENT_REGISTRY.lock() {
+            if let Some(mut stmt) = registry.remove(&self.stmt_id) {
+                stmt.finalize();
+            }
+        }
+    }
+}
+
 /// Extracts the numeric placeholder index from a stored parameter key
 /// (`$1`, `?1`, `@1`) so positional bindings can be ordered deterministically.
 fn positional_index(key: &str) -> i64 {

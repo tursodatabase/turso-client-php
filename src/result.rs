@@ -17,6 +17,38 @@ use crate::{
     OFFLINE_CONNECTION_REGISTRY,
 };
 
+/// Reads the string form of a column's value type from a row set: from the
+/// first row when one exists, otherwise from the row set's declared column
+/// type (SQLite value types are per-row; zero-row results report the declared
+/// type — Null for local databases, the server's column type for remote
+/// queries).
+async fn column_type_from_rows(
+    rows: &mut libsql::Rows,
+    column_index: i32,
+) -> Result<String, PhpException> {
+    match rows.next().await {
+        Ok(Some(row)) => {
+            let column_type = row.column_type(column_index).or_else(|_| {
+                Err(PhpException::from(format!(
+                    "Column index {} out of bounds",
+                    column_index
+                )))
+            })?;
+            Ok(format!("{:?}", column_type))
+        }
+        Ok(None) => {
+            let column_type = rows.column_type(column_index).or_else(|_| {
+                Err(PhpException::from(format!(
+                    "Column index {} out of bounds",
+                    column_index
+                )))
+            })?;
+            Ok(format!("{:?}", column_type))
+        }
+        Err(e) => Err(PhpException::from(format!("Failed to fetch row: {}", e))),
+    }
+}
+
 pub enum FetchResult {
     Zval(ext_php_rs::types::Zval),
     Iterator(LibSQLIterator),
@@ -479,19 +511,7 @@ impl LibSQLResult {
                 self.query_params.clone(),
                 self.force_remote.clone(),
             ) {
-                Ok(mut rows) => runtime().block_on(async {
-                    if let Ok(Some(row)) = rows.next().await {
-                        let column_type = row.column_type(column_index).or_else(|_| {
-                            Err(PhpException::from(format!(
-                                "Column index {} out of bounds",
-                                column_index
-                            )))
-                        })?;
-                        Ok(format!("{:?}", column_type))
-                    } else {
-                        Err(PhpException::from("No rows returned from query"))
-                    }
-                }),
+                Ok(mut rows) => runtime().block_on(column_type_from_rows(&mut rows, column_index)),
                 Err(e) => Err(PhpException::from(e.to_string())),
             }
         } else {
@@ -506,17 +526,7 @@ impl LibSQLResult {
                     .await
                     .map_err(|e| PhpException::from(e.to_string()))?;
 
-                if let Ok(Some(row)) = rows.next().await {
-                    let column_type = row.column_type(column_index).or_else(|_| {
-                        Err(PhpException::from(format!(
-                            "Column index {} out of bounds",
-                            column_index
-                        )))
-                    })?;
-                    Ok(format!("{:?}", column_type))
-                } else {
-                    Err(PhpException::from("No rows returned from query"))
-                }
+                column_type_from_rows(&mut rows, column_index).await
             })
         }
     }

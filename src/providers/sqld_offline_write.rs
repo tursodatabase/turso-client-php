@@ -118,10 +118,17 @@ impl OfflineWriteConnection {
                     Ok(false)
                 }
             })
-            .map_err(|err: libsql::Error| {
-                let err_msg = format!("DB check failed: {}", err);
-                log_error_to_tmp(&err_msg);
-                PhpException::default(err_msg)
+            .or_else(|err: libsql::Error| {
+                // A fresh database has no libsql_metadata table yet — that is
+                // not an error, it just means this database was never
+                // initialized. Only surface unexpected failures.
+                if err.to_string().contains("no such table") {
+                    Ok(false)
+                } else {
+                    let err_msg = format!("DB check failed: {}", err);
+                    log_error_to_tmp(&err_msg);
+                    Err(PhpException::default(err_msg))
+                }
             })?;
         if !already_initialized {
             if let Err(err) = runtime().block_on(async {
