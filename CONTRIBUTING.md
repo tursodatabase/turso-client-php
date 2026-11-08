@@ -97,6 +97,26 @@ Notes about the suite:
   Assert on `Throwable::class` instead, or better, assert on the actual
   values/side effects you expect.
 
+### End-to-end compatibility suite
+
+`tests/e2e/e2e.php` is a dependency-free, offline, end-to-end suite that runs
+with the freshly built `.so` under a bare `php -n` process — see
+[tests/e2e/README.md](tests/e2e/README.md) for the scenario table. It proves
+user-observable engine contracts (fetch shapes, LAZY streaming, transactions,
+exact error messages, offline journal) on the *binary you build*, which is
+exactly the artifact that differs between PHP versions.
+
+For multi-version proofs use the matrix runner (each PHP version gets its own
+isolated `cargo` target directory, because `ext-php-rs` bindings are baked per
+version):
+
+```bash
+tests/e2e/run-matrix.sh          # 8.1–8.5 (default), or a subset: ./run-matrix.sh 8.2 8.4
+```
+
+When your change affects any behavior covered there, run the suite (or the
+full matrix) and keep the "Verified results" table in the e2e README honest.
+
 ## Writing PHP Examples That Actually Run
 
 Small PHP-engine detail, learned from the docs and tests: extension
