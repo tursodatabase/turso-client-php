@@ -4,4 +4,13 @@
 target/
 vendor/
 
+# Not needed to compile the extension; keeps the Docker layer cache stable
+# when the proof harness, tests, or docs are edited.
+docker/
+tests/
+docs/
+php-server/
+# ...but the workload payload IS baked into the production image:
+!docker/production-proof/app
+
 *.bak

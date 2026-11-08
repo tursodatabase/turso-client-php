@@ -150,6 +150,11 @@ make compose/up
 make compose-arm64/up
 ```
 
+The extension is also exercised the way a real deployment runs it —
+php-fpm 8.5 + nginx + the official libSQL server, with a workload through
+the public HTTP tier and a machine-readable `PROOF: {...}` report — via
+[`docker/production-proof/proof.sh`](docker/production-proof/README.md).
+
 For available commands:
 
 ```bash

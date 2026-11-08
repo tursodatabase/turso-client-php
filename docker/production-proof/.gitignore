@@ -1,0 +1,3 @@
+# Copy of the local sqld binary for the optional air-gapped fallback
+# (compose.local-sqld.yaml). Never commit binaries.
+sqld

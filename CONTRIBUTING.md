@@ -160,6 +160,23 @@ Repeatability matters: if your change affects anything order-sensitive
 (result row ordering, parameter ordering, journal replay), run the same
 smoke script many times before trusting a single pass.
 
+### Production-usage proof (docker compose)
+
+`docker/production-proof/proof.sh` brings up the production topology —
+nginx → php-fpm 8.5 (release-built extension installed via `conf.d` ini) →
+official libSQL server — and runs a workload through the public HTTP tier
+with asserts on the hard production claims: remote CRUD visibility from a
+second client, the offline-write journal round trip across a staged
+network outage (journal-only writes → reconnect → the rows visible
+server-side, verified by a second client), app-restart and
+server-restart durability, and an in-process connection-churn leak guard.
+It ends with a `PROOF: {...}` report and a
+non-zero exit when anything fails; see
+[docker/production-proof/README.md](docker/production-proof/README.md)
+for the claim → assert map. Run it before merging changes to sync/offline
+paths or anything that touches connection lifecycles.
+
+
 ## Style & Quality Checklist
 
 * `cargo fmt` (CI-enforced formatting)
