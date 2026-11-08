@@ -145,6 +145,7 @@ persisted locally and pushed to the remote in the background.
 
 ## Next Steps
 
+* 👉 [Offline Writes: Flavor Comparison](offline-writes-flavors.md) — side-by-side matrix of both offline-write flavors
 * 👉 [Offline Writes (libSQL Server/sqld) Connection](offline-writes-sqld-connection.md) — the journaled offline-write flavor
 * 👉 [Core API](LibSQL-class.md) — learn all available methods
 * 👉 [Transactions API](LibSQL-class.md#initiates-a-new-database-transaction) — ensure atomic writes

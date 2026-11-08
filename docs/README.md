@@ -22,6 +22,7 @@
 * [Embedded Replica Connection](embedded-replica-connection.md)
 * [Offline Writes (Turso Cloud)](offline-writes-turso-connection.md)
 * [Offline Writes (sqld/libsql-server)](offline-writes-sqld-connection.md)
+* [Offline Writes: Flavor Comparison](offline-writes-flavors.md)
 
 ---
 

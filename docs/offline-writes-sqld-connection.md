@@ -161,6 +161,7 @@ hostname rewriting is applied.
 
 ## Next Steps
 
+* 👉 [Offline Writes: Flavor Comparison](offline-writes-flavors.md) — side-by-side matrix of both offline-write flavors
 * 👉 [Core API](LibSQL-class.md) — learn all available methods
 * 👉 [Transactions API](LibSQL-class.md#initiates-a-new-database-transaction) — explicit transactions work in every connection mode except journaled offline-write mode (`sqld_offline_mode: true`), where `execute()` with bound parameters is the supported path
 * 👉 [Sync API](LibSQL-class.md#sync-the-database) — understand synchronization in detail
