@@ -40,12 +40,15 @@ pub fn create_local_connection(
             None
         };
 
-        let db = libsql::Builder::new_local(url)
-            .flags(db_flags)
-            .encryption_config(encryption_config.unwrap())
-            .build()
-            .await
-            .map_err(|e| PhpException::default(format!("Database build failed: {}", e)))?;
+        let builder = libsql::Builder::new_local(url).flags(db_flags);
+
+        let db = match encryption_config {
+            Some(config) => builder.encryption_config(config),
+            None => builder,
+        }
+        .build()
+        .await
+        .map_err(|e| PhpException::default(format!("Database build failed: {}", e)))?;
 
         db.connect()
             .map_err(|e| PhpException::default(format!("Connection failed: {}", e)))

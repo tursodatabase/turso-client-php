@@ -272,17 +272,17 @@ pub struct WebhookPayload {
 }
 
 pub fn send_webhook_data(url: String, payload: &impl serde::Serialize) -> bool {
-
     if url.is_empty() {
         return false;
     }
 
     let client = match reqwest::blocking::Client::builder()
         .timeout(std::time::Duration::from_secs(20))
-        .build() {
-            Ok(client) => client,
-            Err(_) => return false,
-        };
+        .build()
+    {
+        Ok(client) => client,
+        Err(_) => return false,
+    };
 
     match client.post(url).json(payload).send() {
         Ok(_) => true,

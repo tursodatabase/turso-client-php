@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use crate::CONNECTION_REGISTRY;
+use crate::{utils::log_error::log_error_to_tmp, CONNECTION_REGISTRY};
 use ext_php_rs::prelude::PhpException;
 
 #[derive(Debug, Clone)]
@@ -34,18 +34,30 @@ impl<'a> ext_php_rs::convert::FromZval<'a> for ExtensionParams {
 }
 
 pub fn enable_load_extension(conn_id: String, onoff: Option<bool>) -> Result<(), PhpException> {
-    let conn_registry = CONNECTION_REGISTRY.lock().unwrap();
+    let conn_registry = CONNECTION_REGISTRY.lock().map_err(|e| {
+        let err_msg = format!("Mutex lock error: {}", e);
+        log_error_to_tmp(&err_msg);
+        PhpException::default(err_msg)
+    })?;
+
     let conn = conn_registry
         .get(&conn_id)
         .ok_or_else(|| PhpException::from("Connection not found"))?;
 
-    if Some(onoff.unwrap_or(false)).is_some() {
-        conn.load_extension_enable().unwrap();
+    // An omitted/null parameter behaves the same as `false` (disable).
+    if onoff.unwrap_or(false) {
+        conn.load_extension_enable().map_err(|e| {
+            let err_msg = format!("Failed to enable extension loading: {}", e);
+            log_error_to_tmp(&err_msg);
+            PhpException::default(err_msg)
+        })
     } else {
-        conn.load_extension_disable().unwrap();
+        conn.load_extension_disable().map_err(|e| {
+            let err_msg = format!("Failed to disable extension loading: {}", e);
+            log_error_to_tmp(&err_msg);
+            PhpException::default(err_msg)
+        })
     }
-
-    Ok(())
 }
 
 pub fn load_extension(
@@ -53,11 +65,21 @@ pub fn load_extension(
     dylib_path: &Path,
     entry_point: Option<&str>,
 ) -> Result<(), PhpException> {
-    let conn_registry = CONNECTION_REGISTRY.lock().unwrap();
-    let conn = conn_registry
-        .get(&conn_id)
-        .ok_or_else(|| PhpException::from("Connection not found"))?;
+    let conn_registry = CONNECTION_REGISTRY.lock().map_err(|e| {
+        let err_msg = format!("Mutex lock error: {}", e);
+        log_error_to_tmp(&err_msg);
+        PhpException::default(err_msg)
+    })?;
 
-    conn.load_extension(dylib_path, entry_point).unwrap();
-    Ok(())
+    let conn = conn_registry.get(&conn_id).ok_or_else(|| {
+        let err_msg = "Connection not found".to_string();
+        log_error_to_tmp(&err_msg);
+        PhpException::from(err_msg)
+    })?;
+
+    conn.load_extension(dylib_path, entry_point).map_err(|e| {
+        let err_msg = format!("Failed to load extension '{}': {}", dylib_path.display(), e);
+        log_error_to_tmp(&err_msg);
+        PhpException::default(err_msg)
+    })
 }

@@ -58,7 +58,11 @@ struct LibSQL {
     mode: String,
 
     /// Property representing the webhook URL to capture events.
-    #[prop]
+    ///
+    /// Registered under the documented name `cdc_url` (see
+    /// `libsql_php_extension.stubs.php`); without this override ext-php-rs
+    /// would camelCase it to `cdcUrl`, silently breaking the documented API.
+    #[php(prop, name = "cdc_url")]
     cdc_url: Option<String>,
 
     /// Property representing the connection ID.
@@ -233,7 +237,11 @@ impl LibSQL {
                 (conn, None)
             }
             "remote" => {
-                let conn = providers::remote::create_remote_connection(url, auth_token);
+                let conn =
+                    providers::remote::create_remote_connection(url, auth_token).map_err(|e| {
+                        log_error_to_tmp(&format!("Remote connection failed: {:?}", e));
+                        e
+                    })?;
                 (conn, None)
             }
             "remote_replica" => {
@@ -251,12 +259,20 @@ impl LibSQL {
                         sync_interval.clone(),
                         read_your_writes.clone(),
                         Some(encryption_key),
-                    ),
+                    )
+                    .map_err(|e| {
+                        log_error_to_tmp(&format!("Replica connection failed: {:?}", e));
+                        e
+                    })?,
                     true => providers::offline_write::create_offline_write_connection(
                         cleared_url.clone(),
                         auth_token,
                         sync_url,
-                    ),
+                    )
+                    .map_err(|e| {
+                        log_error_to_tmp(&format!("Offline write connection failed: {:?}", e));
+                        e
+                    })?,
                 };
                 (conn, Some(db))
             }
@@ -659,8 +675,7 @@ impl LibSQL {
                     self.conn_id.to_string(),
                     Path::new(&extension),
                     entry_point,
-                )
-                .unwrap();
+                )?;
             }
             Some(ExtensionParams::Array(extensions)) => {
                 for extension in extensions {
@@ -668,27 +683,37 @@ impl LibSQL {
                         self.conn_id.to_string(),
                         Path::new(&extension),
                         entry_point,
-                    )
-                    .unwrap();
+                    )?;
                 }
             }
-            None => Err(PhpException::default(
-                "No extension paths provided".to_string(),
-            ))
-            .unwrap(),
+            None => {
+                return Err(PhpException::default(
+                    "No extension paths provided".to_string(),
+                ))
+            }
         }
 
         Ok(())
     }
 
-    pub fn capture_it(&self, event_type: String, query: Option<String>, message: Option<String>) -> Result<bool, PhpException> {
+    pub fn capture_it(
+        &self,
+        event_type: String,
+        query: Option<String>,
+        message: Option<String>,
+    ) -> Result<bool, PhpException> {
+        let cdc_url = self
+            .cdc_url
+            .clone()
+            .ok_or_else(|| PhpException::default("CDC URL is not configured".to_string()))?;
+
         let payload = WebhookPayload {
             event_type,
             query: Some(query.unwrap_or("".to_string())),
             message: Some(message.unwrap_or("".to_string())),
         };
 
-        Ok(send_webhook_data(self.cdc_url.clone().expect("REASON").to_string(), &payload))
+        Ok(send_webhook_data(cdc_url, &payload))
     }
 }
 

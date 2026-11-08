@@ -154,7 +154,8 @@ impl OfflineWriteConnection {
                 log_error_to_tmp(&format!("Failed to set schema_initialized: {}", err));
             }
         }
-        let remote_conn = providers::remote::create_remote_connection(sync_url.clone(), auth_token);
+        let remote_conn =
+            providers::remote::create_remote_connection(sync_url.clone(), auth_token)?;
         let initial_online_status = crate::utils::runtime::is_reachable(&sync_url);
         let connection = Self {
             local_conn,
@@ -284,7 +285,7 @@ impl OfflineWriteConnection {
                 .await?;
             let mut rows = stmt.query(libsql::params::Params::None).await?;
             let mut schemas = Vec::new();
-            
+
             while let Some(row) = rows.next().await? {
                 let sql: String = row.get(0)?;
                 let modified_sql = self.add_if_not_exists(&sql);
@@ -306,7 +307,7 @@ impl OfflineWriteConnection {
                 .await?;
             let mut rows = stmt.query(libsql::params::Params::None).await?;
             let mut tables = Vec::new();
-            
+
             while let Some(row) = rows.next().await? {
                 let name: String = row.get(0)?;
                 tables.push(name);
@@ -394,11 +395,29 @@ impl OfflineWriteConnection {
         });
         if let Ok(mut rows) = query_result {
             while let Ok(Some(row)) = runtime().block_on(rows.next()) {
-                let id: i64 = row.get(0).unwrap();
-                let sql: String = row.get(1).unwrap();
-                let params_json: String = row.get(2).unwrap();
-                let op_type: String = row.get(3).unwrap();
-                let timestamp: i64 = row.get(4).unwrap();
+                // Skip entries that cannot be read from the journal instead of
+                // panicking: a corrupt `libsql_pending_ops` row must never crash
+                // the PHP process.
+                let id: i64 = match row.get(0) {
+                    Ok(value) => value,
+                    Err(_) => continue,
+                };
+                let sql: String = match row.get(1) {
+                    Ok(value) => value,
+                    Err(_) => continue,
+                };
+                let params_json: String = match row.get(2) {
+                    Ok(value) => value,
+                    Err(_) => continue,
+                };
+                let op_type: String = match row.get(3) {
+                    Ok(value) => value,
+                    Err(_) => continue,
+                };
+                let timestamp: i64 = match row.get(4) {
+                    Ok(value) => value,
+                    Err(_) => continue,
+                };
                 let json_value: JsonValue =
                     serde_json::from_str(&params_json).unwrap_or(JsonValue::Null);
                 let params = match json_value {
