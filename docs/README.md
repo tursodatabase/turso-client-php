@@ -32,6 +32,7 @@
 * [LibSQLStatement Class](LibSQLStatement-class.md)
 * [LibSQLTransaction Class](LibSQLTransaction-class.md)
 * [LibSQLResult Class](LibSQLResult-class.md)
+* [Constants and Fetch Modes](constants.md)
 
 ---
 
@@ -46,5 +47,6 @@
 
 ## Reference & Appendices
 
+* [Error Semantics](error-semantics.md) — what throws, when, and the exact messages
 * [API Reference (stubs)](../libsql_php_extension.stubs.php)
 * [License](../LICENSE)

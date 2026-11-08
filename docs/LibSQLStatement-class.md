@@ -207,3 +207,6 @@ storage class — parameters are no longer coerced to TEXT:
 > In offline-write mode (`sqld_offline_mode: true`), `$db->prepare()` is
 > not available at all — prepared statements bypass the offline write
 > journal (see [offline-writes-sqld-connection.md](offline-writes-sqld-connection.md)).
+>
+> The cross-cutting throw contract and the complete error-text table are
+> collected in [Error Semantics](error-semantics.md).

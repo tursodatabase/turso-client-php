@@ -44,7 +44,8 @@ class LibSQLResult
 
 The fetch mode (the `LibSQL::LIBSQL_*` constants) decides the shape of the
 returned data. Given a table with columns `id` and `name` and one row
-`(1, 'Ada')`:
+`(1, 'Ada')` — the complete constant reference (including `OPEN_*` flags)
+is [Constants and Fetch Modes](constants.md):
 
 | Constant | Value | Shape |
 | --- | --- | --- |
@@ -178,3 +179,6 @@ Notes:
 | Out-of-range column on `columnType()` | Does not throw; returns `"Null"` |
 | `finalize()` | Throws `Call to undefined method` (not implemented) |
 | `fetchSingle()` with no matching row | `[]` (empty array) |
+
+The cross-cutting throw contract and the complete error-text table are
+collected in [Error Semantics](error-semantics.md).

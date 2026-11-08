@@ -141,3 +141,6 @@ object's destructor at GC time.
 > In offline-write mode (`sqld_offline_mode: true`), `$db->transaction()`
 > is not available at all — explicit transactions bypass the offline write
 > journal (see [offline-writes-sqld-connection.md](offline-writes-sqld-connection.md)).
+>
+> The cross-cutting throw contract and the complete error-text table are
+> collected in [Error Semantics](error-semantics.md).
