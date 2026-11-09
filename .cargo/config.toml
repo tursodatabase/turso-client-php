@@ -3,3 +3,15 @@
 # See https://github.com/extphprs/ext-php-rs#requirements
 [target.x86_64-pc-windows-msvc]
 linker = "rust-lld"
+
+# PHP core symbols (zend_ce_*, std_object_handlers, sapi_module, ...) are
+# resolved at extension-load time from the running php binary. Apple's linker
+# rejects undefined symbols by default when targeting x86_64, so PHP extension
+# dylibs must allow dynamic lookup. (ld64 historically defaulted to this for
+# arm64; keep both targets explicit so a future toolchain bump can't break it.)
+# https://github.com/extphprs/ext-php-rs/issues/774
+[target.x86_64-apple-darwin]
+rustflags = ["-C", "link-arg=-Wl,-undefined,dynamic_lookup"]
+
+[target.aarch64-apple-darwin]
+rustflags = ["-C", "link-arg=-Wl,-undefined,dynamic_lookup"]
