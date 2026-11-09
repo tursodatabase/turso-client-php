@@ -1,49 +1,58 @@
+import os
 import sys
 import argparse
 import requests
-from dotenv import load_dotenv
-import os
 
-load_dotenv()
 
-def update_store(storage_id, file_content):
+def update_gist(gist_id, actor, file_content):
+    # Retrieve the GIST_TOKEN from the environment
+    token = os.getenv("GIST_TOKEN")
+    if not token:
+        print("GIST_TOKEN environment variable is not set.")
+        sys.exit(1)
+
     # Set up headers for the API request
     headers = {
-        "Accept": "application/json",
-        "User-Agent": "GitHub Actions",
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github+json"
     }
+
+    # Determine the file name to update based on the GitHub actor
+    file_name = "unstable_release_metadata.json" if actor == "pandanotabear" else "release_metadata.json"
 
     # Prepare the update data
     update_data = {
-        "data": file_content,
-        "source": "GitHub Actions"
+        "files": {
+            file_name: {
+                "content": file_content
+            }
+        }
     }
 
-    # Make the PATCH request to update the Store
-    base_url = "https://json-storage-six.vercel.app"
-
-    # For local testing, uncomment the following line and comment the above line
-    # base_url = "http://localhost:4500"
-    
-    response = requests.put(f"{base_url}/{storage_id}", json=update_data, headers=headers)
+    # Make the PATCH request to update the Gist
+    response = requests.patch(f"https://api.github.com/gists/{gist_id}", json=update_data, headers=headers)
 
     if response.status_code == 200:
-        print(f"Store ID '{storage_id}' updated successfully")
+        print(f"Gist '{file_name}' updated successfully")
     else:
-        print(f"Failed to update Store ID '{storage_id}': {response.status_code}")
+        print(f"Failed to update gist: {response.status_code}")
         print(response.json())
+        # Fail the job: a stale metadata channel is worse than a red run.
+        sys.exit(1)
+
 
 if __name__ == "__main__":
     # Parse command-line arguments
-    parser = argparse.ArgumentParser(description="Update or retrieve a Store.")
-    parser.add_argument("--storage-id", required=True, help="The ID of the Store.")
-    parser.add_argument("--file-content", help="The content to update the Store file with (required for update).")
+    parser = argparse.ArgumentParser(description="Update or retrieve a Gist.")
+    parser.add_argument("--gist-id", required=True, help="The ID of the Gist.")
+    parser.add_argument("--actor", help="The GitHub actor (required for update).")
+    parser.add_argument("--file-content", help="The content to update the Gist file with (required for update).")
 
     args = parser.parse_args()
 
-    # Update the Store if the actor and file content are provided
-    if args.storage_id and args.file_content:
-        update_store(args.storage_id, args.file_content)
+    # Update the Gist if the actor and file content are provided
+    if args.actor and args.file_content:
+        update_gist(args.gist_id, args.actor, args.file_content)
     else:
-        print("Please provide the storage ID and file content to update the Store.")
+        print("Please provide the actor and file content to update the Gist.")
         sys.exit(1)

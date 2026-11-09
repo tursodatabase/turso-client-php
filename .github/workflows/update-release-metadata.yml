@@ -50,7 +50,7 @@ jobs:
         env:
           TOKEN_VALHALLA: ${{ secrets.TOKEN_VALHALLA }}
         run: |
-          curl \
+          curl -f \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${TOKEN_VALHALLA}" \
             https://api.github.com/repos/${{ github.repository }}/releases/latest \
@@ -58,8 +58,9 @@ jobs:
 
       - name: Update Gist File
         env:
-          STORAGE_ID: ${{ secrets.STORAGE_ID }}
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
         run: |
           python scripts/release_metadata.py \
-            --storage-id $STORAGE_ID \
+            --gist-id ${{ secrets.GIST_ID || '99c0cc406968b50143539620dac2095e' }} \
+            --actor ${{ github.actor }} \
             --file-content "$(cat $GITHUB_WORKSPACE/release_metadata.json)"
