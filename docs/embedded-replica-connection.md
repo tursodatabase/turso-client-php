@@ -24,6 +24,7 @@ $config = [
 // Open a replica connection
 $libsql = new LibSQL(
     config: $config,
+    sqld_offline_mode: false,
     flags: LibSQL::OPEN_READWRITE | LibSQL::OPEN_CREATE,
     encryption_key: "",
     offline_writes: false
@@ -63,5 +64,5 @@ $libsql->sync();
 * 👉 [Offline Writes (Turso) Connection](offline-writes-turso-connection.md) — Connect libSQL with Offline Writes abillity from (with Turso)
 * 👉 [Offline Writes (libSQL Server/sqld) Connection](offline-writes-sqld-connection.md) — Connect libSQL with Offline Writes abillity from (with libSQL Server - self-host)
 * 👉 [Core API](LibSQL-class.md) — learn all available methods
-* 👉 [Transactions](transaction.md) — ensure atomic writes
-* 👉 [Sync](sync.md) — understand synchronization in detail
+* 👉 [Transactions API](LibSQL-class.md#initiates-a-new-database-transaction) — ensure atomic writes
+* 👉 [Sync API](LibSQL-class.md#sync-the-database) — understand synchronization in detail

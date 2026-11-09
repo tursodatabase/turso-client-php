@@ -1,0 +1,83 @@
+name: E2E Compatibility Matrix
+
+# Proves the extension compiles AND behaves identically on every PHP version
+# documented as supported in README.md ("Supported Versions": 8.1–8.5).
+#
+# One runner per PHP version, each with an isolated cargo target directory:
+# ext-php-rs generates PHP-version-specific FFI bindings at build time, so a
+# single `cargo build` is not a multi-version proof.
+#
+# The suite itself is dependency-free (tests/e2e/e2e.php) and offline — it
+# only touches the guaranteed-dead port 127.0.0.1:9.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    name: PHP ${{ matrix.php-versions }} E2E
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Keep in sync with README "Supported Versions" and tests/e2e/README.md.
+        php-versions: ['8.1', '8.2', '8.3', '8.4', '8.5']
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install nightly toolchain
+        uses: dtolnay/rust-toolchain@nightly
+
+      - name: Set up PHP ${{ matrix.php-versions }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-versions }}
+
+      # bindgen (via ext-php-rs) needs libclang to generate PHP-version bindings.
+      - name: Install build dependencies
+        run: sudo apt-get update && sudo apt-get install -y libclang-dev
+
+      - name: Cache build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            target
+          key: e2e-php-${{ matrix.php-versions }}-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+            e2e-php-${{ matrix.php-versions }}-${{ runner.os }}-
+
+      - name: Build extension for PHP ${{ matrix.php-versions }}
+        run: cargo build --quiet
+        env:
+          CARGO_TARGET_DIR: target/php${{ matrix.php-versions }}
+
+      - name: Run E2E compatibility suite
+        run: |
+          set -o pipefail
+          /usr/bin/php -n \
+            -d extension_dir="$PWD/target/php${{ matrix.php-versions }}/debug" \
+            -d extension=liblibsql_php.so \
+            tests/e2e/e2e.php 2>&1 | tee e2e-log.txt
+          test ${PIPESTATUS[0]} -eq 0
+        shell: bash
+
+      - name: Append report to job summary
+        if: always()
+        run: |
+          {
+            echo "### E2E result — PHP ${{ matrix.php-versions }}"
+            grep -E '^E2E-REPORT:' e2e-log.txt | tail -1 || echo '(no report line emitted)'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload E2E log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-log-php${{ matrix.php-versions }}
+          path: e2e-log.txt

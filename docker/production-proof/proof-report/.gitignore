@@ -1,0 +1,3 @@
+# Runtime artifacts land here; the report itself is reproducible content.
+*
+!.gitignore

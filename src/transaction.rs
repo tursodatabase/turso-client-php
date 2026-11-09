@@ -6,7 +6,7 @@ use ext_php_rs::prelude::*;
 use crate::{
     hooks,
     statement::LibSQLStatement,
-    utils::{query_params::QueryParameters, runtime::runtime},
+    utils::{log_error::log_error_to_tmp, query_params::QueryParameters, runtime::runtime},
     CONNECTION_REGISTRY, TRANSACTION_REGISTRY,
 };
 
@@ -21,6 +21,24 @@ pub struct LibSQLTransaction {
 
     /// The ID of the database connection associated with the transaction.
     pub conn_id: String,
+}
+
+/// Registry cleanup on garbage collection: rolls back an abandoned
+/// transaction and removes it from the transaction registry when the PHP
+/// object is destroyed, so open "BEGIN" blocks don't leak native
+/// transactions and hold locks for the life of the process. A transaction
+/// completed via commit()/rollback() removed its own entry already, which
+/// makes this a no-op in that case.
+impl Drop for LibSQLTransaction {
+    fn drop(&mut self) {
+        if let Ok(mut registry) = TRANSACTION_REGISTRY.lock() {
+            if let Some(tx) = registry.remove(&self.trx_id) {
+                // Best effort: if the rollback itself fails there's nothing
+                // left to report to PHP at destruction time.
+                let _ = runtime().block_on(async { tx.rollback().await });
+            }
+        }
+    }
 }
 
 #[php_impl]
@@ -48,10 +66,13 @@ impl LibSQLTransaction {
             _ => libsql::TransactionBehavior::Deferred,
         };
 
-        let trx = runtime().block_on(async {
-            let transaction = conn.transaction_with_behavior(trx_behavior).await;
-            transaction.unwrap()
-        });
+        let trx = runtime()
+            .block_on(async { conn.transaction_with_behavior(trx_behavior).await })
+            .map_err(|e| {
+                let err_msg = format!("Failed to begin transaction: {}", e);
+                log_error_to_tmp(&err_msg);
+                PhpException::default(err_msg)
+            })?;
 
         let trx_id = uuid::Uuid::new_v4().to_string();
         TRANSACTION_REGISTRY

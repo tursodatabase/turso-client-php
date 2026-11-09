@@ -106,18 +106,19 @@ Or non-interactive (example for PHP 8.3):
 turso-php-installer install -n --php-version=8.3
 ```
 
-📦 For alternative methods (manual build, Docker, ARM64), check [Installation Docs](docs/000-configuration.md).
+📦 For alternative methods (manual build, Docker, ARM64), check [Installation Docs](docs/configuration.md).
 
 ---
 
 ## Documentation
 
-* [Installation](docs/000-configuration.md)
+* [Installation](docs/configuration.md)
 * [Quick Start](docs/quick-start.md)
-* [Connections](docs/001-local-connection.md)
-* [API Reference](docs/005-LibSQL-class.md)
-* [Transactions](docs/012-transaction.md)
-* [Sync & Offline Writes](docs/015-sync.md)
+* [Connections](docs/local-connection.md)
+* [API Reference](docs/LibSQL-class.md)
+* [Transactions API](docs/LibSQL-class.md#initiates-a-new-database-transaction)
+* [Sync & Offline Writes](docs/offline-writes-turso-connection.md)
+* [Production Deployment](docs/production-deployment.md)
 
 👉 Full documentation available in the [docs/](docs/) folder.
 
@@ -149,6 +150,11 @@ make compose/up
 # or for arm64
 make compose-arm64/up
 ```
+
+The extension is also exercised the way a real deployment runs it —
+php-fpm 8.5 + nginx + the official libSQL server, with a workload through
+the public HTTP tier and a machine-readable `PROOF: {...}` report — via
+[`docker/production-proof/proof.sh`](docker/production-proof/README.md).
 
 For available commands:
 

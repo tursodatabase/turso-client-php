@@ -16,7 +16,10 @@ use crate::{utils::runtime::runtime, CONNECTION_REGISTRY};
 ///
 /// Returns a `PhpException` if the connection is not found or an error occurs during retrieval.
 pub fn get_is_autocommit(conn_id: String) -> Result<bool, PhpException> {
-    let conn_registry = CONNECTION_REGISTRY.lock().unwrap();
+    let conn_registry = CONNECTION_REGISTRY.lock().map_err(|e| {
+        let err_msg = format!("Mutex lock error: {}", e);
+        PhpException::default(err_msg)
+    })?;
 
     let conn = conn_registry
         .get(&conn_id)

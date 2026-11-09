@@ -1,0 +1,19 @@
+# Optional override: use the *local* sqld binary instead of the official
+# ghcr.io/tursodatabase/libsql-server image (for environments without ghcr
+# access, e.g. air-gapped runs or home labs behind restrictive egress).
+#
+# The binary is NOT committed: copy yours into the context first:
+#   cp ~/.turso/sqld docker/production-proof/sqld
+# (see docker/production-proof/.gitignore)
+#
+# Run exactly like the default topology, with the override file appended:
+#   docker compose -f docker/production-proof/compose.yaml \
+#                  -f docker/production-proof/compose.local-sqld.yaml ... 
+
+services:
+  sqld:
+    # Tagged + built locally from the copied binary instead of the registry.
+    image: turso-proof-sqld-fallback:local
+    build:
+      context: .
+      dockerfile: sqld.Dockerfile

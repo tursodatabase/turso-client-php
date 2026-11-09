@@ -116,6 +116,25 @@ Verify the extension is loaded:
 php -m | grep libsql
 ```
 
+### Environment Variables
+
+#### `LIBSQL_PHP_ERROR_LOG` (optional, off by default)
+
+The extension normally surfaces errors as PHP exceptions. For deeper diagnostics
+it can additionally append errors to a log file on the filesystem. This is
+**opt-in**: the extension never writes a log file unless you explicitly set
+`LIBSQL_PHP_ERROR_LOG` to a file path (absolute or relative to the current
+working directory).
+
+```bash
+# write diagnostics to /var/log/php/libsql.log
+export LIBSQL_PHP_ERROR_LOG=/var/log/php/libsql.log
+```
+
+Log lines are timestamped (`[unix-timestamp] message`) and appended. Note that
+entries can contain the SQL text of failed statements, so point it at a
+secured location rather than a shared directory.
+
 ---
 
 ## Next Steps

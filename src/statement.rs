@@ -11,9 +11,35 @@ use ext_php_rs::prelude::*;
 use ext_php_rs::{php_class, php_impl};
 
 use crate::{
-    utils::{query_params::QueryParameters, runtime::runtime},
+    utils::{log_error::log_error_to_tmp, query_params::QueryParameters, runtime::runtime},
     CONNECTION_REGISTRY, STATEMENT_REGISTRY,
 };
+
+/// Registry cleanup on garbage collection: finalizes the underlying
+/// statement and removes it from the statement registry when the PHP object
+/// is destroyed, so un-finalized statements don't leak native prepared
+/// statements (each one holds SQLite cursors and memory) for the life of the
+/// process. Explicit `finalize()` removes the same entry first, which makes
+/// this a no-op in that case.
+impl Drop for LibSQLStatement {
+    fn drop(&mut self) {
+        if let Ok(mut registry) = STATEMENT_REGISTRY.lock() {
+            if let Some(mut stmt) = registry.remove(&self.stmt_id) {
+                stmt.finalize();
+            }
+        }
+    }
+}
+
+/// Extracts the numeric placeholder index from a stored parameter key
+/// (`$1`, `?1`, `@1`) so positional bindings can be ordered deterministically.
+fn positional_index(key: &str) -> i64 {
+    key.chars()
+        .filter(|c| c.is_ascii_digit())
+        .collect::<String>()
+        .parse::<i64>()
+        .unwrap_or(0)
+}
 
 /// Represents a LibSQLStatement object for executing SQL queries and managing statements.
 #[php_class]
@@ -23,7 +49,7 @@ pub struct LibSQLStatement {
     /// The ID of the statement.
     pub stmt_id: String,
     pub stmt: String,
-    pub params: Arc<Mutex<HashMap<String, String>>>,
+    pub params: Arc<Mutex<HashMap<String, QueryValue>>>,
 }
 
 #[php_impl]
@@ -45,7 +71,13 @@ impl LibSQLStatement {
             .get(&conn_id)
             .ok_or_else(|| PhpException::from("Connection not found"))?;
 
-        let stmt = runtime().block_on(async { conn.prepare(sql).await.unwrap() });
+        let stmt = runtime()
+            .block_on(async { conn.prepare(sql).await })
+            .map_err(|e| {
+                let err_msg = format!("Failed to prepare statement: {}", e);
+                log_error_to_tmp(&err_msg);
+                PhpException::default(err_msg)
+            })?;
 
         let stmt_id = uuid::Uuid::new_v4().to_string();
         STATEMENT_REGISTRY
@@ -79,7 +111,10 @@ impl LibSQLStatement {
                     .trim_start_matches(|c| c == '@' || c == '$' || c == '?' || c == ':')
                     .to_string();
 
-                params.insert(clean_key, value.to_string());
+                // Preserve the typed value instead of coercing everything to
+                // TEXT: integers bind as INTEGER, floats as REAL, blobs as
+                // BLOB, etc.
+                params.insert(clean_key, value.clone());
             }
         }
 
@@ -122,7 +157,9 @@ impl LibSQLStatement {
                     format!("${}", index + 1)
                 };
 
-                params.insert(key, value.to_string());
+                // Preserve the typed value instead of coercing everything to
+                // TEXT.
+                params.insert(key, value.clone());
             }
         }
 
@@ -161,6 +198,13 @@ impl LibSQLStatement {
             .get_mut(&self.stmt_id)
             .ok_or_else(|| PhpException::from("Statement not found"))?;
 
+        // Reset before re-binding: a statement stepped to SQLITE_DONE keeps
+        // its previous bindings (SQLite retains them across the implicit
+        // reset that happens on the next step), and re-binding without a
+        // reset silently fails — every subsequent execute would re-use the
+        // first binding. sqlite3_reset is idempotent for a fresh statement.
+        stmt.reset();
+
         // Default parameters from `params` if none are provided
         let params = match parameters {
             Some(p) => p,
@@ -187,21 +231,25 @@ impl LibSQLStatement {
                                     } else {
                                         format!(":{}", key)
                                     };
-                                    (prefixed_key, QueryValue::Text(value.clone()))
+                                    (prefixed_key, value.clone())
                                 })
                                 .collect(),
                         ),
                         positional: None,
                     }
                 } else {
-                    // Use positional parameters
+                    // Positional parameters: keys carry the placeholder index
+                    // (`$1`, `?1`, `@1`). Sort by that index so the binding
+                    // order is deterministic regardless of hash-map iteration
+                    // order.
+                    let mut entries: Vec<(i64, QueryValue)> = params
+                        .iter()
+                        .map(|(key, value)| (positional_index(key), value.clone()))
+                        .collect();
+                    entries.sort_by_key(|(index, _)| *index);
+
                     QueryParameters {
-                        positional: Some(
-                            params
-                                .iter()
-                                .map(|(_, value)| QueryValue::Text(value.clone()))
-                                .collect(),
-                        ),
+                        positional: Some(entries.into_iter().map(|(_, value)| value).collect()),
                         named: None,
                     }
                 }
@@ -255,7 +303,7 @@ impl LibSQLStatement {
                         .lock()
                         .expect("Failed to lock params mutex")
                         .iter()
-                        .map(|(key, value)| (key.clone(), QueryValue::Text(value.clone())))
+                        .map(|(key, value)| (key.clone(), value.clone()))
                         .collect::<HashMap<String, QueryValue>>(),
                 ),
                 positional: None,

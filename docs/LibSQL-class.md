@@ -21,6 +21,7 @@ class LibSQL
 
    // Properties
    public $mode;
+   public $cdc_url;
 
    // Methods
    public function __construct(
@@ -35,18 +36,19 @@ class LibSQL
    public function isAutocommit(): bool;
    public function totalChanges(): int;
    public function lastInsertedId(): int;
-   public function execute(string $stmt, ?array $parameters = []): int;
+   public function execute(string $stmt, array $parameters = []): int;
    public function executeBatch(string $stmt): bool;
    public function query(string $stmt, array $parameters = [], bool $force_remote = false): LibSQLResult;
    public function transaction(?string $behavior = "DEFERRED"): LibSQLTransaction;
    public function prepare(string $sql): LibSQLStatement;
    public function close(): void;
-   public function sync(): void;
+   public function sync(?bool $log_info = false): void;
    public function checkConnectivity(): bool;
    public function getPendingOperationsCount(): int;
    public function isOnline(): bool;
    public function enableLoadExtension(?bool $onoff): void;
    public function loadExtensions(array|string $extension_paths): void;
+   public function captureIt(string $event_type, ?string $query, ?string $message): bool;
 }
 ```
 
@@ -54,11 +56,12 @@ class LibSQL
 
 - [Create a new LibSQL instance](LibSQL-class.md#create-a-new-libsql-instance)
 - [Retrieves the version of the LibSQL extension](LibSQL-class.md#retrieves-the-version-of-the-libsql-extension)
-- [Retrieves the number of rows changed by the last SQL statement](LibSQL-class.md#retrieves-the-number-of-rows-changed-by-the-last-sql-statement)
+- [Retrieves the number of rows changed by the last SQL statement (changes)](LibSQL-class.md#retrieves-the-number-of-rows-changed-by-the-last-sql-statement-changes)
 - [Checks if autocommit mode is enabled for the connection](LibSQL-class.md#checks-if-autocommit-mode-is-enabled-for-the-connection)
-- [Retrieves the number of rows changed by the last SQL statement](LibSQL-class.md#retrieves-the-number-of-rows-changed-by-the-last-sql-statement)
-- [Executes an SQL statement on the database](LibSQL-class.md#executes-a-batch-of-sql-statements-on-the-database)
-- [Executes a batch of SQL statements on the database](LibSQL-class.md#executes-an-sql-statement-on-the-database)
+- [Retrieves the total number of rows changed by the connection (totalChanges)](LibSQL-class.md#retrieves-the-total-number-of-rows-changed-by-the-connection-totalchanges)
+- [Retrieves the ID of the last inserted row](LibSQL-class.md#retrieves-the-id-of-the-last-inserted-row)
+- [Executes an SQL statement on the database](LibSQL-class.md#executes-an-sql-statement-on-the-database)
+- [Executes a batch of SQL statements on the database](LibSQL-class.md#executes-a-batch-of-sql-statements-on-the-database)
 - [Executes an SQL query on the database](LibSQL-class.md#executes-an-sql-query-on-the-database)
 - [Initiates a new database transaction](LibSQL-class.md#initiates-a-new-database-transaction)
 - [Prepares an SQL statement for execution](LibSQL-class.md#prepares-an-sql-statement-for-execution)
@@ -187,7 +190,7 @@ echo $version;
 
 ---
 
-### Retrieves the number of rows changed by the last SQL statement
+### Retrieves the number of rows changed by the last SQL statement (changes)
 
 ```php
 // Create a new LibSQL instance
@@ -202,6 +205,10 @@ echo "Number of Rows Changed: " . $changes;
 
 $db->close();
 ```
+
+`changes()` reports the rows affected by the most recent *modifying*
+statement on the connection; statements that don't change rows (`SELECT`,
+DDL like `CREATE TABLE`) leave the value unchanged.
 
 ---
 
@@ -222,7 +229,7 @@ $db->close();
 
 ---
 
-### Retrieves the number of rows changed by the last SQL statement
+### Retrieves the total number of rows changed by the connection (totalChanges)
 
 ```php
 // Create a new LibSQL instance
@@ -236,6 +243,17 @@ $changes = $db->totalChanges();
 echo "Number of Rows Changed: " . $changes;
 
 $db->close();
+```
+
+While `changes()` reports only the most recent statement,
+`totalChanges()` is the running count of every row change since the
+connection was opened:
+
+```php
+$db->execute("INSERT INTO t VALUES (1)");
+$db->execute("INSERT INTO t VALUES (1)");
+$db->execute("UPDATE t SET v = 2 WHERE v = 1"); // 2 rows
+$db->totalChanges(); // 4 — 2 inserts + 1 update touching 2 rows
 ```
 
 ---
@@ -312,6 +330,32 @@ foreach ($rows as $row) {
 $db->close();
 ```
 
+The result object and every fetch mode (associative / numeric / both / all /
+lazy streaming) are documented in
+[LibSQLResult Class](LibSQLResult-class.md).
+
+### Prepares an SQL statement for execution
+
+```php
+// Create a new LibSQL instance
+$db = new LibSQL("libsql:dbname=database.db");
+
+// Prepare an SQL statement for execution
+$sql = "SELECT * FROM users WHERE id = ?";
+$statement = $db->prepare($sql);
+
+// Execute the prepared statement with parameters
+$result = $statement->query([1]);
+var_dump($result->fetchArray());
+
+$db->close();
+```
+
+Preparation failures throw (`Failed to prepare statement: ...`) instead of
+returning a falsy value, so wrap the call in `try/catch` when the input is
+not guaranteed valid. The full statement API — binding, reuse, metadata —
+is documented in [LibSQLStatement Class](LibSQLStatement-class.md).
+
 ### Initiates a new database transaction
 
 ```php
@@ -336,27 +380,9 @@ if ($another_transaction) {
 $db->close();
 ```
 
-### Prepares an SQL statement for execution
-
-```php
-// Create a new LibSQL instance
-$db = new LibSQL("libsql:dbname=database.db");
-
-// Prepare an SQL statement for execution
-$sql = "SELECT * FROM users WHERE id = ?";
-$statement = $db->prepare($sql);
-
-if ($statement) {
-    // Execute the prepared statement with parameters
-    $result = $statement->query([1]);
-    var_dump($result->fetchArray());
-} else {
-    // Handle error
-    echo "Failed to prepare statement.";
-}
-
-$db->close();
-```
+Transaction semantics (behaviors, `query()` shape, automatic rollback of
+abandoned transactions) are documented in
+[LibSQLTransaction Class](LibSQLTransaction-class.md).
 
 ### Closes the database connection
 
@@ -368,9 +394,14 @@ $db->close();
 
 ```php
 $db->sync();
+
+// sqld offline-write flavor: fresh journal is replayed to the remote
+$db->sync(true); // true = log sync progress
 ```
 
-_NOTE: Embedded Replica / Offline Writes Only_
+_NOTE: Embedded Replica / Offline Writes Only_ — push-sync by hand for the
+embedded replica, and for the journaled offline-write mode it replays the
+local write journal (the pending operations) to the remote database.
 
 ### Checks the connectivity of the database server
 
@@ -380,6 +411,11 @@ $db->checkConnectivity();
 
 _NOTE: Offline Writes (sqld/libsql-server) Only_
 
+The probe goes to the exact host the connection was configured with
+(`libsql://`, `ws://` and `wss://` URLs normalize to plain `https://`) —
+the hostname is never rewritten, so an unresolvable database host reports
+offline even when the platform it lives on is up.
+
 ### Returns the number of pending operations
 
 ```php
@@ -387,6 +423,13 @@ $db->getPendingOperationsCount();
 ```
 
 _NOTE: Offline Writes (sqld/libsql-server) Only_
+
+In offline-write mode (`sqld_offline_mode: true`) `prepare()` and
+`transaction()` are unavailable: both would bypass the local write journal
+that `sync()` replays to the remote database. Use `execute()` / `query()`
+with bound parameters — those are captured as pending operations, counted
+here, and pushed on the next sync.
+
 
 ### Checks if the database connection is online
 
@@ -407,3 +450,29 @@ $db->enableLoadExtension(true); // or false
 ```php
 $db->loadExtensions(["extension1", "extension2"]);
 ```
+
+### Capture events to a webhook (captureIt)
+
+`captureIt()` sends a small JSON payload to the webhook configured on the
+connection's `cdc_url` property — useful for change-data-capture style
+producers:
+
+```php
+$db = new LibSQL(":memory:");
+$db->cdc_url = "https://example.com/hooks/libsql"; // destination
+
+$delivered = $db->captureIt(
+    "query",                 // event_type (required)
+    "SELECT * FROM users",   // query — optional, defaults to ""
+    "failed to fulfill"      // message — optional, defaults to ""
+);
+// true when the webhook responded, false when delivery failed
+```
+
+Behavior:
+
+* Events are only sent when `cdc_url` is configured. When `cdc_url` is
+  empty, `captureIt()` returns `false` silently; when it is `null`, it
+  throws `CDC URL is not configured` instead.
+* Delivery failures (unreachable host, timeouts) are reported by returning
+  `false`, not by throwing.

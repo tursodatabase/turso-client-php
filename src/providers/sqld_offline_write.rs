@@ -15,6 +15,11 @@ pub struct OfflineWriteConnection {
     pub remote_url: String,
     pub is_online: Arc<Mutex<bool>>,
     pub pending_operations: Arc<Mutex<Vec<PendingOperation>>>,
+    /// Per-connection cache for the online-status check: `(checked_at, status)`.
+    /// Instance-scoped so connections to different hosts are checked
+    /// independently (the previous implementation shared one process-global
+    /// cache keyed to nothing).
+    pub online_cache: Arc<Mutex<Option<(Instant, bool)>>>,
 }
 #[derive(Debug, Clone)]
 pub struct PendingOperation {
@@ -113,10 +118,17 @@ impl OfflineWriteConnection {
                     Ok(false)
                 }
             })
-            .map_err(|err: libsql::Error| {
-                let err_msg = format!("DB check failed: {}", err);
-                log_error_to_tmp(&err_msg);
-                PhpException::default(err_msg)
+            .or_else(|err: libsql::Error| {
+                // A fresh database has no libsql_metadata table yet — that is
+                // not an error, it just means this database was never
+                // initialized. Only surface unexpected failures.
+                if err.to_string().contains("no such table") {
+                    Ok(false)
+                } else {
+                    let err_msg = format!("DB check failed: {}", err);
+                    log_error_to_tmp(&err_msg);
+                    Err(PhpException::default(err_msg))
+                }
             })?;
         if !already_initialized {
             if let Err(err) = runtime().block_on(async {
@@ -154,7 +166,8 @@ impl OfflineWriteConnection {
                 log_error_to_tmp(&format!("Failed to set schema_initialized: {}", err));
             }
         }
-        let remote_conn = providers::remote::create_remote_connection(sync_url.clone(), auth_token);
+        let remote_conn =
+            providers::remote::create_remote_connection(sync_url.clone(), auth_token)?;
         let initial_online_status = crate::utils::runtime::is_reachable(&sync_url);
         let connection = Self {
             local_conn,
@@ -162,6 +175,7 @@ impl OfflineWriteConnection {
             remote_url: sync_url.clone(),
             is_online: Arc::new(Mutex::new(initial_online_status)),
             pending_operations: Arc::new(Mutex::new(Vec::new())),
+            online_cache: Arc::new(Mutex::new(None)),
         };
         if initial_online_status {
             let _ = connection.initial_sync_if_needed();
@@ -174,21 +188,23 @@ impl OfflineWriteConnection {
     ///
     /// # Caching
     ///
-    /// The result of this function is cached for 5 seconds. If the function is called
-    /// multiple times within that time frame, the cached value is returned. This is
-    /// done to avoid frequent HTTP requests to check the online status of the
-    /// remote database.
+    /// The result of this function is cached for 5 seconds per connection. If
+    /// the function is called multiple times within that time frame, the
+    /// cached value is returned. This is done to avoid frequent HTTP requests
+    /// to check the online status of the remote database. The cache lives on
+    /// the connection instance, so two offline-write connections pointed at
+    /// different hosts never pollute each other's status.
     ///
     /// # Note
     ///
-    /// This function does not check if the remote connection is currently available
-    /// or if the last synchronization attempt was successful. It only checks if the
-    /// remote URL is reachable.
+    /// This function does not check if the remote connection is currently
+    /// available or if the last synchronization attempt was successful. It
+    /// only checks if the remote URL is reachable.
     pub fn is_online(&self) -> bool {
-        // Cache status for 5 seconds
-        static LAST_CHECK: Mutex<Option<(Instant, bool)>> = Mutex::new(None);
-
-        let mut last_check = LAST_CHECK.lock().unwrap();
+        let mut last_check = self
+            .online_cache
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
         if let Some((time, status)) = *last_check {
             if time.elapsed() < Duration::from_secs(5) {
                 return status;
@@ -284,7 +300,7 @@ impl OfflineWriteConnection {
                 .await?;
             let mut rows = stmt.query(libsql::params::Params::None).await?;
             let mut schemas = Vec::new();
-            
+
             while let Some(row) = rows.next().await? {
                 let sql: String = row.get(0)?;
                 let modified_sql = self.add_if_not_exists(&sql);
@@ -306,7 +322,7 @@ impl OfflineWriteConnection {
                 .await?;
             let mut rows = stmt.query(libsql::params::Params::None).await?;
             let mut tables = Vec::new();
-            
+
             while let Some(row) = rows.next().await? {
                 let name: String = row.get(0)?;
                 tables.push(name);
@@ -394,11 +410,29 @@ impl OfflineWriteConnection {
         });
         if let Ok(mut rows) = query_result {
             while let Ok(Some(row)) = runtime().block_on(rows.next()) {
-                let id: i64 = row.get(0).unwrap();
-                let sql: String = row.get(1).unwrap();
-                let params_json: String = row.get(2).unwrap();
-                let op_type: String = row.get(3).unwrap();
-                let timestamp: i64 = row.get(4).unwrap();
+                // Skip entries that cannot be read from the journal instead of
+                // panicking: a corrupt `libsql_pending_ops` row must never crash
+                // the PHP process.
+                let id: i64 = match row.get(0) {
+                    Ok(value) => value,
+                    Err(_) => continue,
+                };
+                let sql: String = match row.get(1) {
+                    Ok(value) => value,
+                    Err(_) => continue,
+                };
+                let params_json: String = match row.get(2) {
+                    Ok(value) => value,
+                    Err(_) => continue,
+                };
+                let op_type: String = match row.get(3) {
+                    Ok(value) => value,
+                    Err(_) => continue,
+                };
+                let timestamp: i64 = match row.get(4) {
+                    Ok(value) => value,
+                    Err(_) => continue,
+                };
                 let json_value: JsonValue =
                     serde_json::from_str(&params_json).unwrap_or(JsonValue::Null);
                 let params = match json_value {

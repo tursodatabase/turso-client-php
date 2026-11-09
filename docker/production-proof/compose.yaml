@@ -1,0 +1,81 @@
+# Networks are split so the OFFLINE window is surgically safe:
+# proof.sh disconnects app FROM server-net (losing sqld only) while the
+# nginx→fpm path (web-net) keeps serving traffic — exactly like a real
+# "the server is unreachable" outage that doesn't break the web tier.
+networks:
+  web-net:
+  server-net:
+
+services:
+  sqld:
+    # Official libSQL server (Turso's sqld) — the "live endpoint".
+    image: ghcr.io/tursodatabase/libsql-server:latest
+    networks:
+      - server-net
+    environment:
+      SQLD_DB_PATH: /var/lib/sqld/proof.db
+    volumes:
+      - sqld-data:/var/lib/sqld
+    # NO compose healthcheck: the official image ships no network tools and
+    # its shell is dash (no /dev/tcp). Readiness is asserted by the runner --
+    # it polls a direct Hrana "SELECT 1" until sqld answers (step 0 of
+    # phase main / persist-server).
+
+  app:
+    build:
+      context: ../..
+      dockerfile: docker/production-proof/Dockerfile
+    networks:
+      - web-net
+      - server-net
+    depends_on:
+      - sqld
+    expose:
+      - "9000"
+    volumes:
+      - app-data:/var/www/storage
+    environment:
+      SQLD_HTTP_ADDR: http://sqld:8080
+      LIBSQL_DB_FILE: /var/www/storage/proof.db
+
+  web:
+    image: nginx:alpine
+    networks:
+      - web-net
+    depends_on:
+      - app
+    ports:
+      - "6969:80"
+    volumes:
+      - ./default.conf:/etc/nginx/conf.d/default.conf:ro
+      # nginx needs the same PHP files to hand SCRIPT_FILENAME to fpm.
+      - type: bind
+        source: ./app
+        target: /var/www
+        read_only: true
+
+  proof:
+    # Same image as `app` (has php-cli + curl + the packaged extension).
+    build:
+      context: ../..
+      dockerfile: docker/production-proof/Dockerfile
+    profiles: ["proof"]
+    networks:
+      - web-net
+      - server-net
+    depends_on:
+      - sqld
+      - web
+    volumes:
+      - ./proof-report:/proof-report
+      - app-data:/var/www/storage
+      - ./run-proof.php:/run-proof.php:ro
+    environment:
+      WEB_BASE_URL: http://web
+      SQLD_HTTP_ADDR: http://sqld:8080
+      LIBSQL_DB_FILE: /var/www/storage/proof.db
+    entrypoint: ["php", "-d", "error_reporting=E_ALL", "/run-proof.php"]
+
+volumes:
+  sqld-data:
+  app-data:

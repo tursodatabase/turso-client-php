@@ -1,3 +1,5 @@
+use ext_php_rs::prelude::PhpException;
+
 use crate::utils::runtime::runtime;
 
 /// Creates a new remote replica connection to a libSQL database.
@@ -17,28 +19,17 @@ use crate::utils::runtime::runtime;
 ///
 /// # Returns
 ///
-/// A tuple containing:
+/// A `Result` containing a tuple with:
 /// - A `libsql::Database` object representing the database.
 /// - A `libsql::Connection` object representing the connection.
+/// or a `PhpException` if the database fails to build or the connection cannot
+/// be established.
 ///
-/// # Panics
+/// # Errors
 ///
-/// This function will panic if:
+/// Returns a `PhpException` if:
 /// - The database fails to build.
 /// - The connection to the database cannot be established.
-///
-/// # Examples
-///
-/// ```
-/// let (db, conn) = create_remote_replica_connection(
-///     "https://example.com/db".to_string(),
-///     "auth_token".to_string(),
-///     "https://example.com/sync".to_string(),
-///     std::time::Duration::from_secs(5),
-///     true,
-///     Some("encryption_key".to_string()),
-/// );
-/// ```
 pub fn create_remote_replica_connection(
     url: String,
     auth_token: String,
@@ -46,27 +37,30 @@ pub fn create_remote_replica_connection(
     sync_interval: std::time::Duration,
     read_your_writes: bool,
     encryption_key: Option<String>,
-) -> (libsql::Database, libsql::Connection) {
-    let (db, conn) = runtime().block_on(async {
-        let encryption_config = if let Some(key) = encryption_key {
-            Some(libsql::EncryptionConfig::new(
+) -> Result<(libsql::Database, libsql::Connection), PhpException> {
+    runtime().block_on(async {
+        let builder = libsql::Builder::new_remote_replica(url, sync_url, auth_token);
+
+        let builder = if let Some(key) = encryption_key {
+            builder.encryption_config(libsql::EncryptionConfig::new(
                 libsql::Cipher::Aes256Cbc,
                 key.as_bytes().to_vec().into(),
             ))
         } else {
-            None
+            builder
         };
 
-        let db = libsql::Builder::new_remote_replica(url, sync_url, auth_token)
-            .encryption_config(encryption_config.unwrap())
+        let db = builder
             .read_your_writes(read_your_writes)
             .sync_interval(sync_interval)
             .build()
             .await
-            .unwrap();
-        let conn = db.connect().unwrap();
-        (db, conn)
-    });
+            .map_err(|e| PhpException::default(format!("Replica database build failed: {}", e)))?;
 
-    (db, conn)
+        let conn = db
+            .connect()
+            .map_err(|e| PhpException::default(format!("Replica connection failed: {}", e)))?;
+
+        Ok((db, conn))
+    })
 }
