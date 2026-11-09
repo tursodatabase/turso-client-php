@@ -118,6 +118,7 @@ turso-php-installer install -n --php-version=8.3
 * [API Reference](docs/LibSQL-class.md)
 * [Transactions API](docs/LibSQL-class.md#initiates-a-new-database-transaction)
 * [Sync & Offline Writes](docs/offline-writes-turso-connection.md)
+* [Production Deployment](docs/production-deployment.md)
 
 👉 Full documentation available in the [docs/](docs/) folder.
 

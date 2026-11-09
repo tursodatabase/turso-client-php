@@ -26,6 +26,13 @@
 
 ---
 
+## Production
+
+* [Production Deployment Guide](production-deployment.md) — flavors, the outage playbook, durability, concurrency discipline, and upgrading with the proof as the gate
+* [Production Usage Proof (docker compose)](../docker/production-proof/README.md) — the runnable claim → assert map behind the guide
+
+---
+
 ## Core API
 
 * [LibSQL Class](LibSQL-class.md)
