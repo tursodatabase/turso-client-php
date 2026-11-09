@@ -48,11 +48,12 @@ jobs:
       - name: Fetch the Latest Release Data
         id: fetch_release
         env:
-          TOKEN_VALHALLA: ${{ secrets.TOKEN_VALHALLA }}
+          GITHUB_API_TOKEN: ${{ github.token }}
         run: |
           curl -f \
             -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${TOKEN_VALHALLA}" \
+            -H "Authorization: Bearer ${GITHUB_API_TOKEN}" \
+            -H "User-Agent: gh-actions-${{ github.workflow }}" \
             https://api.github.com/repos/${{ github.repository }}/releases/latest \
             -o $GITHUB_WORKSPACE/release_metadata.json
 
