@@ -124,7 +124,7 @@ impl<'a> FromZval<'a> for QueryParameters {
                     ArrayKey::ZendString(key) => {
                         // The interned zend_string payload may not be valid
                         // UTF-8; only bind it as a named parameter if it is.
-                        if let Some(key_str) = key.as_str() {
+                        if let Ok(key_str) = key.as_str() {
                             if let Some(query_value) = query_value_from_zval(value) {
                                 named.insert(key_str.to_string(), query_value);
                             }
