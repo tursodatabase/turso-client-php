@@ -13,7 +13,7 @@ permissions:
 jobs:
   update-release:
     name: Update release metadata
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     # Run the job only when triggered manually or when the triggering workflow completed successfully
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
