@@ -1,0 +1,87 @@
+# Dependabot configuration — tuned to stay out of the release flow.
+#
+# Goals:
+#   1. Keep dependencies fresh with ONE grouped PR per ecosystem per week.
+#   2. Never propose framework updates that break the documented and CI-verified
+#      PHP 8.1–8.5 matrix (see e2e-matrix.yml) — those are reviewed manually.
+#   3. Off-hours scheduling so maintenance PRs don't collide with releases.
+
+version: 2
+
+updates:
+  # ── Rust (Cargo.lock) ────────────────────────────────────────────────
+  - package-ecosystem: "cargo"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+    # One grouped PR for the whole lockfile, no surprise stream of single-dep PRs.
+    groups:
+      rust-dependencies:
+        patterns:
+          - "*"
+    # Never propose builds that cannot pass the PHP 8.1–8.5 matrix:
+    # ext-php-rs 0.16.x generates bindings for a newer PHP ABI and fails to
+    # compile against PHP < 8.5 headers. Bump only manually, with full CI matrix.
+    ignore:
+      - dependency-name: "ext-php-rs"
+      - dependency-name: "ext-php-rs-derive"
+      - dependency-name: "ext-php-rs-bindgen"
+      - dependency-name: "ext-php-rs-build"
+      # The database engine + parser are release-critical: a bad bump here
+      # would ship in every build, and the e2e matrix is the only safety net.
+      # Bump these only via a deliberate, matrix-verified release.
+      - dependency-name: "libsql"
+      - dependency-name: "libsql-replication"
+      - dependency-name: "libsql-sqlite3-parser"
+    # Keep the backlog tiny; grouped PR is easy to review.
+    open-pull-requests-limit: 2
+    labels:
+      - "dependencies"
+      - "rust"
+    commit-message:
+      prefix: "chore(deps):"
+    # Avoid shipping broken/yanked fresh releases; let the ecosystem settle first.
+    cooldown:
+      default-days: 3
+
+  # ── Composer (dev-time only — the e2e matrix does not consume this) ───
+  - package-ecosystem: "composer"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+    groups:
+      composer-dependencies:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 2
+    labels:
+      - "dependencies"
+      - "composer"
+    commit-message:
+      prefix: "chore(deps):"
+    cooldown:
+      default-days: 3
+
+  # ── GitHub Actions ────────────────────────────────────────────────────
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+    groups:
+      github-actions-dependencies:
+        patterns:
+          - "*"
+    open-pull-requests-limit: 2
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "chore(ci):"
+    cooldown:
+      default-days: 3
