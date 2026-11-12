@@ -419,7 +419,7 @@ jobs:
           
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Get the release version from the tag
         shell: bash
@@ -495,7 +495,7 @@ jobs:
 
 
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             ${{ env.ASSET }}

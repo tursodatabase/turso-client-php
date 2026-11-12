@@ -28,7 +28,7 @@ jobs:
         php-versions: ['8.1', '8.2', '8.3', '8.4', '8.5']
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install nightly toolchain
         uses: dtolnay/rust-toolchain@nightly
@@ -43,7 +43,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libclang-dev
 
       - name: Cache build artifacts
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
@@ -77,7 +77,7 @@ jobs:
 
       - name: Upload E2E log
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-log-php${{ matrix.php-versions }}
           path: e2e-log.txt
