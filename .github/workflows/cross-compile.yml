@@ -18,70 +18,70 @@ jobs:
         include:
           # Linux x64 - PHP8.1 - NTS
           - build: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
+            os: ubuntu-24.04
             target: x86_64-unknown-linux-gnu
             php-versions: '8.1'
             phpts: 'nts'
             
           # Linux x64 - PHP8.2 - NTS
           - build: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
+            os: ubuntu-24.04
             target: x86_64-unknown-linux-gnu
             php-versions: '8.2'
             phpts: 'nts'
           
           # Linux x64 - PHP8.3 - NTS
           - build: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
+            os: ubuntu-24.04
             target: x86_64-unknown-linux-gnu
             php-versions: '8.3'
             phpts: 'nts'
           
           # Linux x64 - PHP8.4 - NTS
           - build: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
+            os: ubuntu-24.04
             target: x86_64-unknown-linux-gnu
             php-versions: '8.4'
             phpts: 'nts'
 
           # Linux x64 - PHP8.5 - NTS
           - build: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
+            os: ubuntu-24.04
             target: x86_64-unknown-linux-gnu
             php-versions: '8.5'
             phpts: 'nts'
 
           # Linux x64 - PHP8.1 - TS
           - build: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
+            os: ubuntu-24.04
             target: x86_64-unknown-linux-gnu
             php-versions: '8.1'
             phpts: 'ts'
             
           # Linux x64 - PHP8.2 - TS
           - build: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
+            os: ubuntu-24.04
             target: x86_64-unknown-linux-gnu
             php-versions: '8.2'
             phpts: 'ts'
           
           # Linux x64 - PHP8.3 - TS
           - build: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
+            os: ubuntu-24.04
             target: x86_64-unknown-linux-gnu
             php-versions: '8.3'
             phpts: 'ts'
           
           # Linux x64 - PHP8.4 - TS
           - build: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
+            os: ubuntu-24.04
             target: x86_64-unknown-linux-gnu
             php-versions: '8.4'
             phpts: 'ts'
 
           # Linux x64 - PHP8.5 - TS
           - build: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
+            os: ubuntu-24.04
             target: x86_64-unknown-linux-gnu
             php-versions: '8.5'
             phpts: 'ts'
