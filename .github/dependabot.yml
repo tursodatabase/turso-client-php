@@ -21,6 +21,9 @@ updates:
       rust-dependencies:
         patterns:
           - "*"
+        update-types:
+          - minor
+          - patch
     # Never propose builds that cannot pass the PHP 8.1–8.5 matrix:
     # ext-php-rs 0.16.x generates bindings for a newer PHP ABI and fails to
     # compile against PHP < 8.5 headers. Bump only manually, with full CI matrix.
@@ -57,6 +60,9 @@ updates:
       composer-dependencies:
         patterns:
           - "*"
+        update-types:
+          - minor
+          - patch
     open-pull-requests-limit: 2
     labels:
       - "dependencies"
@@ -77,6 +83,9 @@ updates:
       github-actions-dependencies:
         patterns:
           - "*"
+        update-types:
+          - minor
+          - patch
     open-pull-requests-limit: 2
     labels:
       - "dependencies"
