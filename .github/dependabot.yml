@@ -29,6 +29,12 @@ updates:
       - dependency-name: "ext-php-rs-derive"
       - dependency-name: "ext-php-rs-bindgen"
       - dependency-name: "ext-php-rs-build"
+      # The database engine + parser are release-critical: a bad bump here
+      # would ship in every build, and the e2e matrix is the only safety net.
+      # Bump these only via a deliberate, matrix-verified release.
+      - dependency-name: "libsql"
+      - dependency-name: "libsql-replication"
+      - dependency-name: "libsql-sqlite3-parser"
     # Keep the backlog tiny; grouped PR is easy to review.
     open-pull-requests-limit: 2
     labels:
