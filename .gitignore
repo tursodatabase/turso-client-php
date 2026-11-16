@@ -18,3 +18,4 @@ src/*.bak
 vendor/
 mergenation.php
 *.log
+.idea

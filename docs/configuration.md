@@ -4,7 +4,7 @@
 
 Before installing **Turso Client PHP**, ensure you have the following:
 
-* **PHP** ≥ 8.1 (supports 8.1, 8.2, 8.3, 8.4)
+* **PHP** ≥ 8.1 (supports 8.1, 8.2, 8.3, 8.4, 8.5)
 * **Composer** (for installer package)
 * **Rust nightly toolchain** (if building from source)
 * **Git**
@@ -12,7 +12,7 @@ Before installing **Turso Client PHP**, ensure you have the following:
 
 Supported platforms:
 
-* ✅ Linux
+* ✅ Linux (`x86_64`, `arm64`)
 * ✅ macOS
 * ✅ Windows / WSL
 
@@ -55,7 +55,7 @@ This will guide you step-by-step.
 turso-php-installer install -n --php-version=8.3
 ```
 
-You can specify PHP versions (`8.1`, `8.2`, `8.3`, `8.4`).
+You can specify PHP versions (`8.1`, `8.2`, `8.3`, `8.4`, `8.5`).
 
 ---
 
@@ -88,7 +88,7 @@ You can also run inside a Docker container:
 make compose/up
 ```
 
-For Apple Silicon / ARM64 machines:
+For ARM64 development environments:
 
 ```bash
 make compose-arm64/up
