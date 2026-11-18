@@ -57,11 +57,11 @@ jobs:
             https://api.github.com/repos/${{ github.repository }}/releases/latest \
             -o $GITHUB_WORKSPACE/release_metadata.json
 
-      - name: Update Gist File
+      - name: Upload Release Metadata Asset
         env:
-          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           python scripts/release_metadata.py \
-            --gist-id ${{ secrets.GIST_ID || '99c0cc406968b50143539620dac2095e' }} \
+            --release-id "$(python -c "import json; print(json.load(open('$GITHUB_WORKSPACE/release_metadata.json'))['id'])")" \
             --actor ${{ github.actor }} \
-            --file-content "$(cat $GITHUB_WORKSPACE/release_metadata.json)"
+            --file-path "$GITHUB_WORKSPACE/release_metadata.json"
