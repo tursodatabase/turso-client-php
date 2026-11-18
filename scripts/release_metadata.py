@@ -4,38 +4,30 @@ import argparse
 import requests
 
 
-def update_gist(gist_id, actor, file_content):
-    # Retrieve the GIST_TOKEN from the environment
-    token = os.getenv("GIST_TOKEN")
+def upload_release_asset(token, release_id, actor, file_path):
+    # Retrieve the GITHUB_TOKEN from the environment
+    token = token or os.getenv("GITHUB_TOKEN")
     if not token:
-        print("GIST_TOKEN environment variable is not set.")
+        print("GITHUB_TOKEN environment variable is not set.")
         sys.exit(1)
 
-    # Set up headers for the API request
     headers = {
         "Authorization": f"Bearer {token}",
         "Accept": "application/vnd.github+json"
     }
 
-    # Determine the file name to update based on the GitHub actor
-    file_name = "unstable_release_metadata.json" if actor == "pandanotabear" else "release_metadata.json"
+    asset_name = "unstable_release_metadata.json" if actor == "pandanotabear" else "release_metadata.json"
 
-    # Prepare the update data
-    update_data = {
-        "files": {
-            file_name: {
-                "content": file_content
-            }
-        }
-    }
+    url = f"https://api.github.com/repos/tursodatabase/turso-client-php/releases/{release_id}/assets"
 
-    # Make the PATCH request to update the Gist
-    response = requests.patch(f"https://api.github.com/gists/{gist_id}", json=update_data, headers=headers)
+    with open(file_path, "rb") as f:
+        files = {"file": (asset_name, f, "application/json")}
+        response = requests.post(url, files=files, headers=headers)
 
-    if response.status_code == 200:
-        print(f"Gist '{file_name}' updated successfully")
+    if response.status_code in (200, 201):
+        print(f"Release asset '{asset_name}' uploaded successfully")
     else:
-        print(f"Failed to update gist: {response.status_code}")
+        print(f"Failed to upload release asset: {response.status_code}")
         print(response.json())
         # Fail the job: a stale metadata channel is worse than a red run.
         sys.exit(1)
@@ -43,16 +35,15 @@ def update_gist(gist_id, actor, file_content):
 
 if __name__ == "__main__":
     # Parse command-line arguments
-    parser = argparse.ArgumentParser(description="Update or retrieve a Gist.")
-    parser.add_argument("--gist-id", required=True, help="The ID of the Gist.")
-    parser.add_argument("--actor", help="The GitHub actor (required for update).")
-    parser.add_argument("--file-content", help="The content to update the Gist file with (required for update).")
+    parser = argparse.ArgumentParser(description="Upload the extension release metadata to a GitHub release.")
+    parser.add_argument("--release-id", required=True, help="The ID of the GitHub release to attach the metadata asset to.")
+    parser.add_argument("--actor", help="The GitHub actor (used to pick the metadata asset name).")
+    parser.add_argument("--file-path", required=True, help="Path to the release metadata file to upload.")
 
     args = parser.parse_args()
 
-    # Update the Gist if the actor and file content are provided
-    if args.actor and args.file_content:
-        update_gist(args.gist_id, args.actor, args.file_content)
+    if args.release_id and args.actor and args.file_path:
+        upload_release_asset(os.getenv("GITHUB_TOKEN"), args.release_id, args.actor, args.file_path)
     else:
-        print("Please provide the actor and file content to update the Gist.")
+        print("Please provide release-id, actor and file-path.")
         sys.exit(1)
