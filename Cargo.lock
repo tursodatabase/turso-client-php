@@ -1706,7 +1706,7 @@ dependencies = [
 name = "libsql_php"
 version = "1.7.0"
 dependencies = [
- "base64 0.22.1",
+ "base64 0.23.1",
  "chrono",
  "ext-php-rs",
  "lazy_static",
