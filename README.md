@@ -46,7 +46,7 @@
 | 8.5           | TS / NTS        |
 
 **TS** = Thread Safe, **NTS** = Non Thread Safe  
-✅ Supported on Linux, macOS, Windows, WSL
+✅ Supported on Linux (`x86_64`, `arm64`), macOS, Windows, WSL
 
 ---
 

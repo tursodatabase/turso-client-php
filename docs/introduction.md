@@ -40,13 +40,14 @@ Whether you’re building a **Laravel app**, a **CLI tool**, or a **PHP microser
 | 8.2         | TS / NTS       |
 | 8.3         | TS / NTS       |
 | 8.4         | TS / NTS       |
+| 8.5         | TS / NTS       |
 
 * **TS** = Thread Safe
 * **NTS** = Non Thread Safe
 
 ### Operating Systems
 
-* ✅ Linux
+* ✅ Linux (`x86_64`, `arm64`)
 * ✅ macOS
 * ✅ Windows / WSL
 
