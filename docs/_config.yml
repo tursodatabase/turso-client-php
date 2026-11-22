@@ -1,0 +1,12 @@
+title: Turso PHP Extension
+description: >-
+  The LibSQL PHP extension client — native, fast, and developer-friendly
+  database bindings for PHP applications built on Turso / LibSQL.
+theme: jekyll-rtd-theme
+remote_theme: jekyll/jekyll-rtd-theme
+markdown: kramdown
+kramdown:
+  input: GFM
+  hard_wrap: false
+sass:
+  style: compressed
