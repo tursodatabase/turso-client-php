@@ -504,6 +504,15 @@ a:hover {
     width: 100%;
     height: auto;
 }
+.shot-frame__body {
+    padding: 24px;
+}
+.shot-frame__body pre {
+    margin: 0;
+}
+.shot-frame__body pre + pre {
+    margin-top: 18px;
+}
 
 /* --------------------------------------------------------------------------
    Sections and bento
