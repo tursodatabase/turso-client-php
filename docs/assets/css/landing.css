@@ -509,6 +509,15 @@ a:hover {
 }
 .shot-frame__body pre {
     margin: 0;
+    padding: 0;
+    overflow-x: auto;
+    white-space: pre;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.9;
+}
+.shot-frame__body .prompt {
+    color: var(--accent);
 }
 .shot-frame__body pre + pre {
     margin-top: 18px;
