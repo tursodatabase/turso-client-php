@@ -1,4 +1,11 @@
-# In-Memory Connection
+---
+title: In-memory connection
+description: Open a temporary in-memory database with Turso Client PHP.
+section: Connections
+eyebrow: First run
+---
+
+## In-Memory Connection
 
 An **in-memory connection** creates a temporary database stored entirely in memory.
 This database disappears when the script ends.

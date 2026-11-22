@@ -1,0 +1,45 @@
+- title: Overview
+  url: /user-manual/
+  section: Introduction
+- title: Getting started
+  url: /user-manual/getting-started/
+  section: Introduction
+- title: Configuration
+  url: /user-manual/configuration/
+  section: Guide
+- title: Local connection
+  url: /user-manual/local-connection/
+  section: Connections
+- title: In-memory connection
+  url: /user-manual/memory-connection/
+  section: Connections
+- title: Remote connection
+  url: /user-manual/remote-connection/
+  section: Connections
+- title: Embedded replica
+  url: /user-manual/embedded-replica-connection/
+  section: Connections
+- title: Offline writes
+  url: /user-manual/offline-writes-flavors/
+  section: Offline writes
+- title: Error semantics
+  url: /user-manual/error-semantics/
+  section: Reference
+- title: Production deployment
+  url: /user-manual/production-deployment/
+  section: Guide
+- title: LibSQL class
+  url: /user-manual/reference/libsql-class/
+  section: Reference
+- title: Result class
+  url: /user-manual/reference/result-class/
+  section: Reference
+- title: Statement class
+  url: /user-manual/reference/statement-class/
+  section: Reference
+- title: Transaction class
+  url: /user-manual/reference/transaction-class/
+  section: Reference
+- title: Constants
+  url: /user-manual/reference/constants/
+  section: Reference

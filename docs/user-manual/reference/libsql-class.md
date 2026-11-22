@@ -1,4 +1,11 @@
-# LibSQL PHP Extension
+---
+title: LibSQL class
+description: "The main LibSQL PHP class: open, execute, query, prepare and transaction entry points."
+section: Reference
+eyebrow: API
+---
+
+## LibSQL PHP Extension
 
 ## Introduction
 
@@ -54,24 +61,24 @@ class LibSQL
 
 ## Table of Contents
 
-- [Create a new LibSQL instance](LibSQL-class.md#create-a-new-libsql-instance)
-- [Retrieves the version of the LibSQL extension](LibSQL-class.md#retrieves-the-version-of-the-libsql-extension)
-- [Retrieves the number of rows changed by the last SQL statement (changes)](LibSQL-class.md#retrieves-the-number-of-rows-changed-by-the-last-sql-statement-changes)
-- [Checks if autocommit mode is enabled for the connection](LibSQL-class.md#checks-if-autocommit-mode-is-enabled-for-the-connection)
-- [Retrieves the total number of rows changed by the connection (totalChanges)](LibSQL-class.md#retrieves-the-total-number-of-rows-changed-by-the-connection-totalchanges)
-- [Retrieves the ID of the last inserted row](LibSQL-class.md#retrieves-the-id-of-the-last-inserted-row)
-- [Executes an SQL statement on the database](LibSQL-class.md#executes-an-sql-statement-on-the-database)
-- [Executes a batch of SQL statements on the database](LibSQL-class.md#executes-a-batch-of-sql-statements-on-the-database)
-- [Executes an SQL query on the database](LibSQL-class.md#executes-an-sql-query-on-the-database)
-- [Initiates a new database transaction](LibSQL-class.md#initiates-a-new-database-transaction)
-- [Prepares an SQL statement for execution](LibSQL-class.md#prepares-an-sql-statement-for-execution)
-- [Closes the database connection](LibSQL-class.md#closes-the-database-connection)
-- [Sync the database](LibSQL-class.md#sync-the-database)
-- [Checks the connectivity of the database server (self-host libsql-server)](LibSQL-class.md#checks-the-connectivity-of-the-database-server)
-- [Returns the number of pending operations (self-host libsql-server)](LibSQL-class.md#returns-the-number-of-pending-operations)
-- [Checks if the database connection is online (self-host libsql-server)](LibSQL-class.md#checks-if-the-database-connection-is-online)
-- [Enable or disable the loading of extensions](LibSQL-class.md#enable-or-disable-the-loading-of-extensions)
-- [Load (sqlite-compatible) extensions](LibSQL-class.md#load-extensions)
+- [Create a new LibSQL instance](libsql-class.md#create-a-new-libsql-instance)
+- [Retrieves the version of the LibSQL extension](libsql-class.md#retrieves-the-version-of-the-libsql-extension)
+- [Retrieves the number of rows changed by the last SQL statement (changes)](libsql-class.md#retrieves-the-number-of-rows-changed-by-the-last-sql-statement-changes)
+- [Checks if autocommit mode is enabled for the connection](libsql-class.md#checks-if-autocommit-mode-is-enabled-for-the-connection)
+- [Retrieves the total number of rows changed by the connection (totalChanges)](libsql-class.md#retrieves-the-total-number-of-rows-changed-by-the-connection-totalchanges)
+- [Retrieves the ID of the last inserted row](libsql-class.md#retrieves-the-id-of-the-last-inserted-row)
+- [Executes an SQL statement on the database](libsql-class.md#executes-an-sql-statement-on-the-database)
+- [Executes a batch of SQL statements on the database](libsql-class.md#executes-a-batch-of-sql-statements-on-the-database)
+- [Executes an SQL query on the database](libsql-class.md#executes-an-sql-query-on-the-database)
+- [Initiates a new database transaction](libsql-class.md#initiates-a-new-database-transaction)
+- [Prepares an SQL statement for execution](libsql-class.md#prepares-an-sql-statement-for-execution)
+- [Closes the database connection](libsql-class.md#closes-the-database-connection)
+- [Sync the database](libsql-class.md#sync-the-database)
+- [Checks the connectivity of the database server (self-host libsql-server)](libsql-class.md#checks-the-connectivity-of-the-database-server)
+- [Returns the number of pending operations (self-host libsql-server)](libsql-class.md#returns-the-number-of-pending-operations)
+- [Checks if the database connection is online (self-host libsql-server)](libsql-class.md#checks-if-the-database-connection-is-online)
+- [Enable or disable the loading of extensions](libsql-class.md#enable-or-disable-the-loading-of-extensions)
+- [Load (sqlite-compatible) extensions](libsql-class.md#load-extensions)
 
 ### Create a new LibSQL instance
 
@@ -332,7 +339,7 @@ $db->close();
 
 The result object and every fetch mode (associative / numeric / both / all /
 lazy streaming) are documented in
-[LibSQLResult Class](LibSQLResult-class.md).
+[LibSQLResult Class](result-class.md).
 
 ### Prepares an SQL statement for execution
 
@@ -354,7 +361,7 @@ $db->close();
 Preparation failures throw (`Failed to prepare statement: ...`) instead of
 returning a falsy value, so wrap the call in `try/catch` when the input is
 not guaranteed valid. The full statement API — binding, reuse, metadata —
-is documented in [LibSQLStatement Class](LibSQLStatement-class.md).
+is documented in [LibSQLStatement Class](statement-class.md).
 
 ### Initiates a new database transaction
 
@@ -382,7 +389,7 @@ $db->close();
 
 Transaction semantics (behaviors, `query()` shape, automatic rollback of
 abandoned transactions) are documented in
-[LibSQLTransaction Class](LibSQLTransaction-class.md).
+[LibSQLTransaction Class](transaction-class.md).
 
 ### Closes the database connection
 

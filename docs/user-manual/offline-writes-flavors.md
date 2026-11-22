@@ -1,4 +1,11 @@
-# Offline Writes: Choosing and Comparing the Two Flavors
+---
+title: Offline writes
+description: Compare the sqld offline-write flavor with the Turso Cloud synced-database flavor.
+section: Offline writes
+eyebrow: Offline first
+---
+
+## Offline Writes: Choosing and Comparing the Two Flavors
 
 LibSQL PHP supports two different **offline-write flavors**: a self-hosted
 one built around a **local write journal** (the `sqld` flavor) and one built
@@ -174,5 +181,5 @@ suites):
 
 * 👉 [Offline Writes with sqld Connection](offline-writes-sqld-connection.md) — full journaled-flavor walkthrough
 * 👉 [Offline Writes with Turso Connection](offline-writes-turso-connection.md) — full Turso Cloud walkthrough
-* 👉 [Core API](LibSQL-class.md) — the `sync()`/connectivity method surface
-* 👉 [LibSQLTransaction Class](LibSQLTransaction-class.md) — why journal-bypassing calls throw in the journaled flavor
+* 👉 [Core API](reference/libsql-class.md) — the `sync()`/connectivity method surface
+* 👉 [LibSQLTransaction Class](reference/transaction-class.md) — why journal-bypassing calls throw in the journaled flavor

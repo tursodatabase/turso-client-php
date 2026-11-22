@@ -1,4 +1,11 @@
-# Installation & Configuration
+---
+title: Configuration
+description: Installation methods and connection configuration for the Turso Client PHP extension.
+section: Guide
+eyebrow: Setup
+---
+
+## Installation & Configuration
 
 ## Requirements
 
@@ -139,5 +146,5 @@ secured location rather than a shared directory.
 
 ## Next Steps
 
-* 👉 [Quick Start](quick-start.md) — run your first queries with Turso Client PHP
+* 👉 [Quick Start](getting-started.md) — run your first queries with Turso Client PHP
 * 👉 [Connections](local-connection.md) — learn how to connect locally, in-memory, or to remote databases

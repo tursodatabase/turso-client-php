@@ -1,4 +1,11 @@
-# Local Connection
+---
+title: Local connection
+description: Open a local SQLite/libSQL database file with Turso Client PHP.
+section: Connections
+eyebrow: First run
+---
+
+## Local Connection
 
 A **local connection** is the simplest way to use Turso Client PHP.
 It stores data in a local SQLite/libSQL file on disk.

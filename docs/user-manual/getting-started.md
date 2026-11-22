@@ -1,4 +1,11 @@
-# Quick Start
+---
+title: Getting started
+description: Install Turso Client PHP and run your first query against a local database, with transactions.
+section: Introduction
+eyebrow: First run
+---
+
+## Quick Start
 
 This guide shows how to create a database, insert data, and run queries with **Turso Client PHP** in just a few steps.
 
@@ -85,4 +92,4 @@ php -m | grep libsql
 
 * 👉 [Local Connection](local-connection.md) — run SQLite/libSQL locally
 * 👉 [Remote Connection](remote-connection.md) — connect to Turso or libSQL server
-* 👉 [Core API](LibSQL-class.md) — deep dive into methods and transactions
+* 👉 [Core API](reference/libsql-class.md) — deep dive into methods and transactions

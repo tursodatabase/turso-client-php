@@ -1,4 +1,11 @@
-# Remote Connection
+---
+title: Remote connection
+description: Connect to a Turso or libSQL server over the network.
+section: Connections
+eyebrow: Cloud
+---
+
+## Remote Connection
 
 A **remote connection** allows PHP applications to connect to a **Turso** or **libSQL** server running remotely.
 This is how you scale beyond local SQLite.

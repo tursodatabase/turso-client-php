@@ -1,12 +1,34 @@
 title: Turso PHP Extension
+tagline: The native LibSQL client for PHP
 description: >-
-  The LibSQL PHP extension client — native, fast, and developer-friendly
-  database bindings for PHP applications built on Turso / LibSQL.
-theme: jekyll-rtd-theme
-remote_theme: jekyll/jekyll-rtd-theme
+  Turso Client PHP is the native LibSQL database client for PHP — a Rust
+  extension built with ext-php-rs, exposing open flags, fetch modes,
+  prepared statements, transactions and offline writes through a single PHP
+  class.
+url: https://tursodatabase.github.io
+baseurl: /turso-client-php
+
 markdown: kramdown
 kramdown:
   input: GFM
   hard_wrap: false
-sass:
-  style: compressed
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    block:
+      line_numbers: false
+
+permalink: pretty
+
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock
+  - vendor
+  - .jekyll-cache
+  - _site
+
+defaults:
+  - scope:
+      path: "user-manual"
+    values:
+      layout: manual

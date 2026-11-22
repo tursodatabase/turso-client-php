@@ -1,7 +1,14 @@
-# Production Deployment Guide
+---
+title: Production deployment
+description: Deployment topology, TLS, scaling and rollback guidance for the Turso Client PHP extension.
+section: Guide
+eyebrow: Ops
+---
+
+## Production Deployment Guide
 
 Everything in this page is backed by the runnable proof harness in
-[`docker/production-proof/`](../docker/production-proof/README.md) — a docker
+[`docker/production-proof/`](../../docker/production-proof/README.md) — a docker
 compose topology (nginx → php-fpm → live libSQL server) whose runner asserts
 the production claims and emits a machine-readable `PROOF: {...}` report
 (**24 asserts / 0 fail** in the reference run). If you skip everything else,
@@ -183,7 +190,7 @@ Checklist to keep those guarantees in your platform:
 ## 9. CDC / `captureIt` in production
 
 Verified in this PR (full delivery semantics:
-[LibSQL-class.md](LibSQL-class.md#capture-events-to-a-webhook-captureit)):
+[LibSQL-class.md](reference/libsql-class.md#capture-events-to-a-webhook-captureit)):
 
 * an **empty `cdc_url` makes `captureIt()` return `false` without throwing**
 * `null` throws a defined error
@@ -207,7 +214,7 @@ your own probe for it, keep `captureIt()` off the critical write path.
   actual source tree into the fpm image and starts from wiped volumes, so
   the result is deterministic; exit code > 0 blocks. Run it in CI when
   touching sync/offline paths or connection lifecycles (see
-  [CONTRIBUTING.md](../CONTRIBUTING.md)).
+  [CONTRIBUTING.md](../../CONTRIBUTING.md)).
 * Air-gapped / registry-restricted environments: `compose.local-sqld.yaml`
   + `sqld.Dockerfile` swap the official image for a locally built `sqld`
   binary (copy yours in; it is gitignored, never committed).

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-baseurl="{{ site.baseurl }}">
+<head>
+    {% include head.html %}
+</head>
+<body>
+    {% include header.html %}
+
+    {% assign flat = site.data.nav %}
+    {% assign idx = nil %}
+    {% for item in flat %}
+        {% if item.url == page.url %}{% assign idx = forloop.index0 %}{% endif %}
+    {% endfor %}
+
+    <div class="manual {% if page.toc != false %}manual--with-toc{% endif %}">
+        {% include sidebar.html %}
+
+        <main class="content">
+            <nav class="breadcrumbs" aria-label="Breadcrumb">
+                <a href="{{ site.baseurl }}/">Home</a>
+                <span aria-hidden="true">/</span>
+                <a href="{{ site.baseurl }}/user-manual/">User Manual</a>
+                {% if page.section %}
+                <span aria-hidden="true">/</span>
+                <span>{{ page.section }}</span>
+                {% endif %}
+                <span aria-hidden="true">/</span>
+                <span>{{ page.title }}</span>
+            </nav>
+
+            <header class="page-header">
+                {% if page.eyebrow %}
+                <span class="page-header__eyebrow">{{ page.eyebrow }}</span>
+                {% endif %}
+                <h1>{{ page.title }}</h1>
+                {% if page.description %}
+                <p class="page-header__lede">{{ page.description }}</p>
+                {% endif %}
+            </header>
+
+            <div class="manual__body">
+                <div>
+                    <article class="prose">
+                        {{ content }}
+                    </article>
+
+                    {% if idx %}
+                    <nav class="pager" aria-label="Manual pagination">
+                        {% assign next_i = idx | plus: 1 %}
+                        {% assign next = flat[next_i] %}
+                        {% if idx > 0 %}
+                        {% assign prev_i = idx | minus: 1 %}
+                        {% assign prev = flat[prev_i] %}
+                        <a class="pager__link" href="{{ prev.url | relative_url }}">
+                            <span class="pager__label">← Previous</span>
+                            <span class="pager__title">{{ prev.title }}</span>
+                        </a>
+                        {% else %}<span></span>{% endif %}
+                        {% if next %}
+                        <a class="pager__link pager__link--next" href="{{ next.url | relative_url }}">
+                            <span class="pager__label">Next →</span>
+                            <span class="pager__title">{{ next.title }}</span>
+                        </a>
+                        {% endif %}
+                    </nav>
+                    {% endif %}
+                </div>
+
+                {% if page.toc != false %}
+                <aside class="toc" data-toc aria-label="On this page">
+                    <p class="toc__title">On this page</p>
+                    <ul></ul>
+                </aside>
+                {% endif %}
+            </div>
+        </main>
+    </div>
+
+    {% include footer.html %}
+
+    <script src="{{ '/assets/js/site.js' | relative_url }}" defer></script>
+</body>
+</html>

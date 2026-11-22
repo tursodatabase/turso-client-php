@@ -1,4 +1,11 @@
-# LibSQLTransaction Class
+---
+title: Transaction class
+description: Transaction handling for Turso Client PHP.
+section: Reference
+eyebrow: API
+---
+
+## LibSQLTransaction Class
 
 `LibSQLTransaction` represents an **active transaction** on a connection.
 You create one through `$db->transaction($behavior)` — the class
@@ -140,7 +147,7 @@ object's destructor at GC time.
 
 > In offline-write mode (`sqld_offline_mode: true`), `$db->transaction()`
 > is not available at all — explicit transactions bypass the offline write
-> journal (see [offline-writes-sqld-connection.md](offline-writes-sqld-connection.md)).
+> journal (see [offline-writes-sqld-connection.md](../offline-writes-sqld-connection.md)).
 >
 > The cross-cutting throw contract and the complete error-text table are
-> collected in [Error Semantics](error-semantics.md).
+> collected in [Error Semantics](../error-semantics.md).

@@ -1,9 +1,16 @@
-# Constants and Fetch Modes
+---
+title: Constants
+description: LibSQL PHP constants and fetch modes.
+section: Reference
+eyebrow: API
+---
+
+## Constants and Fetch Modes
 
 All constants live on the `LibSQL` class. This page is the single source
 for their values and for the shape each fetch mode returns; the method
 reference lives in
-[`LibSQLResult Class`](LibSQLResult-class.md).
+[`LibSQLResult Class`](result-class.md).
 
 ---
 
@@ -32,7 +39,7 @@ Two verified behaviors around flags:
 * When using named arguments, every parameter between `$config` and the
   first named one you pass must be supplied explicitly; the constructor
   rejects skipped optional slots (see
-  [Error Semantics](error-semantics.md)).
+  [Error Semantics](../error-semantics.md)).
 
 ## Fetch modes
 
@@ -132,6 +139,6 @@ Array-backed iterators restart on `rewind()`; row-set iterators do not.
 
 ## Related
 
-* [`LibSQLResult Class`](LibSQLResult-class.md) — every fetch method in detail
-* [`LibSQLStatement Class`](LibSQLStatement-class.md#typed-bindings) — how PHP types bind to SQLite storage classes
-* [Error Semantics](error-semantics.md) — what gets thrown when values or modes are wrong
+* [`LibSQLResult Class`](result-class.md) — every fetch method in detail
+* [`LibSQLStatement Class`](statement-class.md#typed-bindings) — how PHP types bind to SQLite storage classes
+* [Error Semantics](../error-semantics.md) — what gets thrown when values or modes are wrong

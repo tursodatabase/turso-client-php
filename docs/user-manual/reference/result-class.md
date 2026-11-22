@@ -1,4 +1,11 @@
-# LibSQLResult Class
+---
+title: Result class
+description: Result rows, fetch modes and column type reading for Turso Client PHP.
+section: Reference
+eyebrow: API
+---
+
+## LibSQLResult Class
 
 `LibSQLResult` represents the **result of a query**. You obtain one from
 `$db->query(...)`, `$stmt->query(...)` or `$trx->query(...)` — the class
@@ -181,4 +188,4 @@ Notes:
 | `fetchSingle()` with no matching row | `[]` (empty array) |
 
 The cross-cutting throw contract and the complete error-text table are
-collected in [Error Semantics](error-semantics.md).
+collected in [Error Semantics](../error-semantics.md).

@@ -1,0 +1,21 @@
+<aside class="sidebar" data-sidebar>
+    {% assign sections = site.data.nav | group_by: "section" %}
+    {% for section in sections %}
+    <div class="sidebar__section">
+        <p class="sidebar__title">{{ section.name }}</p>
+        <ul class="sidebar__list">
+            {% for item in section.items %}
+            <li>
+                <a class="sidebar__link" href="{{ item.url | relative_url }}"
+                   {% if page.url == item.url %}aria-current="page"{% endif %}>{{ item.title }}</a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endfor %}
+
+    <div class="sidebar__cta">
+        <p>Building a PHP app on LibSQL? The native extension is one install away.</p>
+        <a href="https://github.com/tursodatabase/turso-client-php">Get the source →</a>
+    </div>
+</aside>

@@ -1,4 +1,11 @@
-# Error Semantics
+---
+title: Error semantics
+description: How the extension maps engine failures to PHP exceptions.
+section: Reference
+eyebrow: Reliability
+---
+
+## Error Semantics
 
 Since the panic-free error-mapping work, the extension no longer unwinds or
 crashes the PHP process. Every failure that the engine reports is mapped to
@@ -7,9 +14,9 @@ the call sequence. This page is the single reference for what throws, when
 it throws, and the exact messages to expect.
 
 For the full per-method tables see
-[LibSQLStatement Class](LibSQLStatement-class.md#error-semantics),
-[LibSQLTransaction Class](LibSQLTransaction-class.md#error-semantics),
-[LibSQLResult Class](LibSQLResult-class.md#error-semantics) and the
+[LibSQLStatement Class](reference/statement-class.md#error-semantics),
+[LibSQLTransaction Class](reference/transaction-class.md#error-semantics),
+[LibSQLResult Class](reference/result-class.md#error-semantics) and the
 [offline flavor matrix](offline-writes-flavors.md#error-text-reference).
 
 ---
@@ -119,7 +126,7 @@ Also not error condition — deliberate non-throwing paths:
   a `null` `cdc_url` throws `CDC URL is not configured`.
 * The `LibSQL::LIBSQL_ALL` fetch of a zero-row SELECT is a structure with
   empty rows — no throw (see
-  [fetch modes](constants.md#fetch-modes)).
+  [fetch modes](reference/constants.md#fetch-modes)).
 
 ---
 

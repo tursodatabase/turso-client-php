@@ -1,4 +1,11 @@
-# Embedded Replica Connection
+---
+title: Embedded replica
+description: Connect to a read replica of a Turso/libSQL database with periodic sync.
+section: Connections
+eyebrow: Cloud
+---
+
+## Embedded Replica Connection
 
 A **remote replica connection** allows your PHP application to connect to a **read-replica** of a Turso/libSQL database.
 This replica can be configured with a **sync URL** so that it periodically synchronizes with the primary database.
@@ -63,6 +70,6 @@ $libsql->sync();
 
 * 👉 [Offline Writes (Turso) Connection](offline-writes-turso-connection.md) — Connect libSQL with Offline Writes abillity from (with Turso)
 * 👉 [Offline Writes (libSQL Server/sqld) Connection](offline-writes-sqld-connection.md) — Connect libSQL with Offline Writes abillity from (with libSQL Server - self-host)
-* 👉 [Core API](LibSQL-class.md) — learn all available methods
-* 👉 [Transactions API](LibSQL-class.md#initiates-a-new-database-transaction) — ensure atomic writes
-* 👉 [Sync API](LibSQL-class.md#sync-the-database) — understand synchronization in detail
+* 👉 [Core API](reference/libsql-class.md) — learn all available methods
+* 👉 [Transactions API](reference/libsql-class.md#initiates-a-new-database-transaction) — ensure atomic writes
+* 👉 [Sync API](reference/libsql-class.md#sync-the-database) — understand synchronization in detail

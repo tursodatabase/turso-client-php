@@ -1,4 +1,11 @@
-# Introduction
+---
+title: Overview
+description: What Turso Client PHP is, why it exists, and which PHP versions and platforms it supports.
+section: Introduction
+eyebrow: Product guide
+---
+
+## Introduction
 
 ## What is Turso Client PHP?
 
@@ -63,4 +70,4 @@ Whether you’re building a **Laravel app**, a **CLI tool**, or a **PHP microser
 ## Next Steps
 
 * 👉 [Installation & Configuration](configuration.md)
-* 👉 [Quick Start](quick-start.md)
+* 👉 [Quick Start](getting-started.md)

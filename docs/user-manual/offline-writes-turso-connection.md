@@ -1,4 +1,11 @@
-# Offline Writes with Turso Connection
+---
+title: Offline writes
+description: Keep accepting writes while the database is unreachable and sync later.
+section: Offline writes
+eyebrow: Offline first
+---
+
+## Offline Writes with Turso Connection
 
 **Offline writes** allow your PHP application to continue functioning even when the database is temporarily unreachable.
 Instead of failing immediately, **writes are stored locally in a replica file** and later synchronized to the primary Turso database once connectivity is restored.
@@ -147,6 +154,6 @@ persisted locally and pushed to the remote in the background.
 
 * 👉 [Offline Writes: Flavor Comparison](offline-writes-flavors.md) — side-by-side matrix of both offline-write flavors
 * 👉 [Offline Writes (libSQL Server/sqld) Connection](offline-writes-sqld-connection.md) — the journaled offline-write flavor
-* 👉 [Core API](LibSQL-class.md) — learn all available methods
-* 👉 [Transactions API](LibSQL-class.md#initiates-a-new-database-transaction) — ensure atomic writes
-* 👉 [Sync API](LibSQL-class.md#sync-the-database) — understand synchronization in detail
+* 👉 [Core API](reference/libsql-class.md) — learn all available methods
+* 👉 [Transactions API](reference/libsql-class.md#initiates-a-new-database-transaction) — ensure atomic writes
+* 👉 [Sync API](reference/libsql-class.md#sync-the-database) — understand synchronization in detail
