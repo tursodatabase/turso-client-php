@@ -1,4 +1,4 @@
-/* MylibSQLAdmin docs — progressive enhancement only. */
+/* Turso Client PHP docs — progressive enhancement only. */
 
 (function () {
     'use strict';
@@ -14,12 +14,11 @@
     }
 
     function syncFavicon() {
-        var isDark = root.getAttribute('data-theme') === 'dark';
         var icon = document.getElementById('site-favicon');
         var shortcut = document.querySelector('link[rel="shortcut icon"]');
         var base = root.getAttribute('data-baseurl') || '';
-        if (icon) icon.href = isDark ? base + '/favicon-dark-32.png' : base + '/favicon-light-32.png';
-        if (shortcut) shortcut.href = isDark ? base + '/favicon-dark.ico' : base + '/favicon-light.ico';
+        if (icon) icon.href = base + '/favicon-32.png';
+        if (shortcut) shortcut.href = base + '/favicon.ico';
     }
 
     document.querySelectorAll('[data-theme-toggle]').forEach(function (button) {

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   MylibSQLAdmin — product site + user manual
+   Turso Client PHP — product site + user manual
    Self-contained styles. No CDN, no build step.
    ========================================================================== */
 
@@ -9,19 +9,21 @@
     --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
         "Liberation Mono", monospace;
 
-    --bg: #fafafa;
-    --bg-elevated: #ffffff;
-    --bg-subtle: #f4f4f5;
-    --border: #e4e4e7;
-    --border-strong: #d4d4d8;
-    --text: #18181b;
-    --text-muted: #52525b;
-    --text-faint: #71717a;
-    --accent: #2563eb;
-    --accent-soft: rgba(37, 99, 235, 0.08);
-    --accent-border: rgba(37, 99, 235, 0.35);
-    --code-bg: #f4f4f5;
-    --shadow: 0 1px 2px rgba(9, 9, 11, 0.06), 0 8px 24px -12px rgba(9, 9, 11, 0.18);
+    /* Palette sampled from docs/images/turso-client-php-logo.png:
+       coral accent #F65233, warm ink #1A1513, warm paper #FCF7F5. */
+    --bg: #fcf7f5;
+    --bg-elevated: #fffdfb;
+    --bg-subtle: #f5ede8;
+    --border: #e6d7cf;
+    --border-strong: #d4c0b5;
+    --text: #1a1513;
+    --text-muted: #61544d;
+    --text-faint: #73665f;
+    --accent: #c2412c;
+    --accent-soft: rgba(246, 82, 51, 0.1);
+    --accent-border: rgba(194, 65, 44, 0.35);
+    --code-bg: #f5ede8;
+    --shadow: 0 1px 2px rgba(26, 21, 19, 0.06), 0 8px 24px -12px rgba(26, 21, 19, 0.18);
 
     --header-h: 64px;
     --sidebar-w: 268px;
@@ -30,18 +32,18 @@
 }
 
 [data-theme="dark"] {
-    --bg: #09090b;
-    --bg-elevated: #101013;
-    --bg-subtle: #18181b;
-    --border: #232327;
-    --border-strong: #303036;
-    --text: #ededf0;
-    --text-muted: #a1a1aa;
-    --text-faint: #8b8b93;
-    --accent: #60a5fa;
-    --accent-soft: rgba(96, 165, 250, 0.1);
-    --accent-border: rgba(96, 165, 250, 0.35);
-    --code-bg: #17171b;
+    --bg: #100d0b;
+    --bg-elevated: #181311;
+    --bg-subtle: #211a17;
+    --border: #302622;
+    --border-strong: #42342d;
+    --text: #f5ede8;
+    --text-muted: #c4b5ad;
+    --text-faint: #9a8b84;
+    --accent: #ff6b52;
+    --accent-soft: rgba(246, 82, 51, 0.14);
+    --accent-border: rgba(255, 107, 82, 0.38);
+    --code-bg: #1a1513;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 16px 40px -20px rgba(0, 0, 0, 0.8);
 }
 
@@ -137,14 +139,13 @@ img {
     line-height: 1;
 }
 
-/* The exact AppLogoIcon the application renders in its header. The asset is
-   black; invert it in dark mode to match the app's text-white variant. */
+/* The turso-client-php logo is a coloured mark; keep it unchanged in both
+   themes. */
 .brand__mark img {
-    width: 18px;
+    width: 20px;
     height: 20px;
-}
-[data-theme="dark"] .brand__mark img {
-    filter: invert(1);
+    border-radius: 4px;
+    object-fit: contain;
 }
 
 .brand__sub {
@@ -980,7 +981,7 @@ img {
 
 .highlight .na,
 .highlight .nv {
-    color: #60a5fa;
+    color: #fdba74;
 }
 
 [data-theme="light"] .highlight .k,

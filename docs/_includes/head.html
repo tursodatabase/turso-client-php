@@ -2,7 +2,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% if page.title %}{{ page.title }} — {% endif %}{{ site.title }}</title>
 <meta name="description" content="{{ page.description | default: site.description | strip_html | normalize_whitespace | truncate: 170 }}">
-<meta name="theme-color" content="#09090b">
+<meta name="theme-color" content="#100d0b">
 <link rel="canonical" href="{{ page.url | absolute_url }}">
 
 <meta property="og:type" content="website">
@@ -11,9 +11,10 @@
 <meta property="og:description" content="{{ page.description | default: site.description | strip_html | normalize_whitespace | truncate: 170 }}">
 <meta property="og:url" content="{{ page.url | absolute_url }}">
 
-<!-- The same light/dark favicons the application serves. -->
-<link rel="icon" id="site-favicon" href="{{ '/favicon-dark-32.png' | relative_url }}" type="image/png">
-<link rel="shortcut icon" href="{{ '/favicon-dark.ico' | relative_url }}">
+<!-- Favicons rendered from the turso-client-php logo. One coloured mark serves
+     both themes, so there is no per-theme favicon swap. -->
+<link rel="icon" href="{{ '/favicon-32.png' | relative_url }}" type="image/png" sizes="32x32">
+<link rel="shortcut icon" href="{{ '/favicon.ico' | relative_url }}">
 <link rel="stylesheet" href="{{ '/assets/css/site.css' | relative_url }}">
 
 <script>
