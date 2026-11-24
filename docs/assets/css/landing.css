@@ -1,7 +1,8 @@
 /* ==========================================================================
-   MylibSQLAdmin — landing page styles
+   Turso Client PHP — landing page styles
    Self-contained companion to assets/css/site.css (the user manual).
-   Same token names, same accent, same radius language — no CDN, no build step.
+   Warm palette sampled from docs/images/turso-client-php-logo.png.
+   No CDN, no build step.
    ========================================================================== */
 
 @font-face {
@@ -39,24 +40,24 @@
     --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
         "Liberation Mono", monospace;
 
-    --bg: #fafafa;
-    --surface: #ffffff;
-    --surface-2: #f4f4f5;
-    --surface-3: #ececef;
-    --border: #e4e4e7;
-    --border-strong: #d4d4d8;
-    --text: #18181b;
-    --muted: #52525b;
-    --faint: #71717a;
-    --accent: #2563eb;
-    --accent-soft: rgba(37, 99, 235, 0.08);
-    --accent-border: rgba(37, 99, 235, 0.32);
-    /* The product's primary button is near-black in light, near-white in
-       dark. The CTA follows the app rather than shouting in accent blue. */
-    --ink: #18181b;
-    --on-ink: #fafafa;
-    --shadow: 0 1px 2px rgba(9, 9, 11, 0.05),
-        0 20px 44px -26px rgba(9, 9, 11, 0.3);
+    /* Palette sampled from docs/images/turso-client-php-logo.png:
+       coral accent #F65233, warm ink #1A1513, warm paper #FCF7F5. */
+    --bg: #fcf7f5;
+    --surface: #fffdfb;
+    --surface-2: #f5ede8;
+    --surface-3: #ede1da;
+    --border: #e6d7cf;
+    --border-strong: #d4c0b5;
+    --text: #1a1513;
+    --muted: #61544d;
+    --faint: #73665f;
+    --accent: #c2412c;
+    --accent-soft: rgba(246, 82, 51, 0.1);
+    --accent-border: rgba(194, 65, 44, 0.32);
+    --ink: #1a1513;
+    --on-ink: #fcf7f5;
+    --shadow: 0 1px 2px rgba(26, 21, 19, 0.05),
+        0 20px 44px -26px rgba(26, 21, 19, 0.28);
 
     --header-h: 64px;
     --radius-sm: 6px;
@@ -65,20 +66,20 @@
 }
 
 [data-theme="dark"] {
-    --bg: #09090b;
-    --surface: #101013;
-    --surface-2: #18181b;
-    --surface-3: #202024;
-    --border: #232327;
-    --border-strong: #303036;
-    --text: #ededf0;
-    --muted: #a1a1aa;
-    --faint: #8b8b93;
-    --accent: #60a5fa;
-    --accent-soft: rgba(96, 165, 250, 0.1);
-    --accent-border: rgba(96, 165, 250, 0.35);
-    --ink: #ededf0;
-    --on-ink: #09090b;
+    --bg: #100d0b;
+    --surface: #181311;
+    --surface-2: #211a17;
+    --surface-3: #2a211d;
+    --border: #302622;
+    --border-strong: #42342d;
+    --text: #f5ede8;
+    --muted: #c4b5ad;
+    --faint: #9a8b84;
+    --accent: #ff6b52;
+    --accent-soft: rgba(246, 82, 51, 0.14);
+    --accent-border: rgba(255, 107, 82, 0.38);
+    --ink: #f5ede8;
+    --on-ink: #100d0b;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.5),
         0 26px 64px -34px rgba(0, 0, 0, 0.9);
 }
@@ -308,14 +309,13 @@ a:hover {
     line-height: 1;
 }
 
-/* The exact AppLogoIcon the application renders in its header. The asset is
-   black; invert it in dark mode to match the app's text-white variant. */
+/* The turso-client-php logo is a coloured mark; keep it unchanged in both
+   themes. */
 .brand__mark img {
-    width: 18px;
+    width: 20px;
     height: 20px;
-}
-[data-theme="dark"] .brand__mark img {
-    filter: invert(1);
+    border-radius: 4px;
+    object-fit: contain;
 }
 .brand__tag {
     margin-left: 4px;
@@ -414,14 +414,39 @@ a:hover {
 }
 
 /* --------------------------------------------------------------------------
-   Hero — split composition, real screenshot, no gradient text
+   Hero — split composition, terminal frame, faint logo watermark behind copy
    -------------------------------------------------------------------------- */
 
 .hero {
+    position: relative;
+    overflow: hidden;
     padding: 88px 0 76px;
+    --hero-mark-opacity: 0.09;
+}
+
+[data-theme="dark"] .hero {
+    --hero-mark-opacity: 0.15;
+}
+
+.hero__watermark {
+    position: absolute;
+    z-index: 0;
+    top: 48%;
+    left: clamp(-260px, calc((100vw - 1200px) / 2 - 210px), -40px);
+    width: clamp(420px, 56vw, 760px);
+    height: auto;
+    transform: translateY(-50%) rotate(-8deg);
+    opacity: var(--hero-mark-opacity);
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
+    -webkit-mask-image: radial-gradient(ellipse 62% 62% at 50% 50%, #000 38%, transparent 78%);
+    mask-image: radial-gradient(ellipse 62% 62% at 50% 50%, #000 38%, transparent 78%);
 }
 
 .hero-grid {
+    position: relative;
+    z-index: 1;
     display: grid;
     grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
     align-items: center;
@@ -1013,14 +1038,23 @@ a:hover {
         display: inline-grid;
     }
     .hero-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
         gap: 44px;
+    }
+    .hero__watermark {
+        top: 30%;
+        left: -140px;
+        width: 520px;
     }
     .hero h1 {
         max-width: 20ch;
     }
     .hero__visual {
+        min-width: 0;
         max-width: 760px;
+    }
+    .shot-frame {
+        min-width: 0;
     }
     .tile--w8,
     .tile--w4 {
@@ -1041,8 +1075,23 @@ a:hover {
     .container {
         padding: 0 18px;
     }
+    .header-inner {
+        gap: 12px;
+    }
+    .brand__tag {
+        display: none;
+    }
     .hero {
         padding: 56px 0 56px;
+        --hero-mark-opacity: 0.06;
+    }
+    [data-theme="dark"] .hero {
+        --hero-mark-opacity: 0.1;
+    }
+    .hero__watermark {
+        top: 6%;
+        left: -150px;
+        width: 380px;
     }
     .hero h1 {
         font-size: clamp(2.375rem, 10vw, 3rem);

@@ -1,5 +1,5 @@
 <p align="center">
-  <img alt="Turso + PHP" src="https://i.imgur.com/zRVfWL3.png" width="800">
+  <img alt="Turso Client PHP" src="art/turso-client-php-banner.png" width="800">
 </p>
 
 <h1 align="center">Turso Client PHP</h1>

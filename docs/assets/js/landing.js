@@ -1,8 +1,8 @@
-/* MylibSQLAdmin landing page — progressive enhancement only. */
+/* Turso Client PHP landing page — progressive enhancement only. */
 (function () {
     "use strict";
 
-    var REPO = "darkterminal/mylibsqladmin";
+    var REPO = "tursodatabase/turso-client-php";
 
     /* ----------------------------------------------------------- theme */
     // Same storage key and attribute as the user manual, so a toggle here
@@ -21,8 +21,8 @@
         var icon = document.getElementById("site-favicon");
         var shortcut = document.querySelector('link[rel="shortcut icon"]');
         var base = root.getAttribute("data-baseurl") || "";
-        if (icon) icon.href = theme === "dark" ? base + "/favicon-dark-32.png" : base + "/favicon-light-32.png";
-        if (shortcut) shortcut.href = theme === "dark" ? base + "/favicon-dark.ico" : base + "/favicon-light.ico";
+        if (icon) icon.href = base + "/favicon-32.png";
+        if (shortcut) shortcut.href = base + "/favicon.ico";
     }
 
     if (toggle) {
