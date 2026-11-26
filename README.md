@@ -1,4 +1,10 @@
 <p align="center">
+  <a href="https://discord.gg/9eAaMnJtfY">
+    <img src="art/support-my-work-banner.png" alt="Support my work - Turso PHP Ecosystem" width="1000">
+  </a>
+</p>
+
+<p align="center">
   <img alt="Turso Client PHP" src="art/turso-client-php-banner.png" width="800">
 </p>
 
@@ -9,7 +15,7 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/github/license/tursodatabase/turso-client-php?color=01c3b0" alt="MIT License"></a>
-  <a href="https://tur.so/discord-php"><img src="https://img.shields.io/discord/933071162680958986?color=01c3b0" alt="Discord"></a>
+  <a href="https://discord.gg/9eAaMnJtfY"><img src="https://img.shields.io/discord/933071162680958986?color=01c3b0" alt="Discord"></a>
   <a href="#contributors"><img src="https://img.shields.io/github/contributors/tursodatabase/turso-client-php?color=01c3b0" alt="Contributors"></a>
   <a href="https://github.com/tursodatabase/turso-client-php/releases"><img src="https://img.shields.io/github/downloads/tursodatabase/turso-client-php/total.svg?color=01c3b0" alt="Downloads"></a>
   <a href="https://github.com/tursodatabase/turso-client-php/releases"><img src="https://img.shields.io/github/v/release/tursodatabase/turso-client-php?color=01c3b0" alt="Release"></a>
@@ -166,7 +172,7 @@ make help
 
 ## Community & Support
 
-* 💬 Join us on [Discord](https://tur.so/discord-php)
+* 💬 Join us on [Discord](https://discord.gg/9eAaMnJtfY)
 * 🐛 Report issues on [GitHub Issues](https://github.com/tursodatabase/turso-client-php/issues)
 * 🤝 Contributions welcome! See [Contributing Guide](CONTRIBUTING.md)
 
